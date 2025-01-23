@@ -74,7 +74,6 @@ export const FetchPerfumeWithFilters = async (
 
 ): Promise<FetchPerfumeResult> => {
   try {
-    // ฟังก์ชันช่วย: ตรวจสอบ array ว่างและแปลงเป็น null
     const toNullIfEmpty = (array?: string[]) => (array && array.length > 0 ? array : null);
 
     // สร้าง payload ที่จะส่งเข้า RPC
