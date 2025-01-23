@@ -36,14 +36,11 @@ function Test() {
     const result = await FetchPerfumeWithFilters(
       filters.searchQuery,
       1,
-      10,
-      {
-        gender: filters.gender,
-        accords: filters.accords,
-        top_notes: filters.top_notes,
-        middle_notes: filters.middle_notes,
-        base_notes: filters.base_notes,
-      }
+      filters.gender,
+      filters.accords,
+      filters.top_notes,
+      filters.middle_notes,
+      filters.base_notes
     );
 
     // แสดงผลลัพธ์ใน console

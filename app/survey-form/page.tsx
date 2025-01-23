@@ -43,10 +43,6 @@ function Survey() {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = () => {
-    console.log(formData);
-  };
-
   return (
     <div className="w-full max-w-3xl mx-auto p-6 space-y-4">
       {showForm && (

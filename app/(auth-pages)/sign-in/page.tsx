@@ -1,5 +1,4 @@
 import React from 'react'
-import { useSearchParams } from 'next/navigation';
 import { signInAction } from '@/utils/api/actions-server'
 import { FormMessage, Message } from '@/components/form-message'
 import { SubmitButton } from '@/components/submit-button'
@@ -9,17 +8,10 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createServer } from '@/utils/supabase/server'
 
-/**
- * ฟังก์ชันนี้จะแสดงฟอร์มลงชื่อเข้าใช้
- * โดยจะแสดงข้อความที่ต้องการลงชื่อเข้าใช้
- * และเมื่อส่งข้อมูลฟอร์มจะเรียกใช้ `signInAction`
- * เพื่อดำเนินการลงชื่อเข้าใช้ในส่วนหลังของระบบ
- * @param searchParams - ข้อความที่จะแสดงในฟอร์ม
- */
-
 export default async function Login ({
-  searchParams // ?error=Passwords%20do%20not%20match
-}: Readonly<{ searchParams: Message }>) {
+  searchParams
+}: Readonly<{ searchParams: Promise<Message> }>) {
+  const message = await searchParams;
   const supabase = await createServer()
 
   const {
@@ -60,7 +52,7 @@ export default async function Login ({
         <SubmitButton pendingText='Signing In...' formAction={signInAction}>
           Sign in
         </SubmitButton>
-        <FormMessage message={await searchParams} />
+        <FormMessage message={message} />
       </div>
     </form>
   )

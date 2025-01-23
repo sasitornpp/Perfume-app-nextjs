@@ -10,7 +10,7 @@ import { redirect } from "next/navigation";
 
 export default async function Signup({
   searchParams,
-}: Readonly<{ searchParams: Message }>) {
+}: Readonly<{ searchParams: Promise<Message> }>) {
   const supabase = await createServer();
   const {
     data: { user },
