@@ -5,8 +5,10 @@ import { configureStore } from "@reduxjs/toolkit";
 import perfumeReducer from "./perfume/perfumeReducer";
 // นำเข้า reducer ที่ใช้จัดการ state ของน้ำหอม (perfume)
 
-import createPostReducer from "./createpost/createPostState";
-// นำเข้า reducer ที่ใช้จัดการ state ของการสร้างโพสต์ (createPost)
+import basketReducer from "./basket/basketReducer";
+
+import perfumeMiddleware from "./middleware";
+
 
 // สร้าง Redux Store
 export const store = configureStore({
@@ -14,11 +16,13 @@ export const store = configureStore({
 
   reducer: {
     // รวม reducers หลายตัวเข้าด้วยกัน
-    perfume: perfumeReducer, 
+    perfume: perfumeReducer,
     // ชื่อ `perfume` ใน store เชื่อมกับ `perfumeReducer` (จัดการ state ของน้ำหอม)
-    createPost: createPostReducer, 
-    // ชื่อ `createPost` ใน store เชื่อมกับ `createPostReducer` (จัดการ state ของการสร้างโพสต์)
-  },
+    basket: basketReducer,
+
+  }, 
+  // middleware: (getDefaultMiddleware) =>
+  //   getDefaultMiddleware().concat(perfumeMiddleware),
 });
 
 // สร้างประเภท (Type) สำหรับ root state ของ Redux

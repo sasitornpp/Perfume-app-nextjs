@@ -1,10 +1,14 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
-import { Perfume } from "@/types/perfume";
+import { Perfume, TradablePerfume } from "@/types/perfume";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function Perfume_card({ perfume }: { perfume: Perfume }) {
+export function Perfume_card({
+  perfume,
+}: {
+  perfume: Perfume | TradablePerfume;
+}) {
   const shuffledAccords = Array.isArray(perfume.accords)
     ? [...perfume.accords].slice(0, 4)
     : [];
@@ -13,14 +17,17 @@ export function Perfume_card({ perfume }: { perfume: Perfume }) {
       <CardContent className="flex flex-col aspect-square p-6">
         {/* รูปสินค้า */}
         <div className="justify-center items-center flex-1 flex flex-row w-full">
-          <Image
-            src={perfume.img[0]}
-            alt={perfume.name}
-            width={100}
-            height={133}
-            className="rounded-md object-cover aspect-[100/133]"
-            priority
-          />
+          {typeof perfume.images[0] === "string" &&
+            perfume.images[0] !== "" && (
+              <Image
+                src={perfume.images[0]}
+                alt={perfume.name}
+                width={100}
+                height={133}
+                className="rounded-md object-cover aspect-[100/133]"
+                priority
+              />
+            )}
         </div>
         {/* ข้อมูลสินค้า */}
         <div className="flex flex-1 flex-col w-full p-2">

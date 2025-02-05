@@ -1,15 +1,6 @@
 /** @type {import('next').NextConfig} */
 
 export default {
-  experimental: {
-    serverActions: {
-      bodySizeLimit: "5mb",
-    },
-  },
-  i18n: {
-    locales: ["en"],
-    defaultLocale: "en",
-  },
   images: {
     remotePatterns: [
       {

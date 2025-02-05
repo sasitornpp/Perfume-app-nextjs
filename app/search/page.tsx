@@ -10,20 +10,24 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Perfume_card, Perfume_card_skeleton } from "@/components/perfume-card";
+import {
+  addPerfumes,
+  addTradablePerfumes,
+} from "@/redux/perfume/perfumeReducer";
+import { useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
+import filterPerfumes from "@/utils/functions/filter_perfume";
+import { RootState } from "@/redux/Store";
 
 function Search() {
-  const [perfumes, setPerfumes] = useState<Perfume[]>([]);
+  const dispatch = useDispatch();
+  const perfumeState = useSelector((state: RootState) => state.perfume.perfume);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [searchQuery, setSearchQuery] = useState(false);
   const skeletonRef = useRef<HTMLDivElement | null>(null);
-  const [filtersPerfume, setfiltersPerfume] = useState<Perfume[]>([]);
   const [filters, setFilters] = useState<Filters>(FiltersPerfumeValues);
-
-  // console.log("filtersPerfume", filtersPerfume);
-  // console.log("perfume", perfumes);
-  // console.log("filters", filters);
-  console.log(searchQuery && filters.searchQuery !== "");
+  const filtersPerfume = filterPerfumes(perfumeState, filters);
 
   // ฟังก์ชันสำหรับดึงข้อมูล
   const fetchData = useCallback(
@@ -40,9 +44,8 @@ function Search() {
         );
         if (perfumesResult && perfumesResult.length > 0) {
           if (searchQuery) {
-            setfiltersPerfume(perfumesResult || []);
           } else {
-            setPerfumes((prev) => [...prev, ...(perfumesResult || [])]);
+            dispatch(addPerfumes(perfumesResult));
           }
         } else {
           setHasMore(false);
@@ -55,7 +58,6 @@ function Search() {
   );
 
   useEffect(() => {
-    // console.log("fetching data");
     fetchData(page);
   }, [page, fetchData, filters]);
 
@@ -65,10 +67,10 @@ function Search() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          setPage((prev) => prev + 1); // เพิ่มหน้าถัดไปเมื่อ Skeleton เข้าหน้าจอ
+          setPage((prev) => prev + 1);
         }
       },
-      { threshold: 0.1 } // ตรวจจับเมื่อ Skeleton ทั้งหมดเข้ามาในมุมมอง
+      { threshold: 0.1 }
     );
 
     observer.observe(skeletonRef.current);
@@ -103,7 +105,7 @@ function Search() {
   };
 
   return (
-    <ResizablePanelGroup direction="horizontal">
+    <ResizablePanelGroup direction="horizontal" className="mt-8">
       {/* Search Filters */}
       <ResizablePanel
         className="shadow-md rounded-lg p-6 m-6 w-64"
@@ -118,7 +120,6 @@ function Search() {
             value={filters.searchQuery}
             onChange={(e) => handleChange("searchQuery", e.target.value)}
           />
-
           {/* เพศ */}
           <select
             className="border border-gray-300 rounded-md p-2"
@@ -128,19 +129,6 @@ function Search() {
             <option value="">เพศ</option>
             <option value="women">หญิง</option>
             <option value="men">ชาย</option>
-            <option value="for women and men">Unisex</option>
-          </select>
-
-          {/* แบรนด์ */}
-          <select
-            className="border border-gray-300 rounded-md p-2"
-            value={filters.band}
-            onChange={(e) => handleChange("band", e.target.value)}
-          >
-            <option value="">แบรนด์</option>
-            <option value="แบรนด์ A">แบรนด์ A</option>
-            <option value="แบรนด์ B">แบรนด์ B</option>
-            <option value="แบรนด์ C">แบรนด์ C</option>
           </select>
         </div>
 
@@ -151,14 +139,6 @@ function Search() {
         >
           ล้างทั้งหมด
         </button>
-
-        {/* Debug แสดงข้อมูลแบบเรียลไทม์ */}
-        <div className="mt-4 p-2 border border-gray-200 rounded-md">
-          <h3 className="text-lg font-medium">ข้อมูลแบบเรียลไทม์:</h3>
-          <pre className="text-sm bg-gray-100 p-2 rounded">
-            {JSON.stringify(filters, null, 2)}
-          </pre>
-        </div>
       </ResizablePanel>
       <ResizableHandle />
       {/* Product List */}
@@ -169,7 +149,7 @@ function Search() {
               ? filtersPerfume.map((perfume, index) => (
                   <Perfume_card key={index} perfume={perfume} />
                 ))
-              : perfumes.map((perfume, index) => (
+              : perfumeState.map((perfume, index) => (
                   <Perfume_card key={index} perfume={perfume} />
                 ))}
             {hasMore && <Perfume_card_skeleton />}

@@ -16,9 +16,10 @@ import {
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/Store";
 import { Separator } from "@/components/ui/separator";
+import { Perfume } from "@/types/perfume";
 
 const Home: React.FC = () => {
-  const perfumes = useSelector((state: RootState) => state.perfume);
+  const perfumes = useSelector((state: RootState) => state.perfume.perfume);
 
   console.log(perfumes);
   return (
@@ -36,8 +37,8 @@ const Home: React.FC = () => {
       >
         <CarouselContent>
           {perfumes &&
-            perfumes.map((perfume, index) => {
-              const shuffledAccords = Array.isArray(perfume.accords)
+            perfumes.map((perfume: Perfume, index: number) => {
+              const shuffledAccords: string[] = Array.isArray(perfume.accords)
                 ? [...perfume.accords]
                     .sort(() => 0.5 - Math.random())
                     .slice(0, 4)
@@ -49,7 +50,7 @@ const Home: React.FC = () => {
                       <CardContent className="flex flex-col aspect-square p-6">
                         <div className="justify-center items-center flex-1 flex flex-row w-full">
                           <Image
-                            src={perfume.img[0]}
+                            src={perfume.images[0]}
                             alt="perfume"
                             width={100}
                             height={100}
@@ -66,14 +67,16 @@ const Home: React.FC = () => {
                               : perfume.description || ""}
                           </span>
                           <div className="flex flex-row flex-wrap">
-                            {shuffledAccords.map((accord, index) => (
-                              <span
-                                key={index}
-                                className="text-xs bg-gray-200 rounded-full px-2 py-1 m-1"
-                              >
-                                {accord}
-                              </span>
-                            ))}
+                            {shuffledAccords.map(
+                              (accord: string, index: number) => (
+                                <span
+                                  key={index}
+                                  className="text-xs bg-gray-200 rounded-full px-2 py-1 m-1"
+                                >
+                                  {accord}
+                                </span>
+                              )
+                            )}
                           </div>
                         </div>
                       </CardContent>
