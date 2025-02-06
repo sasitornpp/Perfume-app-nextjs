@@ -4,18 +4,21 @@
 import { FetchPerfumeResult } from "@/types/perfume";
 import { supabaseClient } from "@/utils/supabase/client";
 import { TradablePerfume } from "@/types/perfume";
+import { Perfume } from "@/types/perfume";
 import { v4 as uuidv4 } from 'uuid';
 
 // นำเข้าคลาส supabaseClient สำหรับเชื่อมต่อกับ Supabase เพื่อเรียกใช้ฐานข้อมูลและฟังก์ชันต่าง ๆ
 // ฟังก์ชันสำหรับแนะนำ (สุ่ม) น้ำหอม
 
-export const RecommendPerfume = async () => {
+export const RecommendPerfume = async (): Promise<Perfume[]> => {
   // ใช้ฟังก์ชัน `rpc` ของ Supabase เพื่อเรียก Stored Procedure ชื่อ `random_perfumes`
   const { data, error } = await supabaseClient.rpc("random_perfumes", {
     num_limit: 5,
   });
   // 'random_perfumes' คือชื่อฟังก์ชันที่เก็บในฐานข้อมูล (Stored Procedure)
   // `{ num_limit: 5 }` คือพารามิเตอร์ที่ส่งไปยังฟังก์ชันในฐานข้อมูล (สุ่มน้ำหอม 5 รายการ)
+  console.log("error:", error);
+  console.log("Data:", data);
 
   if (error) {
     // ตรวจสอบว่ามีข้อผิดพลาดหรือไม่
@@ -186,7 +189,7 @@ export const InsertTradablePerfume = async ({ tradablePerfume }: { tradablePerfu
 
     await supabaseClient.from('tradable_perfumes').insert({
       name: tradablePerfume.name,
-      descriptions: tradablePerfume.description,
+      descriptions: tradablePerfume.descriptions,
       gender: tradablePerfume.gender,
       brand: tradablePerfume.brand,
       concentration: tradablePerfume.concentration,

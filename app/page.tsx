@@ -20,7 +20,6 @@ import { Perfume } from "@/types/perfume";
 
 const Home: React.FC = () => {
   const perfumes = useSelector((state: RootState) => state.perfume.perfume);
-
   console.log(perfumes);
   return (
     <div className="flex flex-col items-center justify-center w-full">
@@ -62,9 +61,9 @@ const Home: React.FC = () => {
                           </span>
                           <span className="text-sm">{perfume.brand}</span>
                           <span className="text-sm">
-                            {perfume.description?.length > 100
-                              ? `${perfume.description.substring(0, 100)}...`
-                              : perfume.description || ""}
+                            {perfume.descriptions?.length > 100
+                              ? `${perfume.descriptions.substring(0, 100)}...`
+                              : perfume.descriptions || ""}
                           </span>
                           <div className="flex flex-row flex-wrap">
                             {shuffledAccords.map(

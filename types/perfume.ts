@@ -3,13 +3,13 @@ interface BasePerfume {
   brand: string;
   gender: string;
   accords: string[];
-  description: string;
+  descriptions: string;
   perfumer: string;
   topNotes: string[];
   middleNotes: string[];
   baseNotes: string[];
   rating: number;
-  total_votes: number;
+  totalVotes: number;
 
 }
 
