@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Select,
   SelectContent,
@@ -14,23 +14,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-function Survey() {
-  const [showForm, setShowForm] = useState(true);
+function UserProfileForm() {
   const [formData, setFormData] = useState({
-    name: "",
+    username: "",
+    bio: "",
     gender: "",
-    birthdate: "",
-    situation: "",
-    intensity: "",
-    scentType: "",
-    topNote: "",
-    middleNote: "",
-    baseNote: "",
-    brand: "",
-    price: "",
-    volume: "",
-    feeling: "",
+    image: null as File | null,
   });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -43,182 +35,117 @@ function Survey() {
     setFormData({ ...formData, [name]: value });
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData({ ...formData, image: file });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Handle form submission here
+    console.log(formData);
+  };
+
   return (
-    <div className="w-full max-w-3xl mx-auto p-6 space-y-4">
-      {showForm && (
-        <form className="flex flex-col w-full max-w-3xl mx-auto p-6 space-y-4 rounded shadow mt-16">
-          <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="name">ชื่อ</Label>
-            <Input
-              name="name"
-              placeholder="ชื่อ"
-              value={formData.name}
-              onChange={handleChange}
-            />
+    <div className="w-full max-w-2xl mx-auto p-6">
+      <form onSubmit={handleSubmit} className="space-y-6 rounded shadow p-6">
+        {/* Image Upload Section */}
+        <div className="flex flex-col items-center space-y-4">
+          <div 
+            onClick={handleImageClick}
+            className="relative w-32 h-32 rounded-full overflow-hidden cursor-pointer border-2 border-dashed border-gray-300 hover:border-gray-400 flex items-center justify-center bg-gray-50"
+          >
+            {imagePreview ? (
+              <img 
+                src={imagePreview} 
+                alt="Profile preview" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="text-center text-gray-500">
+                <p>Click to upload</p>
+                <p className="text-sm">or drag and drop</p>
+              </div>
+            )}
           </div>
-          <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="gender">เพศ</Label>
-            <Select
-              onValueChange={(value) => handleSelectChange("gender", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="เลือก..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ชาย">ชาย</SelectItem>
-                <SelectItem value="หญิง">หญิง</SelectItem>
-                <SelectItem value="Unisex">Unisex</SelectItem>
-                <SelectItem value="LGBTQ+">LGBTQ+</SelectItem>
-                <SelectItem value="อื่นๆ">อื่นๆ</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="birthdate">วันเกิด</Label>
-            <Input
-              type="date"
-              name="birthdate"
-              value={formData.birthdate}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="situation">สถานการณ์</Label>
-            <Select
-              onValueChange={(value) => handleSelectChange("situation", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="สถานการณ์ (เช่น งานเลี้ยง, ทำงาน)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ไปข้างนอก">ไปข้างนอก</SelectItem>
-                <SelectItem value="เดท">เดท</SelectItem>
-                <SelectItem value="ปาร์ตี้กลางคืน">ปาร์ตี้กลางคืน</SelectItem>
-                <SelectItem value="งานสุภาพ">EDC</SelectItem>
-                <SelectItem value="งานศพ">Eau Fraiche</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="intensity">ความเข้มข้น</Label>
-            <Select
-              onValueChange={(value) => handleSelectChange("intensity", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="เลือก..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Perfume">Perfume</SelectItem>
-                <SelectItem value="EDP">EDP</SelectItem>
-                <SelectItem value="EDT">EDT</SelectItem>
-                <SelectItem value="EDC">EDC</SelectItem>
-                <SelectItem value="Eau Fraiche">Eau Fraiche</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="scentType">ประเภทกลิ่น</Label>
-            <Input
-              name="scentType"
-              placeholder="ประเภทกลิ่น (เช่น Floral, Woody)"
-              value={formData.scentType}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="flex flex-row space-x-4">
-            <div className="flex flex-col space-y-1.5 flex-1">
-              <Label htmlFor="topNote">Top Note</Label>
-              <Select>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a topNote" />
-                </SelectTrigger>
-                <SelectContent></SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-col space-y-1.5 flex-1">
-              <Label htmlFor="middleNote">Middle Note</Label>
-              <Select>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a topNote" />
-                </SelectTrigger>
-                <SelectContent></SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-col space-y-1.5 flex-1">
-              <Label htmlFor="baseNote">Base Note</Label>
-              <Select>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a topNote" />
-                </SelectTrigger>
-                <SelectContent></SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="brand">แบรนด์</Label>
-            <Input
-              name="brand"
-              placeholder="แบรนด์"
-              value={formData.brand}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="price">ราคา</Label>
-            <Select
-              onValueChange={(value) => handleSelectChange("price", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="เลือก..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="hight-low">สูง-ต่ำ</SelectItem>
-                <SelectItem value="low-hight">ต่ำ-สูง</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="size">ขนาด</Label>
-            <Input
-              name="volume"
-              placeholder="ขนาด ml"
-              value={formData.volume}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="feeling">ความรู้สึก</Label>
-            <Textarea
-              name="feeling"
-              placeholder="ความรู้สึก"
-              value={formData.feeling}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="flex flex-row space-x-4">
-            <Link href={"/search"}>
-              <Button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="w-full"
-              >
-                ยกเลิก
-              </Button>
-            </Link>
-            <Link href={"/search"}>
-              <Button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="w-full"
-              >
-                บันทึกข้อมูล
-              </Button>
-            </Link>
-          </div>
-        </form>
-      )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="hidden"
+          />
+        </div>
+
+        {/* Username Field */}
+        <div className="flex flex-col space-y-1.5">
+          <Label htmlFor="username">Username</Label>
+          <Input
+            id="username"
+            name="username"
+            placeholder="Enter your username"
+            value={formData.username}
+            onChange={handleChange}
+          />
+        </div>
+
+        {/* Bio Field */}
+        <div className="flex flex-col space-y-1.5">
+          <Label htmlFor="bio">Bio</Label>
+          <Textarea
+            id="bio"
+            name="bio"
+            placeholder="Tell us about yourself"
+            value={formData.bio}
+            onChange={handleChange}
+            className="min-h-[100px]"
+          />
+        </div>
+
+        {/* Gender Field */}
+        <div className="flex flex-col space-y-1.5">
+          <Label htmlFor="gender">Gender</Label>
+          <Select
+            onValueChange={(value) => handleSelectChange("gender", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select gender" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="male">ชาย</SelectItem>
+              <SelectItem value="female">หญิง</SelectItem>
+              <SelectItem value="unisex">Unisex</SelectItem>
+              <SelectItem value="lgbtq">LGBTQ+</SelectItem>
+              <SelectItem value="other">อื่นๆ</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-row space-x-4">
+          <Link href="/search" className="flex-1">
+            <Button type="button" variant="outline" className="w-full">
+              ยกเลิก
+            </Button>
+          </Link>
+          <Button type="submit" className="flex-1">
+            บันทึกข้อมูล
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
 
-export default Survey;
+export default UserProfileForm;

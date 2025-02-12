@@ -3,9 +3,8 @@
 import React from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { signOutAction } from "@/utils/api/actions-server";
+import { signOutAction } from "@/utils/api/actions-client/auth";
 import { UserRound, Settings, LogOut, Laptop, Moon, Sun } from "lucide-react";
-import { useUser } from "@/context/UserContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,10 +18,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "./ui/button";
+import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/Store";
 
 export function AccountDropdown() {
-  const { user } = useUser();
+  const { user } = useSelector((state: RootState) => state.user);
   const { theme, setTheme } = useTheme();
+  const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
 
   const handleSettheme = (theme: string) => {
@@ -86,7 +89,9 @@ export function AccountDropdown() {
         <DropdownMenuItem>
           <LogOut />
           {user ? (
-            <span onClick={async () => await signOutAction()}>ออกจากระบบ</span>
+            <span onClick={async () => await signOutAction({ router })}>
+              ออกจากระบบ
+            </span>
           ) : (
             <Link href="/sign-in">เข้าสู่ระบบ</Link>
           )}

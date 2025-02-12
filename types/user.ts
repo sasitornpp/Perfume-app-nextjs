@@ -1,53 +1,12 @@
-// กำหนดประเภทของสถานะผู้ใช้
-export type UserStatus = "Online" | "Offline";
-// "UserStatus" เป็นประเภท (Type) ที่มีค่าได้เพียง 2 อย่างคือ "Online" และ "Offline"
-// ใช้เพื่อระบุว่าผู้ใช้อยู่ในสถานะออนไลน์หรือออฟไลน์
+import { Perfume } from "./perfume";
 
-// กำหนดโครงสร้างข้อมูลสำหรับโปรไฟล์ของผู้ใช้
-export interface Profile {
-  userId: string; 
-  // ไอดีของผู้ใช้ เป็นค่าแบบข้อความ (string) ที่ไม่ซ้ำกัน
-  name: string; 
-  // ชื่อของผู้ใช้ เป็นข้อความ
-  gender: Gender; 
-  // เพศของผู้ใช้ โดยใช้ค่าที่กำหนดจาก `Gender` enum
-  bio: string; 
-  // ข้อมูลเกี่ยวกับตัวผู้ใช้ เช่น คำอธิบายสั้น ๆ หรือประวัติส่วนตัว
-  imgFiles?: File | undefined; 
-  // ไฟล์รูปโปรไฟล์ของผู้ใช้ (เป็นประเภทไฟล์ หรือ undefined หากไม่มี)
-  // `?` หมายถึงเป็นตัวเลือก (Optional) ไม่จำเป็นต้องมีเสมอ
+export interface User {
+  id: string;
+  name: string;
+  bio: string;
+  gender: string;
+  images: string;
+  suggestions_perfumes: Perfume[];
+  perfume_id: string[];
+  created_at: Date;
 }
-
-// กำหนดค่า Enum สำหรับเพศของผู้ใช้
-export enum Gender {
-  MAN = "MAN", 
-  // เพศชาย (MAN) ถูกแทนด้วยค่าข้อความ "MAN"
-  WOMAN = "WOMAN", 
-  // เพศหญิง (WOMAN) ถูกแทนด้วยค่าข้อความ "WOMAN"
-  LGBTQ = "LGBTQ", 
-  // กลุ่มผู้ใช้ที่ระบุว่าเป็น LGBTQ ถูกแทนด้วยข้อความ "LGBTQ"
-  OTHER = "OTHER", 
-  // เพศอื่น ๆ ถูกแทนด้วยค่าข้อความ "OTHER"
-}
-// Enum ทำให้สามารถจำกัดค่าที่เป็นไปได้สำหรับตัวแปรประเภท Gender ได้อย่างชัดเจน
-
-// กำหนดโครงสร้างข้อมูลสำหรับผู้ใช้ในระบบ
-export interface UserType {
-  id: string; 
-  // ไอดีของผู้ใช้ในระบบ เป็นข้อความที่ไม่ซ้ำกัน
-  name: string; 
-  // ชื่อของผู้ใช้
-  img: string; 
-  // URL ของรูปโปรไฟล์ผู้ใช้ (เป็นข้อความ)
-  email: string; 
-  // อีเมลของผู้ใช้
-  status: UserStatus; 
-  // สถานะของผู้ใช้ ใช้ค่า "Online" หรือ "Offline" จาก `UserStatus`
-  created_at: Date; 
-  // วันที่และเวลาที่บัญชีผู้ใช้ถูกสร้าง (เป็นชนิด Date)
-  online_at: Date; 
-  // วันที่และเวลาที่ผู้ใช้เข้าสู่ระบบล่าสุด (เป็นชนิด Date)
-  lastOnline: string; 
-  // เวลาที่ผู้ใช้ออฟไลน์ล่าสุด (เก็บเป็นข้อความ เช่น "10 นาทีที่แล้ว")
-}
-// โครงสร้างนี้ใช้สำหรับเก็บข้อมูลผู้ใช้ในระบบที่มีสถานะและประวัติการออนไลน์

@@ -4,11 +4,12 @@ import { configureStore } from "@reduxjs/toolkit";
 
 import perfumeReducer from "./perfume/perfumeReducer";
 // นำเข้า reducer ที่ใช้จัดการ state ของน้ำหอม (perfume)
-
+import { subscribeToSessionChanges } from "./middleware";
 import basketReducer from "./basket/basketReducer";
 
-import perfumeMiddleware from "./middleware";
+import userReducer from "./user/userReducer";
 
+import middleware from "./middleware";
 
 // สร้าง Redux Store
 export const store = configureStore({
@@ -20,10 +21,13 @@ export const store = configureStore({
     // ชื่อ `perfume` ใน store เชื่อมกับ `perfumeReducer` (จัดการ state ของน้ำหอม)
     basket: basketReducer,
 
-  }, 
-  // middleware: (getDefaultMiddleware) =>
-  //   getDefaultMiddleware().concat(perfumeMiddleware),
+    user: userReducer,
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(middleware),
 });
+
+subscribeToSessionChanges();
 
 // สร้างประเภท (Type) สำหรับ root state ของ Redux
 export type RootState = ReturnType<typeof store.getState>;

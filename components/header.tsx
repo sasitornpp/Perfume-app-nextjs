@@ -147,7 +147,7 @@ function Header({ pathname }: any) {
                                 {basket.name}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                {basket.description}
+                                {basket.descriptions}
                               </p>
                             </div>
                           </div>

@@ -3,21 +3,18 @@
 import React from "react";
 import { store } from "@/redux/Store";
 import { Provider } from "react-redux";
-import CacheData from "./cachedata";
-import { UserType } from "@/types/user";
+import Container from "@/components/container-setup";
 
 interface ProviderComponentProps {
-  user: UserType;
   children: React.ReactNode;
 }
 
 const ProviderComponent: React.FC<ProviderComponentProps> = ({
-  user,
   children,
 }) => {
   return (
     <Provider store={store}>
-      <CacheData user={user}>{children}</CacheData>
+      <Container >{children}</Container>;
     </Provider>
   );
 };

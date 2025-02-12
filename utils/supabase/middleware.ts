@@ -69,7 +69,7 @@ export const updateSession = async (request: NextRequest) => {
         // เปลี่ยนเส้นทางไปยังหน้าล็อกอิน `/sign-in`
       }
     } else if (
-      user &&
+      profiles &&
       request.nextUrl.pathname === "/survey-form"
     ) {
       // ถ้าผู้ใช้ล็อกอินแล้ว แต่พยายามเข้าหน้า `/survey-form` และมีชื่อในโปรไฟล์แล้ว

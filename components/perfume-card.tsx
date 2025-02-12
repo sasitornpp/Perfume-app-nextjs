@@ -34,9 +34,9 @@ export function Perfume_card({
           <span className="text-lg font-semibold">{perfume.name}</span>
           <span className="text-sm text-gray-500">{perfume.brand}</span>
           <span className="text-sm text-gray-700">
-            {perfume.description?.length > 100
-              ? `${perfume.description.substring(0, 100)}...`
-              : perfume.description || ""}
+            {perfume.descriptions?.length > 100
+              ? `${perfume.descriptions.substring(0, 100)}...`
+              : perfume.descriptions || ""}
           </span>
           <div className="flex flex-row flex-wrap mt-2">
             {shuffledAccords &&

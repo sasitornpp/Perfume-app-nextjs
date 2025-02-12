@@ -20,7 +20,7 @@ const filterPerfumes = (perfumes: Perfume[] | TradablePerfume[], filters: Filter
           perfume.name?.toLowerCase() ?? '',
           perfume.brand?.toLowerCase() ?? '',
           perfume.gender?.toLowerCase() ?? '',
-          perfume.description?.toLowerCase() ?? '',
+          perfume.descriptions?.toLowerCase() ?? '',
           ...(perfume.accords?.map(accord => accord.toLowerCase()) ?? []),
           ...(perfume.topNotes?.map(note => note.toLowerCase()) ?? []),
           ...(perfume.middleNotes?.map(note => note.toLowerCase()) ?? []),

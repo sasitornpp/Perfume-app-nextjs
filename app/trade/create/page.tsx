@@ -25,7 +25,7 @@ function Trade() {
   const [formData, setFormData] = useState<TradablePerfume>({
     id: "",
     name: "",
-    description: "",
+    descriptions: "",
     gender: "",
     brand: "",
     concentration: "",
@@ -40,7 +40,7 @@ function Trade() {
     accords: [],
     perfumer: "",
     rating: 0,
-    total_votes: 0,
+    totalVotes: 0,
   });
 
   const handleChange = (
@@ -149,7 +149,7 @@ function Trade() {
             <Label>Description</Label>
             <Textarea
               name="description"
-              value={formData.description}
+              value={formData.descriptions}
               onChange={handleChange}
               placeholder="Describe the perfume"
               required

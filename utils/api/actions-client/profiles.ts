@@ -1,6 +1,5 @@
 import { supabaseClient } from "@/utils/supabase/client"; 
 // นำเข้าคลาส supabaseClient สำหรับเชื่อมต่อกับ Supabase
-import { Gender } from "@/types/user"; 
 // นำเข้าประเภท Gender (ชาย, หญิง, อื่น ๆ) จากไฟล์ types เพื่อใช้กับข้อมูลโปรไฟล์
 
 // ฟังก์ชันสำหรับอัปโหลดรูปภาพโปรไฟล์
@@ -31,7 +30,7 @@ const uploadProfileImage = async (file: File, fileName: string) => {
 export const createProfile = async (data: {
   userId: string; // ไอดีของผู้ใช้
   name: string; // ชื่อของผู้ใช้
-  gender: Gender; // เพศของผู้ใช้ (ระบุด้วยประเภท Gender)
+  gender: string; // เพศของผู้ใช้ (ระบุด้วยประเภท Gender)
   bio: string; // ข้อมูลเกี่ยวกับตัวเอง
   imgFiles?: File; // รูปโปรไฟล์ (เป็นตัวเลือก, ไม่จำเป็นต้องมี)
 }) => {

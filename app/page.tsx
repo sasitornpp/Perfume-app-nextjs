@@ -20,7 +20,7 @@ import { Perfume } from "@/types/perfume";
 
 const Home: React.FC = () => {
   const perfumes = useSelector((state: RootState) => state.perfume.perfume);
-  console.log(perfumes);
+  // console.log(perfumes);
   return (
     <div className="flex flex-col items-center justify-center w-full">
       <Carousel
@@ -36,54 +36,57 @@ const Home: React.FC = () => {
       >
         <CarouselContent>
           {perfumes &&
-            perfumes.map((perfume: Perfume, index: number) => {
-              const shuffledAccords: string[] = Array.isArray(perfume.accords)
-                ? [...perfume.accords]
-                    .sort(() => 0.5 - Math.random())
-                    .slice(0, 4)
-                : [];
-              return (
-                <CarouselItem key={index} className="h-96">
-                  <div className="p-1">
-                    <Card>
-                      <CardContent className="flex flex-col aspect-square p-6">
-                        <div className="justify-center items-center flex-1 flex flex-row w-full">
-                          <Image
-                            src={perfume.images[0]}
-                            alt="perfume"
-                            width={100}
-                            height={100}
-                          />
-                        </div>
-                        <div className="flex flex-1 flex-col w-full p-2">
-                          <span className="text-lg font-semibold">
-                            {perfume.name}
-                          </span>
-                          <span className="text-sm">{perfume.brand}</span>
-                          <span className="text-sm">
-                            {perfume.descriptions?.length > 100
-                              ? `${perfume.descriptions.substring(0, 100)}...`
-                              : perfume.descriptions || ""}
-                          </span>
-                          <div className="flex flex-row flex-wrap">
-                            {shuffledAccords.map(
-                              (accord: string, index: number) => (
-                                <span
-                                  key={index}
-                                  className="text-xs bg-gray-200 rounded-full px-2 py-1 m-1"
-                                >
-                                  {accord}
-                                </span>
-                              )
-                            )}
+            [...perfumes]
+              .sort(() => 0.5 - Math.random())
+              .slice(0, 5)
+              .map((perfume: Perfume, index: number) => {
+                const shuffledAccords: string[] = Array.isArray(perfume.accords)
+                  ? [...perfume.accords]
+                      .sort(() => 0.5 - Math.random())
+                      .slice(0, 4)
+                  : [];
+                return (
+                  <CarouselItem key={index} className="h-96">
+                    <div className="p-1">
+                      <Card>
+                        <CardContent className="flex flex-col aspect-square p-6">
+                          <div className="justify-center items-center flex-1 flex flex-row w-full">
+                            <Image
+                              src={perfume.images[0]}
+                              alt="perfume"
+                              width={100}
+                              height={100}
+                            />
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </CarouselItem>
-              );
-            })}
+                          <div className="flex flex-1 flex-col w-full p-2">
+                            <span className="text-lg font-semibold">
+                              {perfume.name}
+                            </span>
+                            <span className="text-sm">{perfume.brand}</span>
+                            <span className="text-sm">
+                              {perfume.descriptions?.length > 100
+                                ? `${perfume.descriptions.substring(0, 100)}...`
+                                : perfume.descriptions || ""}
+                            </span>
+                            <div className="flex flex-row flex-wrap">
+                              {shuffledAccords.map(
+                                (accord: string, index: number) => (
+                                  <span
+                                    key={index}
+                                    className="text-xs bg-gray-200 rounded-full px-2 py-1 m-1"
+                                  >
+                                    {accord}
+                                  </span>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </CarouselItem>
+                );
+              })}
         </CarouselContent>
         <CarouselPrevious />
         <CarouselNext />

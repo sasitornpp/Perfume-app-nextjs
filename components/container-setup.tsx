@@ -1,22 +1,21 @@
-'use client'
+"use client";
 
-import { usePathname } from 'next/navigation'
-import { Provider } from 'react-redux'
-import { store } from '@/redux/Store'
-import React from 'react'
-import Header from './header'
-import { SpeedInsights } from '@vercel/speed-insights/next'
-import { Analytics } from '@vercel/analytics/react'
-import { UserType } from '@/types/user'
+import { usePathname } from "next/navigation";
+import { Provider } from "react-redux";
+import { store } from "@/redux/Store";
+import React from "react";
+import Header from "./header";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
 
 
 interface HeaderProps {
-  user: UserType
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 const Container: React.FC<HeaderProps> = ({ children }) => {
-  const pathname = usePathname()
+  const pathname = usePathname();
+
   return (
     <div className={`transition-all duration-500 ml-0 w-full h-full`}>
       <Header pathname={pathname} />
@@ -25,9 +24,9 @@ const Container: React.FC<HeaderProps> = ({ children }) => {
       >
         <div
           className={`flex ${
-            pathname === '/sign-in' || pathname === '/sign-up'
-              ? 'items-center'
-              : 'items-start'
+            pathname === "/sign-in" || pathname === "/sign-up"
+              ? "items-center"
+              : "items-start"
           } h-full justify-center w-full`}
         >
           <Provider store={store}>{children}</Provider>
@@ -36,7 +35,7 @@ const Container: React.FC<HeaderProps> = ({ children }) => {
         </div>
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default Container
+export default Container;
