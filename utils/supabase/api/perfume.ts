@@ -1,5 +1,4 @@
 "use client";
-// บอกว่าโค้ดนี้ทำงานฝั่ง Client (หน้าเว็บ) แทนที่จะเป็น Server (หลังบ้าน)
 
 import { FetchPerfumeResult } from "@/types/perfume";
 import { supabaseClient } from "@/utils/supabase/client";
@@ -11,8 +10,6 @@ export const RecommendPerfume = async (): Promise<Perfume[]> => {
   const { data, error } = await supabaseClient.rpc("random_perfumes", {
     num_limit: 5,
   });
-  console.log("error:", error);
-  console.log("Data:", data);
 
   if (error) {
     throw new Error(`Error fetching perfume data: ${error.message}`);
@@ -44,13 +41,11 @@ export const FetchPerfume = async (
     const { data, error } = await query.range(offset, offset + limit - 1);
 
     if (error) {
-      console.error("Error fetching perfumes:", error);
       return { data: null, error: error.message };
     }
 
     return { data, error: null };
   } catch (error) {
-    console.error("Unexpected error:", error);
     return { data: null, error: "An unexpected error occurred." };
   }
 };
@@ -85,13 +80,11 @@ export const FetchPerfumeWithFilters = async (
     );
 
     if (error) {
-      console.error("Error calling RPC filter_perfumes:", error);
       return { data: null, error: error.message };
     }
 
     return { data, error: null };
   } catch (error) {
-    console.error("Unexpected error:", error);
     return { data: null, error: "An unexpected error occurred." };
   }
 };
@@ -103,13 +96,11 @@ export const FetchTradablePerfume = async () => {
       .select("*");
 
     if (error) {
-      console.error("Error fetching tradable perfumes:", error);
       return { data: null, error: error.message };
     }
 
     return { data, error: null };
   } catch (error) {
-    console.error("Unexpected error:", error);
     return { data: null, error: "An unexpected error occurred." };
   }
 };
@@ -122,13 +113,11 @@ export const RemoveTradablePerfumes = async ({ id }: { id: string }) => {
       .eq("id", id);
 
     if (error) {
-      console.error("Error removing tradable perfume:", error);
       return (error as any).message;
     }
 
     return null;
   } catch (error) {
-    console.error("Unexpected error:", error);
     return "An unexpected error occurred.";
   }
 };
@@ -146,7 +135,6 @@ const uploadImagesToSupabase = async (images: File[]) => {
           .upload(filePath, file);
 
         if (error) {
-          console.error("Upload error:", error);
           return null;
         }
 
@@ -155,13 +143,11 @@ const uploadImagesToSupabase = async (images: File[]) => {
           .getPublicUrl(filePath);
 
         if (!publicUrlData) {
-          console.error("Error getting public URL:");
           return null;
         }
 
         return publicUrlData.publicUrl as string;
       } catch (error) {
-        console.error("Upload error:", error);
         return null;
       }
     })
@@ -177,7 +163,6 @@ export const InsertTradablePerfume = async ({
 }) => {
   try {
     const imageUrls = await uploadImagesToSupabase(tradablePerfume.images);
-    console.log("Image URLs:", imageUrls);
     const { data } = await supabaseClient.auth.getUser();
     const user = data.user;
 
@@ -202,3 +187,4 @@ export const InsertTradablePerfume = async ({
     return (error as any).message;
   }
 };
+

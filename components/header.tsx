@@ -95,7 +95,7 @@ function Header({ pathname }: any) {
           </div>
         </div>
         <h1 className="text-xl font-bold ml-2 flex-1/3 flex w-full justify-center items-center">
-          เลือกน้ำหอมที่เหมาะกับคุณ
+          Choose the best perfume for you
         </h1>
         <div className="flex flex-1/3 w-full justify-center items-center" />
       </div>
@@ -108,9 +108,9 @@ function Header({ pathname }: any) {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56">
             <DropdownMenuGroup>
-              <DropdownMenuItem>หน้าแรก</DropdownMenuItem>
+              <DropdownMenuItem>Home</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>ซื้อขาย</DropdownMenuItem>
+              <DropdownMenuItem>Shop</DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -131,7 +131,7 @@ function Header({ pathname }: any) {
               <TooltipContent>
                 <Card className={cn("w-[300px]")}>
                   <CardHeader>
-                    <CardTitle>ตะกร้าน้ำหอมของคุณ</CardTitle>
+                    <CardTitle>Your perfume basket</CardTitle>
                   </CardHeader>
                   <CardContent className="grid gap-4">
                     {baskets.length > 0 ? (
@@ -155,14 +155,14 @@ function Header({ pathname }: any) {
                       </div>
                     ) : (
                       <div className="text-center text-muted-foreground">
-                        ไม่มีสินค้าในตะกร้า
+                        You don't have any perfume in your basket
                       </div>
                     )}
                   </CardContent>
                   <CardFooter>
                     {baskets.length > 0 && (
                       <Button className="w-full">
-                        <Check /> ชำระเงิน
+                        <Check /> Proceed to checkout
                       </Button>
                     )}
                   </CardFooter>
@@ -188,3 +188,4 @@ function Header({ pathname }: any) {
 }
 
 export default Header;
+

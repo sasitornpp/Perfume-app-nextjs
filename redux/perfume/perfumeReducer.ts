@@ -12,7 +12,6 @@ const initialState: PerfumeState = {
     tradeable_perfume: []
 };
 
-// ✅ ดึงข้อมูลน้ำหอมจาก Supabase
 export const fetchPerfumes = createAsyncThunk('perfume/fetchPerfumes', async () => {
     const { data, error } = await supabaseClient
         .from('perfumes')

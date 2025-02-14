@@ -1,12 +1,12 @@
 import { Middleware } from "@reduxjs/toolkit";
-import { supabaseClient } from "@/utils/supabase/client"; 
+import { supabaseClient } from "@/utils/supabase/client";
 import {
   addPerfumes,
   addTradablePerfumes,
   removeTradablePerfumes,
 } from "./perfume/perfumeReducer";
 import { store } from "./Store";
-import { RemoveTradablePerfumes } from "@/utils/api/actions-client/perfume";
+import { RemoveTradablePerfumes } from "@/utils/supabase/api/perfume";
 import { fetchPerfumes } from "@/redux/perfume/perfumeReducer";
 import { fetchAuthUser, fetchUserDetails } from "./user/userReducer";
 
@@ -51,30 +51,26 @@ export default middleware;
 
 const fetchUser = async () => {
   try {
-    // Fetch user data from auth first
     await store.dispatch(fetchAuthUser());
 
-    // Retrieve user data from the store
     const user = store.getState().user;
     if (!user.user) {
       await store.dispatch(fetchUserDetails((user.user as any)?.id));
     }
-    
+
     if (user.user && user.authentication) {
-      // Fetch projects (perfumes) only if the user is authenticated
-      // await store.dispatch(fetchPerfumes());
+      await store.dispatch(fetchPerfumes());
     }
   } catch (error) {
     console.error("Error fetching user and projects:", error);
   }
 };
 
-// Subscribe to session changes
 export const subscribeToSessionChanges = () => {
   supabaseClient.auth.onAuthStateChange((event, session) => {
     if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
-      // เมื่อ session เปลี่ยนแปลงให้เรียก fetchUser ใหม่
       fetchUser();
     }
   });
 };
+

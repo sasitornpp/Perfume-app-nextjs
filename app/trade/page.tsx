@@ -49,11 +49,11 @@ function Trade() {
         defaultSize={25}
       >
         <div>
-          <h2 className="text-xl font-semibold mb-4">กรองโดย</h2>
+          <h2 className="text-xl font-semibold mb-4">Filter By</h2>
           <div className="flex flex-col gap-4">
             <input
               className="border border-gray-300 rounded-md p-2"
-              placeholder="ชื่อสินค้า"
+              placeholder="Product Name"
               value={filters.searchQuery}
               onChange={(e) => handleChange("searchQuery", e.target.value)}
             />
@@ -62,7 +62,7 @@ function Trade() {
         <div>
           <Link href={"trade/create"}>
             <Button onClick={clearFilters} className="w-full mt-16">
-              ลงสินค้า
+              List Product
             </Button>
           </Link>
         </div>
@@ -72,7 +72,7 @@ function Trade() {
         <ScrollArea className="w-full rounded-md border p-4 h-screen">
           {filtersPerfume.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full">
-              ไม่มีข้อมูลเพิ่มเติมแล้ว
+              No more information
             </div>
           ) : (
             <div className="flex flex-wrap justify-center gap-6">
@@ -93,3 +93,4 @@ function Trade() {
 }
 
 export default Trade;
+

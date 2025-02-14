@@ -3,7 +3,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { signUpAction } from "@/utils/api/actions-client/auth";
+import { signUpAction } from "@/utils/supabase/api/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,10 +60,7 @@ function SignUpFrom() {
 
   return (
     <div className="flex justify-center items-center h-full">
-      <form
-        className={cn("flex flex-col gap-6")}
-        onSubmit={handleSubmit}
-      >
+      <form className={cn("flex flex-col gap-6")} onSubmit={handleSubmit}>
         <div className="flex flex-col items-center gap-2 text-center">
           <h1 className="text-2xl font-bold">Create an account</h1>
           <p className="text-balance text-sm text-muted-foreground">

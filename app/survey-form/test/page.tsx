@@ -54,14 +54,14 @@ function PerfumePreferencesForm() {
       <form onSubmit={handleSubmit} className="space-y-6 rounded shadow p-6">
         {/* Favorite Brand */}
         <div className="flex flex-col space-y-1.5">
-          <Label htmlFor="favoriteBrand">แบรนด์ที่ชอบ</Label>
+          <Label htmlFor="favoriteBrand">Favorite Brand</Label>
           <Select
             onValueChange={(value) =>
               handleSelectChange("favoriteBrand", value)
             }
           >
             <SelectTrigger>
-              <SelectValue placeholder="เลือกแบรนด์..." />
+              <SelectValue placeholder="Select a brand..." />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="chanel">Chanel</SelectItem>
@@ -69,13 +69,13 @@ function PerfumePreferencesForm() {
               <SelectItem value="tomford">Tom Ford</SelectItem>
               <SelectItem value="ysl">YSL</SelectItem>
               <SelectItem value="gucci">Gucci</SelectItem>
-              <SelectItem value="other">อื่นๆ</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>
           {formData.favoriteBrand === "other" && (
             <Input
               name="customBrand"
-              placeholder="ระบุแบรนด์ที่ชอบ"
+              placeholder="Enter a brand..."
               value={formData.customBrand}
               onChange={handleChange}
               className="mt-2"
@@ -85,28 +85,28 @@ function PerfumePreferencesForm() {
 
         {/* Favorite Scent */}
         <div className="flex flex-col space-y-1.5">
-          <Label htmlFor="favoriteScent">กลิ่นที่ชอบ</Label>
+          <Label htmlFor="favoriteScent">Favorite Scent</Label>
           <Select
             onValueChange={(value) =>
               handleSelectChange("favoriteScent", value)
             }
           >
             <SelectTrigger>
-              <SelectValue placeholder="เลือกประเภทกลิ่น..." />
+              <SelectValue placeholder="Select a scent..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="floral">Floral (กลิ่นดอกไม้)</SelectItem>
-              <SelectItem value="woody">Woody (กลิ่นไม้)</SelectItem>
-              <SelectItem value="oriental">Oriental (กลิ่นตะวันออก)</SelectItem>
-              <SelectItem value="fresh">Fresh (กลิ่นสดชื่น)</SelectItem>
-              <SelectItem value="citrus">Citrus (กลิ่นส้ม)</SelectItem>
-              <SelectItem value="other">อื่นๆ</SelectItem>
+              <SelectItem value="floral">Floral</SelectItem>
+              <SelectItem value="woody">Woody</SelectItem>
+              <SelectItem value="oriental">Oriental</SelectItem>
+              <SelectItem value="fresh">Fresh</SelectItem>
+              <SelectItem value="citrus">Citrus</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>
           {formData.favoriteScent === "other" && (
             <Input
               name="customScent"
-              placeholder="ระบุกลิ่นที่ชอบ"
+              placeholder="Enter a scent..."
               value={formData.customScent}
               onChange={handleChange}
               className="mt-2"
@@ -126,31 +126,31 @@ function PerfumePreferencesForm() {
               onValueChange={handleSliderChange}
             />
           </div>
-          <div className="text-center mt-2">{formData.rating} ดาว</div>
+          <div className="text-center mt-2">{formData.rating} stars</div>
         </div>
 
         {/* Notes */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="topNotes">Top Notes ที่ชอบ</Label>
+            <Label htmlFor="topNotes">Top Notes</Label>
             <Select
               onValueChange={(value) => handleSelectChange("topNotes", value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="เลือก..." />
+                <SelectValue placeholder="Select..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="citrus">Citrus (ผลไม้ตระกูลส้ม)</SelectItem>
-                <SelectItem value="lavender">Lavender (ลาเวนเดอร์)</SelectItem>
-                <SelectItem value="bergamot">Bergamot (มะกรูด)</SelectItem>
-                <SelectItem value="mint">Mint (มิ้นต์)</SelectItem>
-                <SelectItem value="other">อื่นๆ</SelectItem>
+                <SelectItem value="citrus">Citrus</SelectItem>
+                <SelectItem value="lavender">Lavender</SelectItem>
+                <SelectItem value="bergamot">Bergamot</SelectItem>
+                <SelectItem value="mint">Mint</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
             {formData.topNotes === "other" && (
               <Input
                 name="customTopNotes"
-                placeholder="ระบุ Top Notes ที่ชอบ"
+                placeholder="Enter top notes..."
                 value={formData.customTopNotes}
                 onChange={handleChange}
                 className="mt-2"
@@ -159,29 +159,27 @@ function PerfumePreferencesForm() {
           </div>
 
           <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="middleNotes">Middle Notes ที่ชอบ</Label>
+            <Label htmlFor="middleNotes">Middle Notes</Label>
             <Select
               onValueChange={(value) =>
                 handleSelectChange("middleNotes", value)
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="เลือก..." />
+                <SelectValue placeholder="Select..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="rose">Rose (กุหลาบ)</SelectItem>
-                <SelectItem value="jasmine">Jasmine (มะลิ)</SelectItem>
-                <SelectItem value="ylangylang">
-                  Ylang Ylang (กระดังงา)
-                </SelectItem>
-                <SelectItem value="geranium">Geranium (เจอราเนียม)</SelectItem>
-                <SelectItem value="other">อื่นๆ</SelectItem>
+                <SelectItem value="rose">Rose</SelectItem>
+                <SelectItem value="jasmine">Jasmine</SelectItem>
+                <SelectItem value="ylangylang">Ylang-Ylang</SelectItem>
+                <SelectItem value="geranium">Geranium</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
             {formData.middleNotes === "other" && (
               <Input
                 name="customMiddleNotes"
-                placeholder="ระบุ Middle Notes ที่ชอบ"
+                placeholder="Enter middle notes..."
                 value={formData.customMiddleNotes}
                 onChange={handleChange}
                 className="mt-2"
@@ -190,27 +188,25 @@ function PerfumePreferencesForm() {
           </div>
 
           <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="baseNotes">Base Notes ที่ชอบ</Label>
+            <Label htmlFor="baseNotes">Base Notes</Label>
             <Select
               onValueChange={(value) => handleSelectChange("baseNotes", value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="เลือก..." />
+                <SelectValue placeholder="Select..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="vanilla">Vanilla (วานิลา)</SelectItem>
-                <SelectItem value="musk">Musk (มัสก์)</SelectItem>
-                <SelectItem value="sandalwood">
-                  Sandalwood (ไม้จันทน์)
-                </SelectItem>
-                <SelectItem value="amber">Amber (อำพัน)</SelectItem>
-                <SelectItem value="other">อื่นๆ</SelectItem>
+                <SelectItem value="vanilla">Vanilla</SelectItem>
+                <SelectItem value="musk">Musk</SelectItem>
+                <SelectItem value="sandalwood">Sandalwood</SelectItem>
+                <SelectItem value="amber">Amber</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
             {formData.baseNotes === "other" && (
               <Input
                 name="customBaseNotes"
-                placeholder="ระบุ Base Notes ที่ชอบ"
+                placeholder="Enter base notes..."
                 value={formData.customBaseNotes}
                 onChange={handleChange}
                 className="mt-2"
@@ -221,26 +217,26 @@ function PerfumePreferencesForm() {
 
         {/* Situation */}
         <div className="flex flex-col space-y-1.5">
-          <Label htmlFor="situation">สถานการณ์ที่จะใช้</Label>
+          <Label htmlFor="situation">Situation</Label>
           <Select
             onValueChange={(value) => handleSelectChange("situation", value)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="เลือกสถานการณ์..." />
+              <SelectValue placeholder="Select a situation..." />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="daily">ใช้ประจำวัน</SelectItem>
-              <SelectItem value="work">ไปทำงาน</SelectItem>
-              <SelectItem value="date">ไปเดท</SelectItem>
-              <SelectItem value="party">ปาร์ตี้/งานสังสรรค์</SelectItem>
-              <SelectItem value="special">โอกาสพิเศษ</SelectItem>
-              <SelectItem value="other">อื่นๆ</SelectItem>
+              <SelectItem value="daily">Daily</SelectItem>
+              <SelectItem value="work">Work</SelectItem>
+              <SelectItem value="date">Date</SelectItem>
+              <SelectItem value="party">Party</SelectItem>
+              <SelectItem value="special">Special Occasion</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>
           {formData.situation === "other" && (
             <Input
               name="customSituation"
-              placeholder="ระบุสถานการณ์"
+              placeholder="Enter a situation..."
               value={formData.customSituation}
               onChange={handleChange}
               className="mt-2"
@@ -252,11 +248,11 @@ function PerfumePreferencesForm() {
         <div className="flex flex-row space-x-4">
           <Link href="/search" className="flex-1">
             <Button type="button" variant="outline" className="w-full">
-              ยกเลิก
+              Cancel
             </Button>
           </Link>
           <Button type="submit" className="flex-1">
-            บันทึกข้อมูล
+            Save
           </Button>
         </div>
       </form>

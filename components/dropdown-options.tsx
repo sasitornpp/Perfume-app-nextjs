@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { signOutAction } from "@/utils/api/actions-client/auth";
+import { signOutAction } from "@/utils/supabase/api/auth";
 import { UserRound, Settings, LogOut, Laptop, Moon, Sun } from "lucide-react";
 import {
   DropdownMenu,
@@ -28,8 +28,8 @@ export function AccountDropdown() {
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
 
-  const handleSettheme = (theme: string) => {
-    setTheme(theme);
+  const handleSetTheme = (selectedTheme: string) => {
+    setTheme(selectedTheme);
     setDropdownOpen(!dropdownOpen);
   };
 
@@ -44,41 +44,41 @@ export function AccountDropdown() {
         <DropdownMenuGroup>
           <DropdownMenuItem>
             <Settings />
-            <span>ตั้งค่า</span>
+            <span>Settings</span>
           </DropdownMenuItem>
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Moon />
-              <span>ธีม</span>
+              <span>Theme</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
-                <DropdownMenuItem onClick={() => handleSettheme("light")}>
+                <DropdownMenuItem onClick={() => handleSetTheme("light")}>
                   <Moon size={16} />{" "}
                   <span
                     className={`${
                       theme === "light" && "text-muted-foreground"
                     }`}
                   >
-                    สว่าง
+                    Light
                   </span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleSettheme("dark")}>
+                <DropdownMenuItem onClick={() => handleSetTheme("dark")}>
                   <Sun size={16} />{" "}
                   <span
                     className={`${theme === "dark" && "text-muted-foreground"}`}
                   >
-                    มืด
+                    Dark
                   </span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleSettheme("system")}>
+                <DropdownMenuItem onClick={() => handleSetTheme("system")}>
                   <Laptop size={16} />{" "}
                   <span
                     className={`${
                       theme === "system" && "text-muted-foreground"
                     }`}
                   >
-                    อุปกรณ์
+                    System
                   </span>
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
@@ -90,13 +90,14 @@ export function AccountDropdown() {
           <LogOut />
           {user ? (
             <span onClick={async () => await signOutAction({ router })}>
-              ออกจากระบบ
+              Sign out
             </span>
           ) : (
-            <Link href="/sign-in">เข้าสู่ระบบ</Link>
+            <Link href="/sign-in">Sign in</Link>
           )}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
+

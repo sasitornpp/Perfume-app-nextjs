@@ -123,11 +123,11 @@ function UserProfileForm() {
               <SelectValue placeholder="Select gender" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="male">ชาย</SelectItem>
-              <SelectItem value="female">หญิง</SelectItem>
+              <SelectItem value="male">Male</SelectItem>
+              <SelectItem value="female">Female</SelectItem>
               <SelectItem value="unisex">Unisex</SelectItem>
               <SelectItem value="lgbtq">LGBTQ+</SelectItem>
-              <SelectItem value="other">อื่นๆ</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -136,11 +136,11 @@ function UserProfileForm() {
         <div className="flex flex-row space-x-4">
           <Link href="/search" className="flex-1">
             <Button type="button" variant="outline" className="w-full">
-              ยกเลิก
+              Cancel
             </Button>
           </Link>
           <Button type="submit" className="flex-1">
-            บันทึกข้อมูล
+            Save
           </Button>
         </div>
       </form>

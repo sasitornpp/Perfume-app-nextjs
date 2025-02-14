@@ -16,7 +16,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { TradablePerfume } from "@/types/perfume";
 import { X, Plus, ImagePlus } from "lucide-react";
-import { InsertTradablePerfume } from "@/utils/api/actions-client/perfume";
+import { InsertTradablePerfume } from "@/utils/supabase/api/perfume";
 import { useRouter } from "next/navigation";
 
 function Trade() {

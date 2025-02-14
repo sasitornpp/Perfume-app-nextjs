@@ -15,7 +15,6 @@ export function Perfume_card({
   return (
     <Card className="w-full max-w-xs border border-gray-200 rounded-md shadow-md p-4 hover:shadow-lg transition-shadow">
       <CardContent className="flex flex-col aspect-square p-6">
-        {/* รูปสินค้า */}
         <div className="justify-center items-center flex-1 flex flex-row w-full">
           {typeof perfume.images[0] === "string" &&
             perfume.images[0] !== "" && (
@@ -29,7 +28,6 @@ export function Perfume_card({
               />
             )}
         </div>
-        {/* ข้อมูลสินค้า */}
         <div className="flex flex-1 flex-col w-full p-2">
           <span className="text-lg font-semibold">{perfume.name}</span>
           <span className="text-sm text-gray-500">{perfume.brand}</span>
@@ -59,20 +57,17 @@ export function Perfume_card_skeleton() {
   return (
     <Card className="w-full max-w-xs border border-gray-200 rounded-md shadow-md p-4">
       <CardContent className="flex flex-col aspect-square p-6">
-        {/* Skeleton รูปสินค้า */}
         <div className="justify-center items-center flex-1 flex flex-row w-full">
           <Skeleton className="w-24 h-24 rounded-md" />
         </div>
-        {/* Skeleton ข้อมูลสินค้า */}
         <div className="flex flex-1 flex-col w-full p-2">
-          <Skeleton className="h-6 w-3/4 mb-2" /> {/* ชื่อสินค้า */}
-          <Skeleton className="h-4 w-1/2 mb-2" /> {/* แบรนด์ */}
-          <Skeleton className="h-4 w-full mb-2" /> {/* คำอธิบาย */}
+          <Skeleton className="h-6 w-3/4 mb-2" />
+          <Skeleton className="h-4 w-1/2 mb-2" />
+          <Skeleton className="h-4 w-full mb-2" />
           <div className="flex flex-row flex-wrap mt-2 gap-2">
             {Array.from({ length: 3 }).map((_, index) => (
               <Skeleton key={index} className="h-5 w-16 rounded-full" />
             ))}{" "}
-            {/* Accord Tags */}
           </div>
         </div>
       </CardContent>

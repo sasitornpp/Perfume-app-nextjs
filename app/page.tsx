@@ -95,10 +95,10 @@ const Home: React.FC = () => {
       <Card className="w-full max-w-md mx-auto">
         <CardContent className="flex flex-col p-6">
           <Button className="w-full h-12 mb-12 text-xl">
-            <Link href="/survey-form">ค้นหาน้ำหอมที่เหมาะกับเรา</Link>
+        <Link href="/survey-form">Find Your Perfect Perfume</Link>
           </Button>
           <Button className="w-full h-12 mb-4 text-xl">
-            <Link href="/search">ค้นหาน้ำหอมทั่วไป</Link>
+        <Link href="/search">Search Perfumes</Link>
           </Button>
         </CardContent>
       </Card>

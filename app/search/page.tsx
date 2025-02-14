@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { FetchPerfumeWithFilters } from "@/utils/api/actions-client/perfume";
+import { FetchPerfumeWithFilters } from "@/utils/supabase/api/perfume";
 import { FiltersPerfumeValues, Perfume, Filters } from "@/types/perfume";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -29,7 +29,6 @@ function Search() {
   const [filters, setFilters] = useState<Filters>(FiltersPerfumeValues);
   const filtersPerfume = filterPerfumes(perfumeState, filters);
 
-  // ฟังก์ชันสำหรับดึงข้อมูล
   const fetchData = useCallback(
     async (page: number) => {
       try {
@@ -111,33 +110,33 @@ function Search() {
         className="shadow-md rounded-lg p-6 m-6 w-64"
         defaultSize={25}
       >
-        <h2 className="text-xl font-semibold mb-4">กรองโดย</h2>
+        <h2 className="text-xl font-semibold mb-4">Filter By</h2>
         <div className="flex flex-col gap-4">
-          {/* ชื่อสินค้า */}
+          {/* Product Name */}
           <input
             className="border border-gray-300 rounded-md p-2"
-            placeholder="ชื่อสินค้า"
+            placeholder="Product Name"
             value={filters.searchQuery}
             onChange={(e) => handleChange("searchQuery", e.target.value)}
           />
-          {/* เพศ */}
+          {/* Gender */}
           <select
             className="border border-gray-300 rounded-md p-2"
             value={filters.gender}
             onChange={(e) => handleChange("gender", e.target.value)}
           >
-            <option value="">เพศ</option>
-            <option value="women">หญิง</option>
-            <option value="men">ชาย</option>
+            <option value="">Gender</option>
+            <option value="women">Women</option>
+            <option value="men">Men</option>
           </select>
         </div>
 
-        {/* ปุ่มล้าง */}
+        {/* Clear Button */}
         <button
           className="mt-4 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
           onClick={clearFilters}
         >
-          ล้างทั้งหมด
+          Clear All
         </button>
       </ResizablePanel>
       <ResizableHandle />
@@ -157,7 +156,7 @@ function Search() {
           <div ref={skeletonRef} className="w-full h-1"></div>
           {!hasMore && (
             <div className="text-center text-sm text-gray-500 mt-4">
-              ไม่มีข้อมูลเพิ่มเติมแล้ว
+              No more data available.
             </div>
           )}
         </ScrollArea>

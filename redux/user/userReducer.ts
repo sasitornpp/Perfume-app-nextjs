@@ -70,7 +70,6 @@ const userSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // ✅ ดึง user จาก Supabase Auth
       .addCase(fetchAuthUser.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -86,7 +85,6 @@ const userSlice = createSlice({
         state.authentication = false;
       })
 
-      // ✅ ดึงข้อมูลจาก Table `users`
       .addCase(fetchUserDetails.pending, (state) => {
         state.loading = true;
       })

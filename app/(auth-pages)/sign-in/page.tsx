@@ -2,7 +2,7 @@
 
 import React, { useState, FormEvent } from "react";
 import { cn } from "@/lib/utils";
-import { signInAction } from "@/utils/api/actions-client/auth";
+import { signInAction } from "@/utils/supabase/api/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
