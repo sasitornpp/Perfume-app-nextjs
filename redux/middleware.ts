@@ -49,18 +49,15 @@ const middleware: Middleware = (store) => {
 
 export default middleware;
 
-const fetchUser = async () => {
+const fetchUserAndPerfumes = async () => {
   try {
     await store.dispatch(fetchAuthUser());
-
-    const user = store.getState().user;
-    if (!user.user) {
-      await store.dispatch(fetchUserDetails((user.user as any)?.id));
+    const user = store.getState().user.userAuth;
+    if (!user) {
+      await store.dispatch(fetchUserDetails(user.id));
     }
 
-    if (user.user && user.authentication) {
-      await store.dispatch(fetchPerfumes());
-    }
+    await store.dispatch(fetchPerfumes());
   } catch (error) {
     console.error("Error fetching user and projects:", error);
   }
@@ -69,8 +66,7 @@ const fetchUser = async () => {
 export const subscribeToSessionChanges = () => {
   supabaseClient.auth.onAuthStateChange((event, session) => {
     if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
-      fetchUser();
+      fetchUserAndPerfumes();
     }
   });
 };
-

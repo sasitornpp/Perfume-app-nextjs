@@ -21,7 +21,7 @@ export const createProfile = async (data: {
   name: string;
   gender: string;
   bio: string;
-  imgFiles?: File;
+  imgFiles?: File | null;
 }) => {
   const { name, bio, imgFiles, userId, gender } = data;
 
@@ -33,15 +33,12 @@ export const createProfile = async (data: {
 
   const { data: profileData, error: profileError } = await supabaseClient
     .from("profiles")
-    .update([
-      {
-        name,
-        bio,
-        gender,
-        img: avatarUrl,
-      },
-    ])
-    .eq("id", userId);
+    .insert({
+      name: name,
+      bio: bio,
+      gender: gender,
+      images: avatarUrl,
+    });
 
   if (profileError) {
     throw new Error(`Error creating profile: ${profileError.message}`);
@@ -50,3 +47,23 @@ export const createProfile = async (data: {
   return profileData;
 };
 
+export const UpdateProfile = async (data: {
+  userId: string;
+  columns: string;
+  values: string | JSON;
+}) => {
+  const { userId, columns, values } = data;
+
+  const { data: profileData, error: profileError } = await supabaseClient
+    .from("profiles")
+    .update({
+      [columns]: values,
+    })
+    .eq("id", userId);
+
+  if (profileError) {
+    throw new Error(`Error updating profile: ${profileError.message}`);
+  }
+
+  return profileData;
+};

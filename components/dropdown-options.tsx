@@ -21,9 +21,12 @@ import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/Store";
+import { useDispatch } from "react-redux";
+import { clearUser } from "@/redux/user/userReducer";
 
 export function AccountDropdown() {
-  const { user } = useSelector((state: RootState) => state.user);
+  const dispatch = useDispatch();
+  const isLoggedIn = useSelector((state: RootState) => state.user.userAuth);
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
@@ -31,6 +34,12 @@ export function AccountDropdown() {
   const handleSetTheme = (selectedTheme: string) => {
     setTheme(selectedTheme);
     setDropdownOpen(!dropdownOpen);
+  };
+
+  const handleLogout = async () => {
+    await signOutAction({ router });
+    dispatch(clearUser());
+    router.push("/sign-in");
   };
 
   return (
@@ -88,10 +97,8 @@ export function AccountDropdown() {
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           <LogOut />
-          {user ? (
-            <span onClick={async () => await signOutAction({ router })}>
-              Sign out
-            </span>
+          {isLoggedIn ? (
+            <span onClick={handleLogout}>Sign out</span>
           ) : (
             <Link href="/sign-in">Sign in</Link>
           )}
@@ -100,4 +107,3 @@ export function AccountDropdown() {
     </DropdownMenu>
   );
 }
-

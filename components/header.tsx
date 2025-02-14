@@ -13,13 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { AccountDropdown } from "@/components/dropdown-options";
-import {
-  AlignJustify,
-  ShoppingCart,
-  Heart,
-  Slash,
-  Check,
-} from "lucide-react";
+import { AlignJustify, ShoppingCart, Heart, Slash, Check } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -62,36 +56,6 @@ function Header({ pathname }: any) {
                 priority
               />
             </Link>
-          </div>
-          <div className="text-xl ml-2 flex-1/3 flex w-full justify-center items-center">
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbLink href="/">...</BreadcrumbLink>
-                </BreadcrumbItem>
-                {pathname.split("/").map((segment: string, index: number) => (
-                  <React.Fragment key={index}>
-                    {segment && (
-                      <>
-                        <BreadcrumbSeparator>
-                          <Slash />
-                        </BreadcrumbSeparator>
-                        <BreadcrumbItem>
-                          <BreadcrumbLink
-                            href={`/${pathname
-                              .split("/")
-                              .slice(1, index + 1)
-                              .join("/")}`}
-                          >
-                            {segment}
-                          </BreadcrumbLink>
-                        </BreadcrumbItem>
-                      </>
-                    )}
-                  </React.Fragment>
-                ))}
-              </BreadcrumbList>
-            </Breadcrumb>
           </div>
         </div>
         <h1 className="text-xl font-bold ml-2 flex-1/3 flex w-full justify-center items-center">
@@ -188,4 +152,3 @@ function Header({ pathname }: any) {
 }
 
 export default Header;
-

@@ -3,42 +3,11 @@
 import { FetchPerfumeResult } from "@/types/perfume";
 import { supabaseClient } from "@/utils/supabase/client";
 import { TradablePerfume } from "@/types/perfume";
-import { Perfume } from "@/types/perfume";
 import { v4 as uuidv4 } from "uuid";
 
-export const RecommendPerfume = async (): Promise<Perfume[]> => {
-  const { data, error } = await supabaseClient.rpc("random_perfumes", {
-    num_limit: 5,
-  });
-
-  if (error) {
-    throw new Error(`Error fetching perfume data: ${error.message}`);
-  }
-
-  if (!data || data.length === 0) {
-    throw new Error("No perfumes found");
-  }
-
-  return data;
-};
-
-export const FetchPerfume = async (
-  perfumeName?: string,
-  page: number = 1,
-  limit: number = 20
-): Promise<FetchPerfumeResult> => {
-  const offset = (page - 1) * limit;
-
+export async function FetchPerfumes(): Promise<FetchPerfumeResult> {
   try {
-    const query = supabaseClient.from("perfumes").select("*");
-
-    if (!perfumeName) {
-      query.order("name", { ascending: true });
-    } else {
-      query.ilike("name", `%${perfumeName}%`);
-    }
-
-    const { data, error } = await query.range(offset, offset + limit - 1);
+    const { data, error } = await supabaseClient.from("perfumes").select("*");
 
     if (error) {
       return { data: null, error: error.message };
@@ -48,46 +17,7 @@ export const FetchPerfume = async (
   } catch (error) {
     return { data: null, error: "An unexpected error occurred." };
   }
-};
-
-export const FetchPerfumeWithFilters = async (
-  searchQuery?: string,
-  page: number = 1,
-  gender?: string,
-  accords?: string[],
-  top_notes?: string[],
-  middle_notes?: string[],
-  base_notes?: string[]
-): Promise<FetchPerfumeResult> => {
-  try {
-    const toNullIfEmpty = (array?: string[]) =>
-      array && array.length > 0 ? array : null;
-
-    const payload = {
-      search_query: searchQuery || null,
-      gender_filter: gender || null,
-      accords_filter: toNullIfEmpty(accords),
-      top_notes_filter: toNullIfEmpty(top_notes),
-      middle_notes_filter: toNullIfEmpty(middle_notes),
-      base_notes_filter: toNullIfEmpty(base_notes),
-      page: page,
-      result_limit: 20,
-    };
-
-    const { data, error } = await supabaseClient.rpc(
-      "filter_perfumes",
-      payload
-    );
-
-    if (error) {
-      return { data: null, error: error.message };
-    }
-
-    return { data, error: null };
-  } catch (error) {
-    return { data: null, error: "An unexpected error occurred." };
-  }
-};
+}
 
 export const FetchTradablePerfume = async () => {
   try {
@@ -126,7 +56,7 @@ const uploadImagesToSupabase = async (images: File[]) => {
   const imageUrls = await Promise.all(
     images.map(async (file) => {
       const fileExt = file.name.split(".").pop();
-      const fileName = `${uuidv4()}.${fileExt}`; // ใช้ uuidv4 ในการสร้างชื่อไฟล์
+      const fileName = `${uuidv4()}.${fileExt}`;
       const filePath = `TradablePerfume/${fileName}`;
 
       try {
@@ -187,4 +117,3 @@ export const InsertTradablePerfume = async ({
     return (error as any).message;
   }
 };
-

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -13,8 +13,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Slider } from "@/components/ui/slider";
+import { UpdateProfile } from "@/utils/supabase/api/profiles";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/Store";
+import { useRouter } from "next/navigation";
+import { situation, SituationType } from "@/types/perfume";
 
 function PerfumePreferencesForm() {
+  const router = useRouter();
+  const user = useSelector((state: RootState) => state.user.userAuth);
+  const [userID, setUserID] = useState("");
   const [formData, setFormData] = useState({
     favoriteScent: "",
     customScent: "",
@@ -27,9 +35,16 @@ function PerfumePreferencesForm() {
     customMiddleNotes: "",
     baseNotes: "",
     customBaseNotes: "",
-    situation: "",
+    situation: [] as string[],
     customSituation: "",
   });
+
+  useEffect(() => {
+    if (user) {
+      setUserID(user.id);
+    }
+    console.log("formData", formData);
+  }, [user, formData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -40,13 +55,25 @@ function PerfumePreferencesForm() {
     setFormData({ ...formData, [name]: value });
   };
 
+  const handleSituationChange = (value: SituationType) => {
+    setFormData({
+      ...formData,
+      situation: situation[value],
+    });
+  };
+
   const handleSliderChange = (value: number[]) => {
     setFormData({ ...formData, rating: value[0] });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(formData);
+    UpdateProfile({
+      userId: userID,
+      columns: "suggestions_perfumes",
+      values: JSON.stringify(formData),
+    });
+    router.push("/search");
   };
 
   return (
@@ -219,29 +246,21 @@ function PerfumePreferencesForm() {
         <div className="flex flex-col space-y-1.5">
           <Label htmlFor="situation">Situation</Label>
           <Select
-            onValueChange={(value) => handleSelectChange("situation", value)}
+            onValueChange={(value) =>
+              handleSituationChange(value as SituationType)
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Select a situation..." />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="daily">Daily</SelectItem>
-              <SelectItem value="work">Work</SelectItem>
+              <SelectItem value="formal">Formal</SelectItem>
               <SelectItem value="date">Date</SelectItem>
               <SelectItem value="party">Party</SelectItem>
-              <SelectItem value="special">Special Occasion</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
+              <SelectItem value="exercise">Exercise</SelectItem>
             </SelectContent>
           </Select>
-          {formData.situation === "other" && (
-            <Input
-              name="customSituation"
-              placeholder="Enter a situation..."
-              value={formData.customSituation}
-              onChange={handleChange}
-              className="mt-2"
-            />
-          )}
         </div>
 
         {/* Action Buttons */}

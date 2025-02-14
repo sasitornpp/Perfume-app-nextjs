@@ -1,48 +1,52 @@
 import { createServerClient } from "@supabase/ssr";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
-export const updateSession = async (request: NextRequest) => {
+export async function updateSession(request: NextRequest) {
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    throw new Error("Supabase URL and ANON KEY must be provided");
+  }
+
+  const urlPath = new URL(request.url).pathname;
+  const publicPaths = ["/", "/sign-in", "/sign-up"];
+  const supabaseResponse = NextResponse.next();
+
+  // console.log("URL Path:", urlPath);
+
   try {
-    let response = NextResponse.next({
-      request: {
-        headers: request.headers,
-      },
-    });
-
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          getAll() {
-            return request.cookies.getAll();
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) =>
-              request.cookies.set(name, value)
-            );
-
-            response = NextResponse.next({
-              request,
-            });
-
-            cookiesToSet.forEach(({ name, value, options }) =>
-              response.cookies.set(name, value, options)
+          getAll: () => request.cookies.getAll(),
+          setAll: (cookies) => {
+            cookies.forEach(({ name, value, options }) =>
+              supabaseResponse.cookies.set(name, value, options)
             );
           },
         },
       }
     );
 
-    return response;
-  } catch (e) {
-    console.error(e);
+    const { data: sessionData, error } = await supabase.auth.getSession();
+    if (error) throw error;
 
-    return NextResponse.next({
-      request: {
-        headers: request.headers,
-      },
-    });
+    const hasSession = Boolean(sessionData.session);
+
+    if (!hasSession && !publicPaths.includes(urlPath)) {
+      return NextResponse.redirect(new URL("/sign-in", request.url));
+    }
+
+    if (hasSession && publicPaths.includes(urlPath)) {
+      return NextResponse.redirect(new URL("/search", request.url));
+    }
+
+    return supabaseResponse;
+  } catch (err) {
+    console.error("Error updating session:", err);
+    return NextResponse.error();
   }
-};
-
+}

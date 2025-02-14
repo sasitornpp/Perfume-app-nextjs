@@ -20,7 +20,11 @@ import { Perfume } from "@/types/perfume";
 
 const Home: React.FC = () => {
   const perfumes = useSelector((state: RootState) => state.perfume.perfume);
-  // console.log(perfumes);
+  const user = useSelector((state: RootState) => state.user);
+
+  console.log("perfumes", perfumes);
+  console.log("user", user);
+  
   return (
     <div className="flex flex-col items-center justify-center w-full">
       <Carousel
