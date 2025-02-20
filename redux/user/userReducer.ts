@@ -65,6 +65,7 @@ const userSlice = createSlice({
 
     clearUser: (state) => {
       state.user = null;
+      state.userAuth = null;
       state.authentication = false;
     },
   },

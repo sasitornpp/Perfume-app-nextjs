@@ -4,7 +4,15 @@ import React from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { signOutAction } from "@/utils/supabase/api/auth";
-import { UserRound, Settings, LogOut, Laptop, Moon, Sun } from "lucide-react";
+import {
+  UserRound,
+  Settings,
+  LogOut,
+  Laptop,
+  Moon,
+  Sun,
+  LogIn,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -96,11 +104,16 @@ export function AccountDropdown() {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
-          <LogOut />
           {isLoggedIn ? (
-            <span onClick={handleLogout}>Sign out</span>
+            <>
+              <LogOut />
+              <span onClick={handleLogout}>Sign out</span>
+            </>
           ) : (
-            <Link href="/sign-in">Sign in</Link>
+            <>
+              <LogIn />
+              <Link href="/sign-in">Sign in</Link>
+            </>
           )}
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -72,7 +72,9 @@ function Header({ pathname }: any) {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56">
             <DropdownMenuGroup>
-              <DropdownMenuItem>Home</DropdownMenuItem>
+              <Link href="/">
+                <DropdownMenuItem>Home</DropdownMenuItem>
+              </Link>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Shop</DropdownMenuItem>
             </DropdownMenuGroup>

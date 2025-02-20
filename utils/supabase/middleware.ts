@@ -13,7 +13,6 @@ export async function updateSession(request: NextRequest) {
   const publicPaths = ["/", "/sign-in", "/sign-up"];
   const supabaseResponse = NextResponse.next();
 
-  // console.log("URL Path:", urlPath);
 
   try {
     const supabase = createServerClient(
@@ -38,10 +37,6 @@ export async function updateSession(request: NextRequest) {
 
     if (!hasSession && !publicPaths.includes(urlPath)) {
       return NextResponse.redirect(new URL("/sign-in", request.url));
-    }
-
-    if (hasSession && publicPaths.includes(urlPath)) {
-      return NextResponse.redirect(new URL("/search", request.url));
     }
 
     return supabaseResponse;
