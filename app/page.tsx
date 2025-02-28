@@ -314,13 +314,13 @@ function Home() {
 			<div className="w-full max-w-md mx-auto">
 				<Card className="overflow-hidden border-none shadow-lg bg-gradient-to-r from-primary/90 to-primary/70">
 					<CardContent className="flex flex-col p-8">
-						<h3 className="text-xl font-bold text-white mb-4 text-center">
+						<h3 className="text-xl font-bold text-foreground mb-4 text-center">
 							Haven't Found Your Perfect Fragrance Yet?
 						</h3>
 						<Button
 							asChild
 							size="lg"
-							className="w-full h-12 mb-4 text-primary bg-white hover:bg-white/90"
+							className="w-full h-12 mb-4 text-primary bg-foreground hover:bg-foreground/90"
 						>
 							<Link
 								href="/survey-form"

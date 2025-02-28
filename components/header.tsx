@@ -46,10 +46,6 @@ import { Badge } from "@/components/ui/badge";
 function Header({ pathname }: any) {
 	const baskets = useSelector((state: RootState) => state.basket);
 	const [isScrolled, setIsScrolled] = useState(false);
-	const [showSearch, setShowSearch] = useState(false);
-	const [searchQuery, setSearchQuery] = useState("");
-
-	const springConfig = { stiffness: 300, damping: 30 };
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -156,47 +152,13 @@ function Header({ pathname }: any) {
 					<div className="flex items-center space-x-2">
 						{/* Search */}
 						<div className="relative">
-							{showSearch ? (
-								<motion.div
-									className="relative flex items-center"
-									style={{
-										opacity: showSearch ? 1 : 0,
-										width: showSearch ? 200 : 0,
-									}}
-								>
-									<Input
-										type="search"
-										placeholder="Search perfumes..."
-										className="pl-8 pr-8"
-										value={searchQuery}
-										onChange={(e) =>
-											setSearchQuery(e.target.value)
-										}
-										autoFocus
-									/>
-									<Search className="absolute left-2 h-4 w-4 text-muted-foreground" />
-									<Button
-										variant="ghost"
-										size="icon"
-										className="absolute right-0 h-8 w-8"
-										onClick={() => {
-											setShowSearch(false);
-											setSearchQuery("");
-										}}
-									>
-										<X className="h-4 w-4" />
-									</Button>
-								</motion.div>
-							) : (
-								<Button
-									variant="ghost"
-									size="icon"
-									onClick={() => setShowSearch(true)}
-									className="text-foreground/70 hover:text-foreground"
-								>
-									<Search className="h-5 w-5" />
-								</Button>
-							)}
+							<Button
+								variant="ghost"
+								size="icon"
+								className="text-foreground/70 hover:text-foreground"
+							>
+								<Search className="h-5 w-5" />
+							</Button>
 						</div>
 
 						{/* Wishlist */}
@@ -313,13 +275,15 @@ function Header({ pathname }: any) {
 													Checkout
 												</Button>
 											) : (
-												<Button
-													variant="outline"
-													className="w-full"
-												>
-													<ShoppingBag className="mr-2 h-4 w-4" />{" "}
-													Browse Products
-												</Button>
+												<Link href={`/trade/basket`}>
+													<Button
+														variant="outline"
+														className="w-full"
+													>
+														<ShoppingBag className="mr-2 h-4 w-4" />{" "}
+														Browse Products
+													</Button>
+												</Link>
 											)}
 										</CardFooter>
 									</Card>
@@ -366,34 +330,6 @@ function Header({ pathname }: any) {
 					</div>
 				</div>
 			</div>
-
-			{/* Full-width search on smaller screens */}
-			{(pathname === "/search/all" ||
-				(showSearch && window.innerWidth < 640)) && (
-				<div className="border-t border-border/30 py-2 px-4 bg-background/95 backdrop-blur-sm">
-					<div className="relative max-w-xl mx-auto">
-						<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-						<Input
-							name="search"
-							type="search"
-							placeholder="Search for perfumes..."
-							className="pl-10 pr-10"
-							value={searchQuery}
-							onChange={(e) => setSearchQuery(e.target.value)}
-						/>
-						{searchQuery && (
-							<Button
-								variant="ghost"
-								size="icon"
-								className="absolute right-0 top-0 h-full"
-								onClick={() => setSearchQuery("")}
-							>
-								<X className="h-4 w-4" />
-							</Button>
-						)}
-					</div>
-				</div>
-			)}
 		</motion.header>
 	);
 }
