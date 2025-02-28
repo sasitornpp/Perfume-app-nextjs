@@ -194,7 +194,7 @@ export const updateProfile = createAsyncThunk(
 		try {
 			const user = (await supabaseClient.auth.getUser()).data;
 			if (!user || !user.user) throw new Error("User not found");
-            console.log(data);
+			console.log(data);
 			const { data: profileData, error: profileError } =
 				await supabaseClient
 					.from("profiles")
@@ -203,7 +203,6 @@ export const updateProfile = createAsyncThunk(
 					.select()
 					.single();
 
-			
 			if (profileError)
 				throw new Error(
 					`Error updating profile: ${profileError.message}`,
@@ -236,6 +235,14 @@ const userSlice = createSlice({
 				state.profile = {
 					...state.profile,
 					wishlist: action.payload.wishlist,
+				};
+			}
+		},
+		updateBasket: (state, action: PayloadAction<{ basket: string[] }>) => {
+			if (state.profile) {
+				state.profile = {
+					...state.profile,
+					basket: action.payload.basket,
 				};
 			}
 		},
@@ -314,5 +321,5 @@ const userSlice = createSlice({
 	},
 });
 
-export const { logout, updateWishlist } = userSlice.actions;
+export const { logout, updateWishlist, updateBasket } = userSlice.actions;
 export default userSlice.reducer;

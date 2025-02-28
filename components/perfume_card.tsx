@@ -22,7 +22,7 @@ function PerfumeCard({
 }) {
 	const [isHovered, setIsHovered] = useState(false);
 	const dispatch = useDispatch();
-
+	const user = useSelector((state: RootState) => state.user.user);
 	const wishlist = useSelector(
 		(state: RootState) => state.user.profile?.wishlist || [],
 	);
@@ -57,8 +57,8 @@ function PerfumeCard({
 				className="w-[300px] overflow-hidden border-2 relative rounded-lg"
 				style={{
 					borderColor: isHovered
-						? "hsl(var(--primary))"
-						: "hsl(var(--border))",
+						? `${isTradable && "user_id" in perfume && user?.id === perfume.user_id ? "lightgreen" : "hsl(var(--primary))"}`
+						: `${isTradable && "user_id" in perfume && user?.id === perfume.user_id ? "green" : "hsl(var(--border))"}`,
 					background: "hsl(var(--card))",
 				}}
 				onMouseEnter={() => setIsHovered(true)}

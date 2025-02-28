@@ -287,181 +287,27 @@ function Header({ pathname }: HeaderProps) {
 							</TooltipProvider>
 
 							{/* Shopping Cart */}
-							<TooltipProvider>
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<Button
-											variant="ghost"
-											size="icon"
-											className="relative text-foreground/70 hover:text-foreground hover:bg-accent/50 transition-colors"
-											onClick={
-												isAuthenticated
-													? undefined
-													: (e) =>
-															handleProtectedAction(
-																e,
-															)
-											}
-										>
-											<ShoppingCart className="h-5 w-5" />
-											<span className="sr-only">
-												Shopping cart
-											</span>
-											{isAuthenticated &&
-												basketItems?.length > 0 && (
-													<Badge
-														variant="default"
-														className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-													>
-														{basketItems?.length}
-													</Badge>
-												)}
-										</Button>
-									</TooltipTrigger>
-									<TooltipContent
-										side="bottom"
-										className="p-0 bg-transparent border-none rounded-lg"
+							<Button
+								variant="ghost"
+								size="icon"
+								className="relative text-foreground/70 hover:text-foreground hover:bg-accent/50 transition-colors"
+								onClick={
+									isAuthenticated
+										? () => router.push("/profile?q=basket")
+										: (e) => handleProtectedAction(e)
+								}
+							>
+								<ShoppingCart className="h-5 w-5" />
+								<span className="sr-only">Shopping cart</span>
+								{isAuthenticated && basketItems?.length > 0 && (
+									<Badge
+										variant="default"
+										className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
 									>
-										<Card className="w-[320px] shadow-lg border-2 border-primary/10">
-											<CardHeader className="pb-2 bg-primary/5 rounded-t-lg">
-												<CardTitle className="text-lg flex items-center">
-													<ShoppingCart className="w-4 h-4 mr-2 text-primary" />
-													Your Perfume Basket
-												</CardTitle>
-											</CardHeader>
-											<CardContent className="pt-4 max-h-[300px] overflow-y-auto bg-primary/5 rounded-t-none">
-												{isAuthenticated ? (
-													(basketItems || []).length >
-													0 ? (
-														<div className="space-y-3">
-															<AnimatePresence>
-																{basketItems?.map(
-																	(
-																		basket,
-																		index,
-																	) => (
-																		<motion.div
-																			key={
-																				index
-																			}
-																			variants={
-																				cartItemVariants
-																			}
-																			initial="hidden"
-																			animate="visible"
-																			exit={{
-																				opacity: 0,
-																				x: -10,
-																			}}
-																			className="flex items-start space-x-3 p-2 rounded-md hover:bg-accent/10 transition-colors"
-																		>
-																			<div className="h-12 w-12 bg-secondary/20 rounded-md flex-shrink-0 flex items-center justify-center">
-																				<ShoppingBag className="h-6 w-6 text-secondary" />
-																			</div>
-																			<div className="flex-1 min-w-0">
-																				<p className="text-sm font-medium truncate">
-																					{
-																						basket.name
-																					}
-																				</p>
-																				<p className="text-xs text-muted-foreground line-clamp-1">
-																					{
-																						basket.descriptions
-																					}
-																				</p>
-																			</div>
-																			<Button
-																				variant="ghost"
-																				size="icon"
-																				className="h-8 w-8 text-destructive"
-																			>
-																				<X className="h-4 w-4" />
-																			</Button>
-																		</motion.div>
-																	),
-																)}
-															</AnimatePresence>
-														</div>
-													) : (
-														<div className="py-8 text-center space-y-3">
-															<motion.div
-																className="mx-auto h-12 w-12 rounded-full bg-muted flex items-center justify-center"
-																initial={{
-																	scale: 0.8,
-																}}
-																animate={{
-																	scale: 1,
-																}}
-																transition={{
-																	repeat: Infinity,
-																	repeatType:
-																		"reverse",
-																	duration: 1.5,
-																}}
-															>
-																<ShoppingCart className="h-6 w-6 text-muted-foreground" />
-															</motion.div>
-															<p className="text-muted-foreground">
-																Your basket is
-																empty
-															</p>
-														</div>
-													)
-												) : (
-													<div className="py-8 text-center space-y-3">
-														<motion.div
-															className="mx-auto h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center"
-															initial={{
-																opacity: 0,
-															}}
-															animate={{
-																opacity: 1,
-															}}
-															transition={{
-																duration: 0.5,
-															}}
-														>
-															<LogIn className="h-6 w-6 text-primary" />
-														</motion.div>
-														<p className="text-muted-foreground">
-															Please sign in to
-															view your basket
-														</p>
-													</div>
-												)}
-											</CardContent>
-											<CardFooter className="rounded-b-lg justify-center bg-primary/5">
-												{isAuthenticated ? (
-													(basketItems || []).length >
-													0 ? (
-														<Button className="w-full bg-primary hover:bg-primary/90">
-															<Check className="mr-2 h-4 w-4" />{" "}
-															Checkout
-														</Button>
-													) : (
-														<Link href="/perfumes/trade">
-															<Button
-																variant="outline"
-																className="w-full"
-															>
-																<ShoppingBag className="mr-2 h-4 w-4" />{" "}
-																Browse Perfumes
-															</Button>
-														</Link>
-													)
-												) : (
-													<Link href="/auth/sign-in">
-														<Button className="w-full bg-primary hover:bg-primary/90">
-															<LogIn className="mr-2 h-4 w-4" />{" "}
-															Sign In
-														</Button>
-													</Link>
-												)}
-											</CardFooter>
-										</Card>
-									</TooltipContent>
-								</Tooltip>
-							</TooltipProvider>
+										{basketItems?.length}
+									</Badge>
+								)}
+							</Button>
 
 							{/* Account or Login Button */}
 							{isAuthenticated ? (

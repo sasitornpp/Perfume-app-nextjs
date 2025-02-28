@@ -172,11 +172,12 @@ export const filterTradablePerfume = (
 					perfume.brand?.toLowerCase() ?? "",
 					perfume.gender?.toLowerCase() ?? "",
 					perfume.descriptions?.toLowerCase() ?? "",
-					...(perfume.topNotes?.map((note) => note.toLowerCase()) ??
+					...(perfume.top_note?.map((note) => note.toLowerCase()) ??
 						[]),
-					...(perfume.middleNotes?.map((note) => note.toLowerCase()) ??
-						[]),
-					...(perfume.baseNotes?.map((note) => note.toLowerCase()) ??
+					...(perfume.middle_note?.map((note) =>
+						note.toLowerCase(),
+					) ?? []),
+					...(perfume.base_note?.map((note) => note.toLowerCase()) ??
 						[]),
 				];
 
@@ -205,19 +206,19 @@ export const filterTradablePerfume = (
 
 			if (top_notes?.length) {
 				const notes =
-					perfume.topNotes?.map((n) => n.toLowerCase()) ?? [];
+					perfume.top_note?.map((n) => n.toLowerCase()) ?? [];
 				if (!checkNotes(notes, top_notes)) return false;
 			}
 
 			if (middle_notes?.length) {
 				const notes =
-					perfume.middleNotes?.map((n) => n.toLowerCase()) ?? [];
+					perfume.middle_note?.map((n) => n.toLowerCase()) ?? [];
 				if (!checkNotes(notes, middle_notes)) return false;
 			}
 
 			if (base_notes?.length) {
 				const notes =
-					perfume.baseNotes?.map((n) => n.toLowerCase()) ?? [];
+					perfume.base_note?.map((n) => n.toLowerCase()) ?? [];
 				if (!checkNotes(notes, base_notes)) return false;
 			}
 

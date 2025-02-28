@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/Store";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "@/redux/Store";
 import { useRouter } from "next/navigation";
 import {
 	ArrowLeft,
@@ -11,6 +11,11 @@ import {
 	Share2,
 	ShoppingBag,
 	ChevronDown,
+	Trash2,
+	Edit,
+	AlertTriangle,
+	CheckCircle,
+	XCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -27,21 +32,33 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
+import { updateBasket } from "@/redux/user/userReducer";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 	const router = useRouter();
+	const dispatch = useDispatch<AppDispatch>();
 	const unwrappedParams = React.use(params); // Unwrap the params
-	const perfume = useSelector((state: RootState) =>
-		state.perfumes.tradablePerfumes.find(
-			(p) => p.id === unwrappedParams.perfumeId,
-		),
-	);
-
+	const userId = useSelector((state: RootState) => state.user.user?.id);
 	const [activeImage, setActiveImage] = useState(0);
 	const [showMore, setShowMore] = useState(false);
 	const [liked, setLiked] = useState(false);
 	const [loadingProgress, setLoadingProgress] = useState(0);
-
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+	const [deleteConfirmationUsername, setDeleteConfirmationUsername] =
+		useState("");
+	const profile = useSelector((state: RootState) => state.user.profile);
 	useEffect(() => {
 		const timer = setTimeout(() => {
 			setLoadingProgress(100);
@@ -49,7 +66,64 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 
 		return () => clearTimeout(timer);
 	}, []);
+	const perfume = useSelector((state: RootState) =>
+		state.perfumes.tradablePerfumes.find(
+			(p) => p.id === unwrappedParams.perfumeId,
+		),
+	);
 
+	const basket = useSelector(
+		(state: RootState) => state.user.profile?.basket || [],
+	);
+	const isInBasket = perfume ? basket.includes(perfume.id) : false;
+	const isOwner = perfume?.user_id === userId;
+
+	const handleUpdateBasket = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		if (!perfume) return;
+
+		if (isInBasket) {
+			const updatedBasket = basket.filter((id) => id !== perfume.id);
+			dispatch(updateBasket({ basket: updatedBasket }));
+			toast.error(`${perfume.name} has been removed from your basket.`, {
+				description: "Removed from basket.",
+				duration: 3000,
+			});
+		} else {
+			const updatedBasket = [...basket, perfume.id];
+			dispatch(updateBasket({ basket: updatedBasket }));
+			toast(`${perfume.name} has been added to your basket!`, {
+				description: "Added to basket.",
+				duration: 3000,
+			});
+		}
+	};
+
+	const handleDeletePerfume = () => {
+		if (deleteConfirmationUsername === profile?.name) {
+			// In a real application, you would call an API to delete the perfume here.
+			console.log(
+				`Perfume "${perfume?.name}" deleted by user "${deleteConfirmationUsername}"`,
+			);
+			setIsDeleteDialogOpen(false);
+			toast("Perfume Deleted!", {
+				description: `"${perfume?.name}" has been successfully deleted.`,
+				duration: 4000,
+				icon: <CheckCircle className="h-4 w-4 text-green-500" />,
+			});
+			router.push("/perfumes"); // Redirect to perfumes page after deletion
+		} else {
+			toast.error("Username verification failed.", {
+				description:
+					"Please enter your correct username to confirm deletion.",
+				duration: 3000,
+				icon: <XCircle className="h-4 w-4" />,
+			});
+		}
+	};
+	const handleGoBack = () => {
+		router.back();
+	};
 	if (!perfume) {
 		return (
 			<div className="container mx-auto px-4 py-8 min-h-screen flex flex-col items-center justify-center">
@@ -96,17 +170,6 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 		);
 	}
 
-	// Calculate sentiment scores for visualization
-	const sentimentCategories = [
-		{ name: "Longevity", score: Math.floor((perfume.rating ?? 0) * 10) },
-		{ name: "Sillage", score: Math.floor((perfume.rating ?? 0) * 12) - 10 },
-		{ name: "Value", score: Math.floor((perfume.rating ?? 0) * 9) },
-		{
-			name: "Uniqueness",
-			score: Math.floor((perfume.rating ?? 0) * 11) - 5,
-		},
-	];
-
 	const truncatedDescription =
 		(perfume?.descriptions ?? "").length > 150
 			? `${perfume.descriptions?.substring(0, 150)}...`
@@ -115,6 +178,28 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 	return (
 		<div className="container mx-auto px-4 py-8 bg-background min-h-screen">
 			<Progress value={loadingProgress} className="w-full h-1 mb-6" />
+			{/* Back Button Bar - Fixed Position */}
+			<div className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border/30 shadow-sm">
+				<div className="container mx-auto px-4 py-3 flex items-center">
+					<Button
+						variant="ghost"
+						size="sm"
+						className="flex items-center hover:bg-accent/20 transition-colors"
+						onClick={handleGoBack}
+					>
+						<ArrowLeft className="mr-2 h-4 w-4" />
+						<span className="font-medium">Back</span>
+					</Button>
+					<div className="ml-4 flex-1 truncate">
+						<span className="text-sm font-medium text-muted-foreground">
+							{perfume.brand}
+						</span>
+						<h2 className="text-sm font-semibold truncate">
+							{perfume.name}
+						</h2>
+					</div>
+				</div>
+			</div>
 
 			<motion.div
 				initial={{ opacity: 0, y: 10 }}
@@ -151,7 +236,9 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 							>
 								<Image
 									src={perfume.images[activeImage]}
-									alt={`${perfume.name} - Image ${activeImage + 1}`}
+									alt={`${perfume.name} - Image ${
+										activeImage + 1
+									}`}
 									width={400}
 									height={500}
 									className="object-cover transition-transform hover:scale-105 duration-700"
@@ -164,7 +251,11 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 									onClick={() => setLiked(!liked)}
 								>
 									<Heart
-										className={`h-5 w-5 ${liked ? "fill-destructive text-destructive" : "text-foreground"}`}
+										className={`h-5 w-5 ${
+											liked
+												? "fill-destructive text-destructive"
+												: "text-foreground"
+										}`}
 									/>
 								</motion.button>
 							</motion.div>
@@ -182,7 +273,9 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 									>
 										<Image
 											src={image}
-											alt={`${perfume.name} thumbnail ${index + 1}`}
+											alt={`${perfume.name} thumbnail ${
+												index + 1
+											}`}
 											fill
 											className="object-cover"
 										/>
@@ -260,7 +353,9 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 												? "Show less"
 												: "Read more"}
 											<ChevronDown
-												className={`ml-1 h-4 w-4 transition-transform ${showMore ? "rotate-180" : ""}`}
+												className={`ml-1 h-4 w-4 transition-transform ${
+													showMore ? "rotate-180" : ""
+												}`}
 											/>
 										</Button>
 									)}
@@ -317,19 +412,122 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 							</div>
 						</CardContent>
 
-						<CardFooter className="pt-2 pb-4">
-							<div className="flex gap-3 w-full">
-								<Button className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90">
-									<ShoppingBag className="mr-2 h-4 w-4" />
-									Add to Cart
-								</Button>
+						<CardFooter className="pt-3 pb-5 px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+							<div className="flex gap-4 w-full">
+								{isInBasket ? (
+									<Button
+										variant="destructive"
+										className="flex-1 font-medium transition-all duration-300 group"
+										onClick={handleUpdateBasket}
+									>
+										<Trash2 className="mr-2 h-4 w-4 group-hover:scale-110" />
+										Remove from Basket
+									</Button>
+								) : (
+									<Button
+										className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-medium shadow-sm transition-all duration-300 hover:shadow-md group"
+										onClick={handleUpdateBasket}
+									>
+										<ShoppingBag className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+										Add to Basket
+									</Button>
+								)}
 								<Button
 									variant="outline"
-									className="border-border hover:bg-accent/10"
+									className="border-border hover:bg-accent/10 transition-all duration-300"
+									aria-label="Share"
 								>
 									<Share2 className="h-4 w-4" />
 								</Button>
 							</div>
+
+							{isOwner && (
+								<div className="flex gap-2 mt-4 md:mt-0">
+									<Button
+										variant="secondary"
+										className="font-medium hover:bg-secondary/80 transition-colors group"
+										onClick={() =>
+											router.push(
+												`/perfumes/edit/${perfume.id}`,
+											)
+										}
+									>
+										<Edit className="mr-2 h-4 w-4 group-hover:scale-110" />
+										Edit Perfume
+									</Button>
+
+									<Dialog
+										open={isDeleteDialogOpen}
+										onOpenChange={setIsDeleteDialogOpen}
+									>
+										<DialogTrigger asChild>
+											<Button
+												variant="destructive"
+												className="font-medium group"
+											>
+												<Trash2 className="mr-2 h-4 w-4 group-hover:scale-110" />
+												Delete Perfume
+											</Button>
+										</DialogTrigger>
+										<DialogContent className="sm:max-w-[400px]">
+											<DialogHeader>
+												<DialogTitle>
+													Delete Perfume
+												</DialogTitle>
+												<DialogDescription>
+													Are you sure you want to
+													delete{" "}
+													<span className="font-semibold">
+														{perfume.name}
+													</span>
+													? This action cannot be
+													undone.
+													<br />
+													<AlertTriangle className="inline-block h-4 w-4 mr-1 text-destructive align-top" />
+													<span className="font-bold text-destructive">
+														Warning
+													</span>
+													: Deleting this perfume is
+													permanent.
+												</DialogDescription>
+											</DialogHeader>
+											<div className="grid gap-4 py-4">
+												<div className="grid grid-cols-4 items-center gap-4">
+													<Label
+														htmlFor="username"
+														className="text-right"
+													>
+														Username
+													</Label>
+													<Input
+														id="username"
+														value={
+															deleteConfirmationUsername
+														}
+														onChange={(e) =>
+															setDeleteConfirmationUsername(
+																e.target.value,
+															)
+														}
+														className="col-span-3"
+													/>
+												</div>
+											</div>
+											<DialogFooter>
+												<Button
+													type="submit"
+													variant="destructive"
+													onClick={
+														handleDeletePerfume
+													}
+												>
+													Confirm Delete
+												</Button>
+											</DialogFooter>
+										</DialogContent>
+									</Dialog>
+								</div>
+							)}
 						</CardFooter>
 					</Card>
 

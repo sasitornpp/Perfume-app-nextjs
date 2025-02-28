@@ -7,7 +7,8 @@ import React from "react";
 import { store } from "@/redux/Store";
 import { Provider } from "react-redux";
 import Container from "@/components/container-setup";
-import Loading from "@/app/loading";
+import { Toaster } from "@/components/ui/sonner";
+// import Loading from "@/components/form/loading";
 
 export default function RootLayout({
 	children,
@@ -29,7 +30,9 @@ export default function RootLayout({
 				>
 					<Provider store={store}>
 						<Container>
-							<Loading>{children}</Loading>{" "}
+							<Toaster />
+							{/* <Loading>{children}</Loading>{" "} */}
+							{children}
 						</Container>
 					</Provider>
 				</ThemeProvider>

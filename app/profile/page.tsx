@@ -32,9 +32,12 @@ import {
 } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import PerfumeCard from "@/components/perfume_card";
+import { useDispatch } from "react-redux";
+import { updateBasket } from "@/redux/user/userReducer";
 
 function ProfilePage() {
 	const searchParams = useSearchParams();
+	const dispatch = useDispatch();
 	const router = useRouter();
 	const queryTab = searchParams.get("q");
 	const validTabs = ["my-perfumes", "wishlist", "basket", "recommendations"];
@@ -46,6 +49,7 @@ function ProfilePage() {
 	const isProfileComplete = !!profile && Object.keys(profile).length > 0;
 
 	const perfume_ids = profile?.my_perfume || [];
+
 	const tradablePerfumes = useSelector((state: RootState) =>
 		state.perfumes.tradablePerfumes.filter((perfume) =>
 			perfume_ids?.includes(perfume.id),
@@ -58,6 +62,7 @@ function ProfilePage() {
 		),
 	);
 	const perfumes = useSelector((state: RootState) => state.perfumes.perfumes);
+
 	const [suggestionsPerfumes, setSuggestionsPerfumes] = useState<Perfume[]>(
 		[],
 	);
@@ -87,6 +92,15 @@ function ProfilePage() {
 	// Handle tab change and update URL
 	const handleTabChange = (value: string) => {
 		router.push(`/profile?q=${value}`, { scroll: false });
+	};
+
+	const basket = useSelector(
+		(state: RootState) => state.user.profile?.basket || [],
+	);
+
+	const handleRemoveBasket = (id: string) => {
+		const updatedBasket = basket.filter((item) => item !== id);
+		dispatch(updateBasket({ basket: updatedBasket }));
 	};
 
 	// If profile doesn't exist, show the create profile UI
@@ -215,14 +229,6 @@ function ProfilePage() {
 							>
 								<Share2 className="h-4 w-4" />
 								<span>Share</span>
-							</Button>
-							<Button
-								variant="outline"
-								size="sm"
-								className="flex items-center gap-1"
-							>
-								<Settings className="h-4 w-4" />
-								<span>Settings</span>
 							</Button>
 						</div>
 					</div>
@@ -356,7 +362,13 @@ function ProfilePage() {
 									Start building your collection by adding
 									perfumes you own
 								</p>
-								<Button onClick={() => router.push("/perfumes/trade/create")}>Add Your First Perfume</Button>
+								<Button
+									onClick={() =>
+										router.push("/perfumes/trade/create")
+									}
+								>
+									Add Your First Perfume
+								</Button>
 							</div>
 						)}
 					</div>
@@ -421,34 +433,86 @@ function ProfilePage() {
 							basketItems.map((perfume) => (
 								<Card
 									key={perfume.id}
-									className="overflow-hidden group"
+									className="overflow-hidden group transition-all duration-300 hover:shadow-lg"
 								>
-									<div className="h-40 bg-accent/20 relative">
-										{perfume.images && (
+									<div className="h-48 bg-accent/20 relative">
+										{perfume.images &&
+										perfume.images.length > 0 ? (
 											<img
 												src={perfume.images[0]}
 												alt={perfume.name}
-												className="w-full h-full object-cover"
+												className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
 											/>
+										) : (
+											<div className="w-full h-full flex items-center justify-center bg-accent/10">
+												<span className="text-muted-foreground">
+													No image
+												</span>
+											</div>
+										)}
+										{perfume.gender && (
+											<div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+												{perfume.gender}
+											</div>
 										)}
 									</div>
-									<CardHeader className="pb-2">
-										<CardTitle className="text-base">
-											{perfume.name}
-										</CardTitle>
-										<CardDescription>
-											{perfume.brand}
-										</CardDescription>
+									<CardHeader className="pb-1">
+										<div className="flex justify-between items-start">
+											<div>
+												<CardTitle className="text-base font-medium">
+													{perfume.name}
+												</CardTitle>
+												<CardDescription className="text-sm text-primary/80">
+													{perfume.brand}
+												</CardDescription>
+											</div>
+											<Badge
+												variant="outline"
+												className="ml-2 text-xs"
+											>
+												{perfume.concentration || "EDP"}
+											</Badge>
+										</div>
+										{perfume.scent_type && (
+											<p className="text-xs text-muted-foreground mt-1">
+												{perfume.scent_type}
+											</p>
+										)}
 									</CardHeader>
-									<CardFooter className="pt-0 flex justify-between">
-										<span className="text-sm text-muted-foreground">
-											{perfume.price}
-										</span>
+									<CardFooter className="pt-0 flex justify-between items-center">
+										<div>
+											<span className="font-semibold text-primary">
+												฿
+												{perfume.price.toLocaleString()}
+											</span>
+											<span className="text-xs text-muted-foreground ml-1">
+												{perfume.volume}ml
+											</span>
+										</div>
 										<Button
 											variant="destructive"
 											size="sm"
-											className="opacity-0 group-hover:opacity-100 transition-opacity"
+											className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+											onClick={() =>
+												handleRemoveBasket(perfume.id)
+											}
 										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												width="16"
+												height="16"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												strokeWidth="2"
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												className="mr-1"
+											>
+												<path d="M3 6h18"></path>
+												<path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+												<path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+											</svg>
 											Remove
 										</Button>
 									</CardFooter>
@@ -464,7 +528,7 @@ function ProfilePage() {
 									Browse recommendations or search for
 									perfumes to add them to your basket
 								</p>
-								<Button>Explore Perfumes</Button>
+								<Button onClick={() => router.push("/perfumes/trade")}>Explore Perfumes</Button>
 							</div>
 						)}
 					</div>
@@ -491,7 +555,7 @@ function ProfilePage() {
 											0,
 										)
 										.toFixed(2)}{" "}
-									USD
+									THB
 								</span>
 							</div>
 							<Button className="w-full">
