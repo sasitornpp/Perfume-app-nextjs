@@ -24,6 +24,9 @@ function TabImage({
 	setFormData: React.Dispatch<React.SetStateAction<TradablePerfume>>;
 }) {
 	const [isUploading, setIsUploading] = useState(false);
+	const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(
+		null,
+	);
 
 	const removeImage = (index: number) => {
 		const newImages = formData.images.filter((_, i) => i !== index);
@@ -47,33 +50,29 @@ function TabImage({
 
 	const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
-		if (files) {
-			const fileObjects = Array.from(files);
-			const fileUrls = fileObjects.map((file) =>
-				URL.createObjectURL(file),
-			);
+		if (!files) return;
 
-			setFormData((prev) => {
-				return {
+		const fileObjects = Array.from(files);
+		const fileUrls = fileObjects.map((file) => URL.createObjectURL(file));
+
+		setFormData(
+			(prev) =>
+				({
 					...prev,
 					images: [...prev.images, ...fileUrls],
-					imagePreviews: [...fileUrls], // Reset previews to new files only
+					imagePreviews: [...(prev.imagePreviews || []), ...fileUrls],
 					imagesFiles: [...prev.imagesFiles, ...fileObjects],
-				} as TradablePerfume;
-			});
-		}
+				}) as TradablePerfume,
+		);
 	};
 
-	const handleImageUploadWithAnimation = (
-		e: ChangeEvent<HTMLInputElement>,
-	) => {
-		if (handleImageUpload) {
-			setIsUploading(true);
-			// Simulate delay for upload animation
-			setTimeout(() => {
-				handleImageUpload(e);
-				setIsUploading(false);
-			}, 800);
+	const handleUploadClick = () => {
+		const input = document.getElementById(
+			"image-upload",
+		) as HTMLInputElement;
+		if (input) {
+			input.value = ""; // Reset input to allow same file selection
+			input.click();
 		}
 	};
 
@@ -105,11 +104,15 @@ function TabImage({
 									whileHover={{ scale: 1.03 }}
 									whileTap={{ scale: 0.97 }}
 								>
-									<Label
-										htmlFor="image-upload"
+									<Button
+										type="button" // Add this to prevent form submission
+										onClick={handleUploadClick}
+										disabled={isUploading}
 										className={cn(
-											"flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground",
-											"cursor-pointer hover:opacity-90 transition-all shadow-sm",
+											"gap-2 rounded-full",
+											isUploading
+												? "opacity-75 cursor-not-allowed"
+												: "hover:opacity-90",
 										)}
 									>
 										{isUploading ? (
@@ -117,7 +120,7 @@ function TabImage({
 										) : (
 											<ImagePlus className="h-4 w-4" />
 										)}
-										<span className="text-sm font-medium">
+										<span>
 											{isUploading
 												? "Uploading..."
 												: "Add Images"}
@@ -128,60 +131,69 @@ function TabImage({
 											multiple
 											accept="image/*"
 											className="hidden"
-											onChange={
-												handleImageUploadWithAnimation
-											}
+											onChange={(e) => {
+												setIsUploading(true);
+												handleImageUpload(e);
+												setIsUploading(false);
+											}}
 											disabled={isUploading}
 										/>
-									</Label>
+									</Button>
 								</motion.div>
 							</div>
 
 							<AnimatePresence>
-								{formData.imagePreviews?.map((image, index) => (
+								{selectedImageIndex !== null && (
 									<motion.div
-										key={`preview-${index}`}
-										initial={{ opacity: 0, y: 20 }}
-										animate={{ opacity: 1, y: 0 }}
-										exit={{ opacity: 0, y: 20 }}
+										initial={{ opacity: 0 }}
+										animate={{ opacity: 1 }}
+										exit={{ opacity: 0 }}
 										className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
-										onClick={() => handleImageUpload}
+										onClick={() =>
+											setSelectedImageIndex(null)
+										}
 									>
 										<motion.div
 											initial={{ scale: 0.9 }}
 											animate={{ scale: 1 }}
-											exit={{ scale: 0.9 }}
-											className="relative max-w-3xl w-full rounded-xl overflow-hidden shadow-xl"
+											className="relative max-w-3xl w-full rounded-xl overflow-hidden shadow-xl bg-card"
 											onClick={(e) => e.stopPropagation()}
 										>
-											<div className="relative aspect-video">
+											<div className="relative aspect-square">
 												<Image
-													src={image}
+													src={
+														formData
+															.imagePreviews?.[
+															selectedImageIndex
+														] || ""
+													}
 													alt="Preview"
 													fill
 													className="object-contain"
 												/>
 											</div>
 											<Button
+												type="button"
 												variant="ghost"
 												size="icon"
 												className="absolute top-2 right-2 bg-background/50 backdrop-blur-sm hover:bg-background/70"
 												onClick={() =>
-													handleImageUploadWithAnimation
+													setSelectedImageIndex(null)
 												}
 											>
 												<X className="h-5 w-5" />
 											</Button>
 										</motion.div>
 									</motion.div>
-								))}
+								)}
 							</AnimatePresence>
 
 							<div className="mt-4 relative">
 								{!formData.imagePreviews?.length ? (
 									<motion.div
 										variants={itemVariants}
-										className="border-2 border-dashed border-primary/30 rounded-xl p-10 bg-muted/10"
+										className="border-2 border-dashed border-primary/30 rounded-xl p-10 bg-muted/10 cursor-pointer"
+										onClick={handleUploadClick}
 									>
 										<div className="flex flex-col items-center justify-center text-center">
 											<div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
@@ -223,19 +235,19 @@ function TabImage({
 															stiffness: 400,
 															damping: 30,
 														}}
-														className="group"
+														className="group relative"
 													>
 														<motion.div
 															whileHover={{
 																y: -5,
 															}}
-															className="relative aspect-square rounded-xl overflow-hidden border border-border shadow-sm bg-card transition-all duration-300 hover:shadow-md"
+															className="aspect-square rounded-xl overflow-hidden border border-border shadow-sm bg-card cursor-pointer"
 														>
 															<Image
 																src={preview}
 																alt={`Perfume image ${index + 1}`}
 																fill
-																className="object-cover transition-all duration-500 group-hover:scale-110"
+																className="object-cover transition-transform duration-300 group-hover:scale-105"
 															/>
 															<div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between p-3">
 																<Button
@@ -244,7 +256,9 @@ function TabImage({
 																	size="icon"
 																	className="h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background"
 																	onClick={() =>
-																		handleImageUploadWithAnimation
+																		setSelectedImageIndex(
+																			index,
+																		)
 																	}
 																>
 																	<Maximize2 className="h-4 w-4" />
@@ -270,44 +284,42 @@ function TabImage({
 													</motion.div>
 												),
 											)}
-										</AnimatePresence>
 
-										<motion.div
-											variants={itemVariants}
-											whileHover={{ scale: 1.03, y: -5 }}
-											whileTap={{ scale: 0.97 }}
-										>
-											<Label
-												htmlFor="image-upload-grid"
-												className={cn(
-													"flex flex-col items-center justify-center aspect-square rounded-xl cursor-pointer",
-													"border-2 border-dashed border-primary/30 bg-muted/5 hover:bg-primary/5 transition-colors",
-												)}
+											<motion.div
+												variants={itemVariants}
+												whileHover={{
+													scale: 1.03,
+													y: -5,
+												}}
+												whileTap={{ scale: 0.97 }}
+												className="aspect-square"
 											>
-												<div className="flex flex-col items-center justify-center p-4">
-													<div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-														<ImagePlus className="h-6 w-6 text-primary" />
+												<div
+													onClick={handleUploadClick}
+													className={cn(
+														"flex flex-col items-center justify-center h-full rounded-xl cursor-pointer",
+														"border-2 border-dashed border-primary/30 bg-muted/5 hover:bg-primary/5 transition-colors",
+														isUploading &&
+															"opacity-50 cursor-not-allowed",
+													)}
+												>
+													<div className="flex flex-col items-center justify-center p-4">
+														<div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+															{isUploading ? (
+																<RotateCw className="h-6 w-6 text-primary animate-spin" />
+															) : (
+																<ImagePlus className="h-6 w-6 text-primary" />
+															)}
+														</div>
+														<span className="text-sm font-medium text-primary">
+															{isUploading
+																? "Uploading..."
+																: "Add more"}
+														</span>
 													</div>
-													<span className="text-sm font-medium text-primary">
-														Add more
-													</span>
-													<span className="text-xs text-muted-foreground mt-1">
-														PNG, JPG or WEBP
-													</span>
 												</div>
-												<Input
-													id="image-upload-grid"
-													type="file"
-													multiple
-													accept="image/*"
-													className="hidden"
-													onChange={
-														handleImageUploadWithAnimation
-													}
-													disabled={isUploading}
-												/>
-											</Label>
-										</motion.div>
+											</motion.div>
+										</AnimatePresence>
 									</div>
 								)}
 							</div>

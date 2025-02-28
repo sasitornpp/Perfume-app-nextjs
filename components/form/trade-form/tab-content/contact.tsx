@@ -122,37 +122,6 @@ function TabContact({
 					<div className="space-y-2">
 						<div className="flex items-center justify-between">
 							<Label
-								htmlFor="userName"
-								className="text-sm font-medium flex items-center"
-							>
-								<User className="h-4 w-4 mr-2 text-primary/70" />
-								Display Name
-								<span className="text-destructive ml-1">*</span>
-							</Label>
-							<Badge
-								variant="outline"
-								className="text-xs font-normal"
-							>
-								Required
-							</Badge>
-						</div>
-						<Input
-							id="userName"
-							name="userName"
-							value={formData.userName}
-							onChange={handleChange}
-							placeholder="Your name or nickname"
-							className="border-input focus-visible:ring-primary/50"
-							required
-						/>
-						<p className="text-xs text-muted-foreground">
-							This will be displayed publicly with your listing
-						</p>
-					</div>
-
-					<div className="space-y-2">
-						<div className="flex items-center justify-between">
-							<Label
 								htmlFor="phoneNumber"
 								className="text-sm font-medium flex items-center"
 							>
@@ -190,13 +159,7 @@ function TabContact({
 							Enter a valid phone number where buyers can contact
 							you
 						</p>
-					</div>
-				</motion.div>
-
-				<motion.div
-					variants={itemVariants}
-					className="grid gap-6 md:grid-cols-2"
-				>
+					</div>{" "}
 					<div className="space-y-2">
 						<Label
 							htmlFor="facebook"
@@ -217,7 +180,12 @@ function TabContact({
 							Provide your Facebook profile for messaging
 						</p>
 					</div>
+				</motion.div>
 
+				<motion.div
+					variants={itemVariants}
+					className="grid gap-6 md:grid-cols-2"
+				>
 					<div className="space-y-2">
 						<Label
 							htmlFor="line"

@@ -170,7 +170,7 @@ function Home() {
 									key={`${perfume.name}-${index}`}
 									className="md:basis-1/2 lg:basis-1/3 h-full"
 								>
-									<Link href={`/perfume/${perfume.id}`}>
+									<Link href={`/perfumes/${perfume.id}`}>
 										<Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02]">
 											<CardContent className="p-0 flex flex-col h-full">
 												<div className="relative aspect-square overflow-hidden">
