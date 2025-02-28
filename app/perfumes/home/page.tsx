@@ -33,7 +33,7 @@ import {
 
 function PerfumeLandingPage() {
 	const unsortedPerfumes = useSelector(
-		(state: RootState) => state.perfume.perfume,
+		(state: RootState) => state.perfumes.perfumes,
 	);
 	const perfumes = React.useMemo(
 		() =>
@@ -145,6 +145,7 @@ function PerfumeLandingPage() {
 			animate={isVisible ? "visible" : "hidden"}
 			variants={containerVariants}
 			className="max-w-7xl mx-auto px-4 sm:px-6 py-8 bg-background mt-16"
+            suppressHydrationWarning
 		>
 			{/* Hero Section - Elegant and visually striking */}
 			<motion.div

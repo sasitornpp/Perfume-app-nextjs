@@ -45,56 +45,63 @@ export const FiltersPerfumeValues = {
 	base_notes: [],
 };
 
-export interface TradablePerfume {
-	id: string;
+interface BaseTradablePerfume {
 	name: string;
-	descriptions: string;
+	descriptions?: string;
 	gender: string | null;
 	brand: string | null;
 	concentration: string | null;
-	scentType: string | null;
+	scent_type: string | null;
 	price: number;
 	volume: number;
-	userId: string;
-	userName: string;
+	user_name: string;
 	images: string[];
-	imagesFiles: File[];
-	topNotes: string[] | null;
-	middleNotes: string[] | null;
-	baseNotes: string[] | null;
+	top_note: string[] | null;
+	middle_note: string[] | null;
+	base_note: string[] | null;
 	facebook: string | null;
 	line: string | null;
-	phoneNumber: string | null;
-	imagePreviews?: [];
-	accords: [""];
+	phone_number: string | null;
+	accords: string[] | null;
 	perfumer: string | null;
-	rating?: number;
-	totalVotes?: number;
 }
 
-export const TradablePerfumeInitialState: TradablePerfume = {
-	id: "",
+export interface TradablePerfumeForInsert extends BaseTradablePerfume {
+	imagesFiles: File[];
+	imagePreviews?: string[];
+}
+
+export interface TradablePerfume extends BaseTradablePerfume {
+	id: string;
+	user_id: string;
+	rating?: number;
+	total_votes?: number;
+    is_tradable?: boolean;
+	updated_at?: Date;
+	created_at?: Date;
+}
+
+export const TradablePerfumeInitialState: TradablePerfumeForInsert = {
 	name: "",
 	descriptions: "",
 	gender: "",
 	brand: "",
 	concentration: "",
-	scentType: "",
+	scent_type: "",
 	price: 0,
 	volume: 0,
-	topNotes: [""],
-	middleNotes: [""],
-	baseNotes: [""],
+	top_note: [""],
+	middle_note: [""],
+	base_note: [""],
 	images: [],
 	imagePreviews: [],
 	imagesFiles: [],
 	accords: [""],
 	perfumer: "",
-	userId: "",
-	userName: "",
+	user_name: "",
 	facebook: "",
 	line: "",
-	phoneNumber: "",
+	phone_number: "",
 };
 
 export type SituationType = "daily" | "formal" | "date" | "party" | "exercise";

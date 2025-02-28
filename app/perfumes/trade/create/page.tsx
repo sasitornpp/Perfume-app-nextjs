@@ -11,23 +11,31 @@ import {
 	CardTitle,
 	CardDescription,
 } from "@/components/ui/card";
-import { TradablePerfume, TradablePerfumeInitialState } from "@/types/perfume";
-import { InsertTradablePerfume } from "@/utils/supabase/api/perfume";
+import {
+	TradablePerfumeForInsert,
+	TradablePerfumeInitialState,
+} from "@/types/perfume";
+import { addTradablePerfume } from "@/redux/perfume/perfumeReducer";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/redux/Store";
 import TabContact from "@/components/form/trade-form/tab-content/contact";
 import TabNotes from "@/components/form/trade-form/tab-content/notes";
 import TabDetails from "@/components/form/trade-form/tab-content/details";
 import TabImage from "@/components/form/trade-form/tab-content/image";
-
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/Store";
 function Trade() {
 	const router = useRouter();
+	const dispatch = useDispatch<AppDispatch>();
 	const [loading, setLoading] = useState(false);
 	const [activeTab, setActiveTab] = useState("details");
 	const [progress, setProgress] = useState(0);
 
-	const [formData, setFormData] = useState<TradablePerfume>(
+	const profile = useSelector((state: RootState) => state.user.profile);
+
+	const [formData, setFormData] = useState<TradablePerfumeForInsert>(
 		TradablePerfumeInitialState,
 	);
 
@@ -42,8 +50,8 @@ function Trade() {
 		];
 		const filledRequired = requiredFields.filter(
 			(field) =>
-				formData[field as keyof TradablePerfume] &&
-				formData[field as keyof TradablePerfume] !== 0,
+				formData[field as keyof TradablePerfumeForInsert] &&
+				formData[field as keyof TradablePerfumeForInsert] !== 0,
 		).length;
 
 		// Additional fields that add to completion percentage
@@ -58,17 +66,17 @@ function Trade() {
 		];
 		const filledBonus = bonusFields.filter(
 			(field) =>
-				formData[field as keyof TradablePerfume] &&
-				formData[field as keyof TradablePerfume] !== "",
+				formData[field as keyof TradablePerfumeForInsert] &&
+				formData[field as keyof TradablePerfumeForInsert] !== "",
 		).length;
 
 		// Notes fields
 		const hasTopNotes =
-			formData.topNotes?.some((note) => note !== "") || false;
-		const hasMiddleNotes = formData.middleNotes?.some(
+			formData.top_note?.some((note) => note !== "") || false;
+		const hasMiddleNotes = formData.middle_note?.some(
 			(note) => note !== "",
 		);
-		const hasBaseNotes = formData.baseNotes?.some((note) => note !== "");
+		const hasBaseNotes = formData.base_note?.some((note) => note !== "");
 		const notesCount = [hasTopNotes, hasMiddleNotes, hasBaseNotes].filter(
 			Boolean,
 		).length;
@@ -100,8 +108,18 @@ function Trade() {
 		e.preventDefault();
 		setLoading(true);
 		try {
-			await InsertTradablePerfume({ tradablePerfume: formData });
-			router.push("/trade");
+			if (!profile) {
+				throw new Error("User profile is required");
+			}
+			dispatch(
+				addTradablePerfume({
+					perfumeData: formData,
+					userProfile: profile,
+				}),
+			);
+			// console.log(formData)
+			// console.log("Listing created successfully ");
+			// router.push("/perfumes/trade");
 		} catch (error) {
 			console.error("Error creating listing:", error);
 		} finally {
@@ -128,13 +146,15 @@ function Trade() {
 		},
 	};
 
-	const nextTab = () => {
+	const nextTab = (e: React.MouseEvent) => {
+		e.preventDefault();
 		if (activeTab === "details") setActiveTab("notes");
 		else if (activeTab === "notes") setActiveTab("images");
 		else if (activeTab === "images") setActiveTab("contact");
 	};
 
-	const previousTab = () => {
+	const previousTab = (e: React.MouseEvent) => {
+		e.preventDefault();
 		if (activeTab === "contact") setActiveTab("images");
 		else if (activeTab === "images") setActiveTab("notes");
 		else if (activeTab === "notes") setActiveTab("details");

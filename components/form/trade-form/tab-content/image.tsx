@@ -6,7 +6,7 @@ import { TabsContent } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { TradablePerfume } from "@/types/perfume";
+import { TradablePerfumeForInsert } from "@/types/perfume";
 import Image from "next/image";
 import { ImagePlus, Info, X, Maximize2, RotateCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,8 +20,8 @@ function TabImage({
 }: {
 	itemVariants: any;
 	containerVariants: any;
-	formData: TradablePerfume;
-	setFormData: React.Dispatch<React.SetStateAction<TradablePerfume>>;
+	formData: TradablePerfumeForInsert;
+	setFormData: React.Dispatch<React.SetStateAction<TradablePerfumeForInsert>>;
 }) {
 	const [isUploading, setIsUploading] = useState(false);
 	const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(
@@ -33,14 +33,16 @@ function TabImage({
 		const newPreviews = (formData.imagePreviews ?? []).filter(
 			(_, i) => i !== index,
 		);
+		const newFiles = formData.imagesFiles.filter((_, i) => i !== index);
 
 		setFormData(
 			(prev) =>
 				({
 					...prev,
+					imagesFiles: newFiles,
 					images: newImages as string[],
 					imagePreviews: newPreviews as string[],
-				}) as TradablePerfume,
+				}) as TradablePerfumeForInsert,
 		);
 
 		if (formData.imagePreviews?.[index]) {
@@ -59,10 +61,9 @@ function TabImage({
 			(prev) =>
 				({
 					...prev,
-					images: [...prev.images, ...fileUrls],
 					imagePreviews: [...(prev.imagePreviews || []), ...fileUrls],
 					imagesFiles: [...prev.imagesFiles, ...fileObjects],
-				}) as TradablePerfume,
+				}) as TradablePerfumeForInsert,
 		);
 	};
 

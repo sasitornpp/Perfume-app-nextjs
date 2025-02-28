@@ -1,15 +1,20 @@
 import { configureStore } from "@reduxjs/toolkit";
 import perfumeReducer from "./perfume/perfumeReducer";
-import basketReducer from "./basket/basketReducer";
 import userReducer from "./user/userReducer";
+import syncWishlistToSupabaseMiddleware, {
+	firstRender,injectStore
+} from "./ReduxMiddleware";
 
 export const store = configureStore({
 	reducer: {
-		perfume: perfumeReducer,
-		basket: basketReducer,
+		perfumes: perfumeReducer,
 		user: userReducer,
 	},
+	middleware: (getDefaultMiddleware) =>
+		getDefaultMiddleware().concat(syncWishlistToSupabaseMiddleware),
 });
+injectStore(store);
+firstRender();
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

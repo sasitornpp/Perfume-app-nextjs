@@ -22,7 +22,7 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 
 function Home() {
-	const perfumes = useSelector((state: RootState) => state.perfume.perfume);
+	const perfumes = useSelector((state: RootState) => state.perfumes.perfumes);
 	const [activeIndex, setActiveIndex] = useState(0);
 
 	// Memoize carousel items to prevent unnecessary re-renders
@@ -54,17 +54,6 @@ function Home() {
 		if (!perfumes?.length) return [];
 		return [...perfumes].sort((a, b) => b.rating - a.rating).slice(0, 3);
 	}, [perfumes]);
-
-	if (!perfumes.length) {
-		return (
-			<div className="flex justify-center items-center h-screen">
-				<div className="animate-pulse flex flex-col items-center">
-					<div className="w-12 h-12 rounded-full bg-primary/30 mb-4"></div>
-					<div className="text-lg">Loading perfumes...</div>
-				</div>
-			</div>
-		);
-	}
 
 	return (
 		<div className="flex flex-col items-center w-full px-4 pb-16 bg-gradient-to-b from-background to-background/50 mt-20">
@@ -144,7 +133,7 @@ function Home() {
 						Featured Fragrances of the Day
 					</h2>
 					<Link
-						href="/home/featured"
+						href="/perfumes/home/search"
 						className="text-primary hover:underline"
 					>
 						View All

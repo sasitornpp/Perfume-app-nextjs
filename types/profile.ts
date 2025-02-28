@@ -13,3 +13,16 @@ export interface SuggestionsPerfumes {
 	situation: string[];
 	customSituation: string;
 }
+
+export interface Profile {
+    id: string;
+    name: string | null;
+    bio: string | null;
+    gender: string;
+    images: string | null;
+    suggestions_perfumes: SuggestionsPerfumes | null;
+    my_perfume: string[] | null;
+    wishlist: string[] | null;
+    basket: string[] | null;
+    created_at: Date;
+}

@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { TabsContent } from "@/components/ui/tabs";
-import { TradablePerfume } from "@/types/perfume";
+import { TradablePerfumeForInsert } from "@/types/perfume";
 import NoteInput from "../note-input";
 
 function TabNotes({
@@ -25,28 +25,28 @@ function TabNotes({
 }: {
 	containerVariants: any;
 	itemVariants: any;
-	formData: TradablePerfume;
+	formData: TradablePerfumeForInsert;
 	handleChange: (
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
 	) => void;
-	setFormData: React.Dispatch<React.SetStateAction<TradablePerfume>>;
+	setFormData: React.Dispatch<React.SetStateAction<TradablePerfumeForInsert>>;
 }) {
 	const NOTE_TYPES = [
 		{
 			type: "Top",
-			field: "topNotes",
+			field: "top_note",
 		},
 		{
 			type: "Middle",
-			field: "middleNotes",
+			field: "middle_note",
 		},
 		{
 			type: "Base",
-			field: "baseNotes",
+			field: "base_note",
 		},
 	] as const;
 	const handleArrayChange = (
-		type: keyof TradablePerfume,
+		type: keyof TradablePerfumeForInsert,
 		index: number,
 		value: string,
 	) => {
@@ -58,14 +58,17 @@ function TabNotes({
 		}));
 	};
 
-	const addArrayItem = (type: keyof TradablePerfume) => {
+	const addArrayItem = (type: keyof TradablePerfumeForInsert) => {
 		setFormData((prev) => ({
 			...prev,
 			[type]: [...(prev[type] as string[]), ""],
 		}));
 	};
 
-	const removeArrayItem = (type: keyof TradablePerfume, index: number) => {
+	const removeArrayItem = (
+		type: keyof TradablePerfumeForInsert,
+		index: number,
+	) => {
 		const newArray = (formData[type] as string[]).filter(
 			(_, i) => i !== index,
 		);
@@ -168,7 +171,7 @@ function TabNotes({
 									placeholder="e.g., Woody, Citrus, Powdery"
 									className="border-input bg-background"
 								/>
-								{formData.accords.length > 1 && (
+								{(formData.accords || []).length > 1 && (
 									<Button
 										type="button"
 										variant="ghost"

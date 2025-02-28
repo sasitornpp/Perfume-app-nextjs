@@ -3,26 +3,47 @@
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
-import { Perfume, TradablePerfume } from "@/types/perfume";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/Store";
+import { Perfume } from "@/types/perfume";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { updateWishlist } from "@/redux/user/userReducer";
+import { TradablePerfume } from "@/types/perfume";
 
 function PerfumeCard({
 	perfume,
 	index,
 }: {
-	perfume: Perfume;
+	perfume: Perfume | TradablePerfume;
 	index: number;
 }) {
 	const [isHovered, setIsHovered] = useState(false);
-	const [isFavorite, setIsFavorite] = useState(false);
+	const dispatch = useDispatch();
+
+	const wishlist = useSelector(
+		(state: RootState) => state.user.profile?.wishlist || [],
+	);
+	const isInWishlist = wishlist.includes(perfume.id);
+
+	const handleFavoriteClick = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		if (isInWishlist) {
+			const updatedWishlist = wishlist.filter((id) => id !== perfume.id);
+			dispatch(updateWishlist({ wishlist: updatedWishlist }));
+		} else {
+			const updatedWishlist = [...wishlist, perfume.id];
+			dispatch(updateWishlist({ wishlist: updatedWishlist }));
+		}
+	};
 
 	const shuffledAccords = Array.isArray(perfume.accords)
 		? [...perfume.accords].sort(() => 0.5 - Math.random()).slice(0, 3)
 		: [];
 
-	const springConfig = { stiffness: 300, damping: 30 };
+	const isTradable = "is_tradable" in perfume ? perfume.is_tradable : false;
 
 	return (
 		<motion.div
@@ -43,20 +64,21 @@ function PerfumeCard({
 				onMouseEnter={() => setIsHovered(true)}
 				onMouseLeave={() => setIsHovered(false)}
 			>
+				{/* Favorite button moved outside of Link */}
 				<div
 					className="absolute top-4 right-4 z-10 cursor-pointer p-2 rounded-full bg-background/80 backdrop-blur-sm transition-all duration-300"
-					onClick={(e) => {
-						e.preventDefault();
-						setIsFavorite(!isFavorite);
-					}}
+					onClick={handleFavoriteClick}
 				>
 					<Heart
 						size={20}
-						className={`transition-colors ${isFavorite ? "fill-destructive text-destructive" : "text-muted-foreground"}`}
+						className={`transition-colors ${isInWishlist ? "fill-destructive text-destructive" : "text-muted-foreground"}`}
 					/>
 				</div>
 
-				<Link href={`/perfumes/${perfume.id}`} className="block">
+				<Link
+					href={`${isTradable ? `/perfumes/trade/${perfume.id}` : `/perfumes/${perfume.id}`}`}
+					className="block"
+				>
 					<CardContent className="flex flex-col h-[420px] p-0 overflow-hidden">
 						<div className="relative overflow-hidden w-full h-[240px] bg-gradient-to-b from-background to-muted flex items-center justify-center">
 							<motion.div
@@ -110,13 +132,7 @@ function PerfumeCard({
 											y: isHovered ? -2 + i * -1 : 0,
 										}}
 										className={`text-xs rounded-full px-3 py-1 font-medium transition-colors duration-300 
-                      ${
-							i === 0
-								? "bg-primary/15 text-primary"
-								: i === 1
-									? "bg-secondary/15 text-secondary-foreground"
-									: "bg-accent/20 text-accent-foreground"
-						}`}
+                      ${i === 0 ? "bg-primary/15 text-primary" : i === 1 ? "bg-secondary/15 text-secondary-foreground" : "bg-accent/20 text-accent-foreground"}`}
 									>
 										{accord}
 									</motion.span>

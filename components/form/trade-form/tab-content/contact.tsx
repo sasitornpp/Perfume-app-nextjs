@@ -4,7 +4,7 @@ import { TabsContent } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { TradablePerfume } from "@/types/perfume";
+import { TradablePerfumeForInsert } from "@/types/perfume";
 import {
 	User,
 	Phone,
@@ -38,7 +38,7 @@ function TabContact({
 }: {
 	containerVariants: any;
 	itemVariants: any;
-	formData: TradablePerfume;
+	formData: TradablePerfumeForInsert;
 	handleChange: (
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
 	) => void;
@@ -46,7 +46,7 @@ function TabContact({
 }) {
 	// Calculate how many contact methods are filled
 	const contactMethodsCount = [
-		formData.phoneNumber,
+		formData.phone_number,
 		formData.facebook,
 		formData.line,
 	].filter((method) => method && method.trim() !== "").length;
@@ -122,7 +122,7 @@ function TabContact({
 					<div className="space-y-2">
 						<div className="flex items-center justify-between">
 							<Label
-								htmlFor="phoneNumber"
+								htmlFor="phone_number"
 								className="text-sm font-medium flex items-center"
 							>
 								<Phone className="h-4 w-4 mr-2 text-primary/70" />
@@ -148,9 +148,10 @@ function TabContact({
 							</TooltipProvider>
 						</div>
 						<Input
-							id="phoneNumber"
-							name="phoneNumber"
-							value={formData.phoneNumber || ""}
+							id="phone_number"
+							name="phone_number"
+                            type="tel"
+							value={formData.phone_number || ""}
 							onChange={handleChange}
 							placeholder="e.g., 089-123-4567"
 							className="border-input focus-visible:ring-primary/50"
@@ -213,7 +214,7 @@ function TabContact({
 						<Button
 							type="submit"
 							className="w-full max-w-md bg-primary hover:bg-primary/90 text-primary-foreground"
-							disabled={loading || !formData.userName}
+							disabled={loading || !formData.user_name}
 						>
 							{loading ? (
 								<>

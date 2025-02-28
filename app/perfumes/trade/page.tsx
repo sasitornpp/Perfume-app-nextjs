@@ -34,8 +34,9 @@ import PerfumeCard from "@/components/perfume_card";
 
 function Search() {
 	const perfumeState = useSelector(
-		(state: RootState) => state.perfume.tradeable_perfume,
+		(state: RootState) => state.perfumes.tradablePerfumes,
 	);
+	console.log(perfumeState);
 	const [searchQuery, setSearchQuery] = useState(false);
 	const [filters, setFilters] = useState<Filters>(FiltersPerfumeValues);
 	const [currentPage, setCurrentPage] = useState(1);
@@ -318,7 +319,7 @@ function Search() {
 							}}
 							className="hover:scale-105 transition-transform my-2"
 						>
-							{/* <PerfumeCard perfume={perfume} index={index} /> */}
+							<PerfumeCard perfume={perfume} index={index} />
 						</motion.div>
 					))}
 				</motion.div>

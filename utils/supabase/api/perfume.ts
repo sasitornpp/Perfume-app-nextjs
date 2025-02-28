@@ -2,118 +2,119 @@
 
 import { FetchPerfumeResult } from "@/types/perfume";
 import { supabaseClient } from "@/utils/supabase/client";
-import { TradablePerfume } from "@/types/perfume";
+import { TradablePerfumeForInsert } from "@/types/perfume";
 import { v4 as uuidv4 } from "uuid";
+import { c } from "framer-motion/dist/types.d-6pKw1mTI";
 
 export async function FetchPerfumes(): Promise<FetchPerfumeResult> {
-  try {
-    const { data, error } = await supabaseClient.from("perfumes").select("*");
+	try {
+		const { data, error } = await supabaseClient
+			.from("perfumes")
+			.select("*");
 
-    if (error) {
-      return { data: null, error: error.message };
-    }
+		if (error) {
+			return { data: null, error: error.message };
+		}
 
-    return { data, error: null };
-  } catch (error) {
-    return { data: null, error: "An unexpected error occurred." };
-  }
+		return { data, error: null };
+	} catch (error) {
+		return { data: null, error: "An unexpected error occurred." };
+	}
 }
 
 export const FetchTradablePerfume = async () => {
-  try {
-    const { data, error } = await supabaseClient
-      .from("tradable_perfumes")
-      .select("*");
+	try {
+		const { data, error } = await supabaseClient
+			.from("tradable_perfumes")
+			.select("*");
 
-    if (error) {
-      return { data: null, error: error.message };
-    }
+		if (error) {
+			return { data: null, error: error.message };
+		}
 
-    return { data, error: null };
-  } catch (error) {
-    return { data: null, error: "An unexpected error occurred." };
-  }
+		return { data, error: null };
+	} catch (error) {
+		return { data: null, error: "An unexpected error occurred." };
+	}
 };
 
 export const RemoveTradablePerfumes = async ({ id }: { id: string }) => {
-  try {
-    const { error } = await supabaseClient
-      .from("tradable_perfumes")
-      .delete()
-      .eq("id", id);
+	try {
+		const { error } = await supabaseClient
+			.from("tradable_perfumes")
+			.delete()
+			.eq("id", id);
 
-    if (error) {
-      return (error as any).message;
-    }
+		if (error) {
+			return (error as any).message;
+		}
 
-    return null;
-  } catch (error) {
-    return "An unexpected error occurred.";
-  }
+		return null;
+	} catch (error) {
+		return "An unexpected error occurred.";
+	}
 };
 
-const uploadImagesToSupabase = async (images: File[]) => {
-  const imageUrls = await Promise.all(
-    images.map(async (file) => {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${uuidv4()}.${fileExt}`;
-      const filePath = `TradablePerfume/${fileName}`;
+export const uploadImagesToSupabase = async (
+	folder_name: string,
+	images: File[],
+) => {
+	const uploadedFiles: { filePath: string; publicUrl: string }[] = [];
 
-      try {
-        const { error } = await supabaseClient.storage
-          .from("IMAGES")
-          .upload(filePath, file);
+	try {
+		const results = await Promise.all(
+			images.map(async (file) => {
+				const fileExt = file.name.split(".").pop();
+				const fileName = `${uuidv4()}.${fileExt}`;
+				const filePath = `${folder_name}/${fileName}`;
 
-        if (error) {
-          return null;
-        }
+				try {
+					const { error } = await supabaseClient.storage
+						.from("IMAGES")
+						.upload(filePath, file);
 
-        const { data: publicUrlData } = supabaseClient.storage
-          .from("IMAGES")
-          .getPublicUrl(filePath);
+					if (error) {
+						return null;
+					}
 
-        if (!publicUrlData) {
-          return null;
-        }
+					const { data: publicUrlData } = supabaseClient.storage
+						.from("IMAGES")
+						.getPublicUrl(filePath);
 
-        return publicUrlData.publicUrl as string;
-      } catch (error) {
-        return null;
-      }
-    })
-  );
+					if (!publicUrlData) {
+						return null;
+					}
 
-  return imageUrls.filter((url) => url !== null) as string[];
+					uploadedFiles.push({
+						filePath,
+						publicUrl: publicUrlData.publicUrl,
+					});
+					return { filePath, publicUrl: publicUrlData.publicUrl };
+				} catch (error) {
+					return null;
+				}
+			}),
+		);
+
+		return {
+			uploadedFiles,
+			results: results.filter(
+				(result): result is { filePath: string; publicUrl: string } =>
+					result !== null,
+			),
+		};
+	} catch (error) {
+		await rollbackUploadedFiles(uploadedFiles.map((file) => file.filePath));
+		return { uploadedFiles: [], results: [] };
+	}
 };
 
-export const InsertTradablePerfume = async ({
-  tradablePerfume,
-}: {
-  tradablePerfume: TradablePerfume;
-}) => {
-  try {
-    const imageUrls = await uploadImagesToSupabase(tradablePerfume.imagesFiles);
-    const { data } = await supabaseClient.auth.getUser();
-    const user = data.user;
-
-    await supabaseClient.from("tradable_perfumes").insert({
-      name: tradablePerfume.name,
-      descriptions: tradablePerfume.descriptions,
-      gender: tradablePerfume.gender,
-      brand: tradablePerfume.brand,
-      concentration: tradablePerfume.concentration,
-      scent_type: tradablePerfume.scentType,
-      price: tradablePerfume.price,
-      volume: tradablePerfume.volume,
-      userName: user?.email,
-      images: imageUrls,
-      top_note: tradablePerfume.topNotes,
-      middle_note: tradablePerfume.middleNotes,
-      base_note: tradablePerfume.baseNotes,
-    });
-
-    return "success fully added";
-  } catch (error) {
-    return (error as any).message;
-  }
+export const rollbackUploadedFiles = async (filePaths: string[]) => {
+	try {
+		if (filePaths.length === 0) return;
+        console.log(filePaths);
+		await supabaseClient.storage.from("IMAGES").remove(filePaths);
+	} catch (error) {
+		console.error("Error during rollback:", error);
+	}
 };

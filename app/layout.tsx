@@ -6,7 +6,8 @@ import "@/styles/globals.css";
 import React from "react";
 import { store } from "@/redux/Store";
 import { Provider } from "react-redux";
-import ProviderComponent from "@/app/provider";
+import Container from "@/components/container-setup";
+import Loading from "@/app/loading";
 
 export default function RootLayout({
 	children,
@@ -27,7 +28,9 @@ export default function RootLayout({
 					disableTransitionOnChange
 				>
 					<Provider store={store}>
-						<ProviderComponent>{children} </ProviderComponent>
+						<Container>
+							<Loading>{children}</Loading>{" "}
+						</Container>
 					</Provider>
 				</ThemeProvider>
 			</body>

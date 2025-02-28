@@ -34,7 +34,7 @@ import PerfumeCard from "@/components/perfume_card";
 
 function Search() {
 	const perfumeState = useSelector(
-		(state: RootState) => state.perfume.perfume,
+		(state: RootState) => state.perfumes.perfumes,
 	);
 	const [searchQuery, setSearchQuery] = useState(false);
 	const [filters, setFilters] = useState<Filters>(FiltersPerfumeValues);

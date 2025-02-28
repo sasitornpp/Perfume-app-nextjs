@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Info as InfoCircledIcon } from "lucide-react";
 import { TabsContent } from "@/components/ui/tabs";
-import { TradablePerfume } from "@/types/perfume";
+import { TradablePerfumeForInsert } from "@/types/perfume";
 
 const TabDetails = ({
 	containerVariants,
@@ -30,11 +30,11 @@ const TabDetails = ({
 }: {
 	containerVariants: any;
 	itemVariants: any;
-	formData: TradablePerfume;
+	formData: TradablePerfumeForInsert;
 	handleChange: (
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
 	) => void;
-	setFormData: React.Dispatch<React.SetStateAction<TradablePerfume>>;
+	setFormData: React.Dispatch<React.SetStateAction<TradablePerfumeForInsert>>;
 }) => {
 	return (
 		<TabsContent value="details" className="m-0 p-0">
@@ -334,7 +334,7 @@ const TabDetails = ({
 									</Label>
 									<Select
 										name="scentType"
-										value={formData.scentType || ""}
+										value={formData.scent_type || ""}
 										onValueChange={(value) =>
 											setFormData((prev) => ({
 												...prev,

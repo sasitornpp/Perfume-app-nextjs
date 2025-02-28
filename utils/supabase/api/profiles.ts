@@ -56,7 +56,7 @@ export const createProfile = async (data: {
 
 export const updateProfile = async (data: {
 	columns: string;
-	values: SuggestionsPerfumes;
+	values: SuggestionsPerfumes | string[] | string;
 }) => {
 	const { columns, values } = data;
 	const userId = (await supabaseClient.auth.getUser()).data.user?.id;

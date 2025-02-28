@@ -4,14 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/Store";
 import { useRouter } from "next/navigation";
-import {
-	ArrowLeft,
-	Star,
-	Heart,
-	Share2,
-	ShoppingBag,
-	ChevronDown,
-} from "lucide-react";
+import { ArrowLeft, Star, Heart, ShoppingBag, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
 	Card,
@@ -27,17 +20,36 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
+import { useDispatch } from "react-redux";
+import { updateWishlist } from "@/redux/user/userReducer";
 
 function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 	const router = useRouter();
+	const dispatch = useDispatch();
 	const unwrappedParams = React.use(params); // Unwrap the params
 	const perfume = useSelector((state: RootState) =>
-		state.perfume.perfume.find((p) => p.id === unwrappedParams.perfumeId),
+		state.perfumes.perfumes.find((p) => p.id === unwrappedParams.perfumeId),
 	);
+	const wishlist = useSelector(
+		(state: RootState) => state.user.profile?.wishlist || [],
+	);
+	const isInWishlist = perfume ? wishlist.includes(perfume.id) : false;
+
+	const handleFavoriteClick = (e: React.MouseEvent) => {
+		e.stopPropagation();
+		if (!perfume) return;
+
+		if (isInWishlist) {
+			const updatedWishlist = wishlist.filter((id) => id !== perfume.id);
+			dispatch(updateWishlist({ wishlist: updatedWishlist }));
+		} else {
+			const updatedWishlist = [...wishlist, perfume.id];
+			dispatch(updateWishlist({ wishlist: updatedWishlist }));
+		}
+	};
 
 	const [activeImage, setActiveImage] = useState(0);
 	const [showMore, setShowMore] = useState(false);
-	const [liked, setLiked] = useState(false);
 	const [loadingProgress, setLoadingProgress] = useState(0);
 
 	useEffect(() => {
@@ -195,10 +207,10 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 									className="absolute top-4 right-4 p-2 bg-background/80 backdrop-blur-sm rounded-full shadow-md z-10"
 									whileHover={{ scale: 1.1 }}
 									whileTap={{ scale: 0.95 }}
-									onClick={() => setLiked(!liked)}
+									onClick={handleFavoriteClick}
 								>
 									<Heart
-										className={`h-5 w-5 ${liked ? "fill-destructive text-destructive" : "text-foreground"}`}
+										className={`h-5 w-5 ${isInWishlist ? "fill-destructive text-destructive" : "text-foreground"}`}
 									/>
 								</motion.button>
 							</motion.div>

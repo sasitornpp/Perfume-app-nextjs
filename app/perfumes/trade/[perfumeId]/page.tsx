@@ -32,7 +32,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 	const router = useRouter();
 	const unwrappedParams = React.use(params); // Unwrap the params
 	const perfume = useSelector((state: RootState) =>
-		state.perfume.tradeable_perfume.find(
+		state.perfumes.tradablePerfumes.find(
 			(p) => p.id === unwrappedParams.perfumeId,
 		),
 	);
@@ -108,8 +108,8 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 	];
 
 	const truncatedDescription =
-		perfume?.descriptions?.length > 150
-			? `${perfume.descriptions.substring(0, 150)}...`
+		(perfume?.descriptions ?? "").length > 150
+			? `${perfume.descriptions?.substring(0, 150)}...`
 			: (perfume?.descriptions ?? "");
 
 	return (
@@ -191,45 +191,6 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 							</div>
 						</CardContent>
 					</Card>
-
-					<Card className="w-full mt-6 border-border/50 bg-card shadow-sm rounded-lg">
-						<CardHeader className="pb-2">
-							<CardTitle className="text-lg font-medium text-card-foreground">
-								Fragrance Profile
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div className="space-y-4">
-								{sentimentCategories.map((category) => (
-									<div
-										key={category.name}
-										className="space-y-1"
-									>
-										<div className="flex justify-between text-sm">
-											<span className="text-muted-foreground">
-												{category.name}
-											</span>
-											<span className="font-medium text-foreground">
-												{category.score}%
-											</span>
-										</div>
-										<motion.div
-											initial={{ width: 0 }}
-											animate={{
-												width: `${category.score}%`,
-											}}
-											transition={{
-												duration: 1,
-												delay: 0.5,
-												ease: "easeOut",
-											}}
-											className="h-2 bg-primary/80 rounded-full"
-										/>
-									</div>
-								))}
-							</div>
-						</CardContent>
-					</Card>
 				</motion.div>
 
 				{/* Right Column - Details */}
@@ -262,7 +223,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 										·
 									</span>
 									<span className="text-muted-foreground text-sm">
-										{perfume.totalVotes} reviews
+										{perfume.total_votes} reviews
 									</span>
 								</div>
 								<Badge className="bg-accent text-accent-foreground">
@@ -285,7 +246,8 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 											? perfume.descriptions
 											: truncatedDescription}
 									</p>
-									{perfume?.descriptions?.length > 150 && (
+									{(perfume?.descriptions ?? "").length >
+										150 && (
 										<Button
 											variant="ghost"
 											size="sm"
@@ -409,7 +371,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 												</h3>
 											</div>
 											<ul className="space-y-2 pl-1">
-												{perfume.topNotes?.map(
+												{perfume.top_note?.map(
 													(note, index) => (
 														<motion.li
 															key={index}
@@ -454,7 +416,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 												</h3>
 											</div>
 											<ul className="space-y-2 pl-1">
-												{perfume.middleNotes?.map(
+												{perfume.middle_note?.map(
 													(note, index) => (
 														<motion.li
 															key={index}
@@ -499,7 +461,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 												</h3>
 											</div>
 											<ul className="space-y-2 pl-1">
-												{perfume.baseNotes?.map(
+												{perfume.base_note?.map(
 													(note, index) => (
 														<motion.li
 															key={index}
