@@ -1,69 +1,92 @@
 import { supabaseClient } from "@/utils/supabase/client";
+import { SuggestionsPerfumes } from "@/types/profile";
+import { UserResponse } from "@supabase/supabase-js";
 
 const uploadProfileImage = async (file: File, fileName: string) => {
-  const { error: uploadError } = await supabaseClient.storage
-    .from("IMAGES")
-    .upload(`Avatars/${fileName}`, file);
+	const { error: uploadError } = await supabaseClient.storage
+		.from("IMAGES")
+		.upload(`Avatars/${fileName}`, file);
 
-  if (uploadError) {
-    throw new Error(`Error uploading file: ${uploadError.message}`);
-  }
+	if (uploadError) {
+		throw new Error(`Error uploading file: ${uploadError.message}`);
+	}
 
-  const { data: publicUrlData } = supabaseClient.storage
-    .from("IMAGES")
-    .getPublicUrl(`Avatars/${fileName}`);
+	const { data: publicUrlData } = supabaseClient.storage
+		.from("IMAGES")
+		.getPublicUrl(`Avatars/${fileName}`);
 
-  return publicUrlData?.publicUrl || null;
+	return publicUrlData?.publicUrl || null;
 };
 
 export const createProfile = async (data: {
-  userId: string;
-  name: string;
-  gender: string;
-  bio: string;
-  imgFiles?: File | null;
+	name: string;
+	gender: string;
+	bio: string;
+	imgFiles?: File | null;
 }) => {
-  const { name, bio, imgFiles, userId, gender } = data;
+	const { name, bio, imgFiles, gender } = data;
 
-  let avatarUrl = null;
+	let avatarUrl = null;
 
-  if (imgFiles) {
-    avatarUrl = await uploadProfileImage(imgFiles, userId);
-  }
+	const user = (await supabaseClient.auth.getUser()).data;
 
-  const { data: profileData, error: profileError } = await supabaseClient
-    .from("profiles")
-    .insert({
-      name: name,
-      bio: bio,
-      gender: gender,
-      images: avatarUrl,
-    });
+	if (user === null) {
+		throw new Error("User not found");
+	}
 
-  if (profileError) {
-    throw new Error(`Error creating profile: ${profileError.message}`);
-  }
+	if (imgFiles) {
+		avatarUrl = await uploadProfileImage(imgFiles, user.user?.id as string);
+	}
 
-  return profileData;
+	const { data: profileData, error: profileError } = await supabaseClient
+		.from("profiles")
+		.insert({
+			name: name,
+			bio: bio,
+			gender: gender,
+			images: avatarUrl,
+		});
+
+	if (profileError) {
+		throw new Error(`Error creating profile: ${profileError.message}`);
+	}
+
+	return profileData;
 };
 
-export const UpdateProfile = async (data: {
-  userId: string;
-  columns: string;
-  values: string | JSON;
+export const updateProfile = async (data: {
+	columns: string;
+	values: SuggestionsPerfumes;
 }) => {
-  const { userId, columns, values } = data;
+	const { columns, values } = data;
+	const userId = (await supabaseClient.auth.getUser()).data.user?.id;
 
-  const { data: profileData, error: profileError } = await supabaseClient
-    .from("profiles")
-    .update({
-      [columns]: values,
-    })
-    .eq("id", userId);
+    if (!userId) {
+        throw new Error("User not found");
+    }
+    
+	const { data: profileData, error: profileError } = await supabaseClient
+		.from("profiles")
+		.update({
+			[columns]: values,
+		})
+		.eq("id", userId);
 
-  if (profileError) {
-    throw new Error(`Error updating profile: ${profileError.message}`);
-  }
+	if (profileError) {
+		throw new Error(`Error updating profile: ${profileError.message}`);
+	}
 
-  return profileData;
+	return profileData;
 };
+
+export function fetchProfile(userId: string) {
+	return supabaseClient
+		.from("profiles")
+		.select("*")
+		.eq("id", userId)
+		.single();
+}
+
+export function getUser() {
+	return supabaseClient.auth.getUser();
+}

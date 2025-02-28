@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Perfume } from "@/types/perfume";
 
 export function encodedRedirect(
   type: "error" | "success",

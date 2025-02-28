@@ -92,7 +92,7 @@ export const InsertTradablePerfume = async ({
   tradablePerfume: TradablePerfume;
 }) => {
   try {
-    const imageUrls = await uploadImagesToSupabase(tradablePerfume.images);
+    const imageUrls = await uploadImagesToSupabase(tradablePerfume.imagesFiles);
     const { data } = await supabaseClient.auth.getUser();
     const user = data.user;
 

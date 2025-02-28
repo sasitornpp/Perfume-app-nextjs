@@ -25,6 +25,9 @@ const perfumeSlice = createSlice({
     name: 'perfume',
     initialState,
     reducers: {
+        setAllPerfumes: (state, action: PayloadAction<Perfume[]>) => {
+            state.perfume = action.payload;
+        },
         addPerfumes: (state, action: PayloadAction<Perfume[]>) => {
             state.perfume = [...state.perfume, ...action.payload].reduce((acc, curr) => {
                 if (!acc.find((perfume) => perfume.id === curr.id)) {
@@ -53,5 +56,5 @@ const perfumeSlice = createSlice({
     }
 });
 
-export const { addPerfumes, addTradablePerfumes, removeTradablePerfumes } = perfumeSlice.actions;
+export const { setAllPerfumes, addPerfumes, addTradablePerfumes, removeTradablePerfumes } = perfumeSlice.actions;
 export default perfumeSlice.reducer;
