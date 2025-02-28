@@ -256,7 +256,7 @@ function Home() {
 
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 					{trendingPerfumes.map((perfume, index) => (
-						<Link href={`/perfume/${perfume.id}`} key={perfume.id}>
+						<Link href={`/perfumes/${perfume.id}`} key={perfume.id}>
 							<Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02]">
 								<CardContent className="p-0 flex flex-col h-full">
 									<div className="flex p-4 items-center gap-3">
