@@ -46,31 +46,56 @@ export const FiltersPerfumeValues = {
 };
 
 export interface TradablePerfume {
-    id: string;
-    name: string;
-    descriptions: string;
-    gender: string | null;
-    brand: string | null;
-    concentration: string | null;
-    scentType: string | null;
-    price: number;
-    volume: number;
-    userId: string;
-    userName: string;
-    images: string[];
-    imagesFiles: File[];
-    topNotes: string[] | null;
-    middleNotes: string[] | null;
-    baseNotes: string[] | null;
-    facebook: string | null;
-    line: string | null;
-    phoneNumber: string | null;
-    imagePreviews?: [],
-    accords: [""],
-    perfumer: string | null;
-    rating?: number;
-    totalVotes?: number;
+	id: string;
+	name: string;
+	descriptions: string;
+	gender: string | null;
+	brand: string | null;
+	concentration: string | null;
+	scentType: string | null;
+	price: number;
+	volume: number;
+	userId: string;
+	userName: string;
+	images: string[];
+	imagesFiles: File[];
+	topNotes: string[] | null;
+	middleNotes: string[] | null;
+	baseNotes: string[] | null;
+	facebook: string | null;
+	line: string | null;
+	phoneNumber: string | null;
+	imagePreviews?: [];
+	accords: [""];
+	perfumer: string | null;
+	rating?: number;
+	totalVotes?: number;
 }
+
+export const TradablePerfumeInitialState: TradablePerfume = {
+	id: "",
+	name: "",
+	descriptions: "",
+	gender: "",
+	brand: "",
+	concentration: "",
+	scentType: "",
+	price: 0,
+	volume: 0,
+	topNotes: [""],
+	middleNotes: [""],
+	baseNotes: [""],
+	images: [],
+	imagePreviews: [],
+	imagesFiles: [],
+	accords: [""],
+	perfumer: "",
+	userId: "",
+	userName: "",
+	facebook: "",
+	line: "",
+	phoneNumber: "",
+};
 
 export type SituationType = "daily" | "formal" | "date" | "party" | "exercise";
 
@@ -225,4 +250,3 @@ export const situation: Record<SituationType, string[]> = {
 		"Aquatic",
 	],
 };
-

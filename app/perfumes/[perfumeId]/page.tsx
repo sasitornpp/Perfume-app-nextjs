@@ -98,13 +98,13 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 		);
 	}
 
-	// Calculate sentiment scores for visualization
-	const sentimentCategories = [
-		{ name: "Longevity", score: Math.floor(perfume.rating * 10) },
-		{ name: "Sillage", score: Math.floor(perfume.rating * 12) - 10 },
-		{ name: "Value", score: Math.floor(perfume.rating * 9) },
-		{ name: "Uniqueness", score: Math.floor(perfume.rating * 11) - 5 },
-	];
+	// // Calculate sentiment scores for visualization
+	// const sentimentCategories = [
+	// 	{ name: "Longevity", score: Math.floor(perfume.rating * 10) },
+	// 	{ name: "Sillage", score: Math.floor(perfume.rating * 12) - 10 },
+	// 	{ name: "Value", score: Math.floor(perfume.rating * 9) },
+	// 	{ name: "Uniqueness", score: Math.floor(perfume.rating * 11) - 5 },
+	// ];
 
 	const truncatedDescription =
 		perfume?.descriptions?.length > 150
@@ -226,7 +226,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 						</CardContent>
 					</Card>
 
-					<Card className="w-full mt-6 border-border/50 bg-card shadow-sm rounded-lg">
+					{/* <Card className="w-full mt-6 border-border/50 bg-card shadow-sm rounded-lg">
 						<CardHeader className="pb-2">
 							<CardTitle className="text-lg font-medium text-card-foreground">
 								Fragrance Profile
@@ -263,7 +263,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 								))}
 							</div>
 						</CardContent>
-					</Card>
+					</Card> */}
 				</motion.div>
 
 				{/* Right Column - Details */}

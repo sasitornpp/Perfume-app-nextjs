@@ -367,7 +367,7 @@ function Search() {
 				className="mt-6 p-4"
 			>
 				<Pagination>
-					<PaginationContent>
+					<PaginationContent className="select-none">
 						<PaginationItem>
 							<PaginationPrevious
 								onClick={() =>
