@@ -1,18 +1,4 @@
-export interface SuggestionsPerfumes {
-	favoriteScent: string;
-	customScent: string;
-	favoriteBrand: string;
-	customBrand: string;
-	rating: number;
-	topNotes: string;
-	customTopNotes: string;
-	middleNotes: string;
-	customMiddleNotes: string;
-	baseNotes: string;
-	customBaseNotes: string;
-	situation: string[];
-	customSituation: string;
-}
+import { suggestedPerfume, Filters } from "./perfume";
 
 export interface Profile {
     id: string;
@@ -20,7 +6,7 @@ export interface Profile {
     bio: string | null;
     gender: string;
     images: string | null;
-    suggestions_perfumes: SuggestionsPerfumes | null;
+    suggestions_perfumes: suggestedPerfume[] | null;
     my_perfume: string[] | null;
     wishlist: string[] | null;
     basket: string[] | null;

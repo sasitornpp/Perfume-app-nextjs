@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/Store";
-import { Perfume } from "@/types/perfume";
+import { suggestedPerfume } from "@/types/perfume";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
@@ -17,7 +17,7 @@ function PerfumeCard({
 	perfume,
 	index,
 }: {
-	perfume: Perfume | TradablePerfume;
+	perfume: suggestedPerfume | TradablePerfume;
 	index: number;
 }) {
 	const [isHovered, setIsHovered] = useState(false);
@@ -75,6 +75,18 @@ function PerfumeCard({
 					/>
 				</div>
 
+                {/* Match score positioned at top-left */}
+                {"match_score" in perfume && (
+                    <div className="absolute top-4 left-4 z-10">
+                        <div className="flex flex-col items-center justify-center rounded-full bg-background/80 backdrop-blur-sm text-primary w-16 h-16 text-center">
+                            <span className="text-xs font-medium">
+                                {Math.round(perfume.match_score ?? 0)}%
+                            </span>
+                            <span className="text-[0.6rem] font-medium">match</span>
+                        </div>
+                    </div>
+                )}
+
 				<Link
 					href={`${isTradable ? `/perfumes/trade/${perfume.id}` : `/perfumes/${perfume.id}`}`}
 					className="block"
@@ -115,6 +127,7 @@ function PerfumeCard({
 								<h4 className="text-sm text-muted-foreground font-medium">
 									{perfume.brand}
 								</h4>
+								{/* Removed match_score from here */}
 							</div>
 
 							{perfume.descriptions && (
@@ -132,7 +145,7 @@ function PerfumeCard({
 											y: isHovered ? -2 + i * -1 : 0,
 										}}
 										className={`text-xs rounded-full px-3 py-1 font-medium transition-colors duration-300 
-                      ${i === 0 ? "bg-primary/15 text-primary" : i === 1 ? "bg-secondary/15 text-secondary-foreground" : "bg-accent/20 text-accent-foreground"}`}
+                ${i === 0 ? "bg-primary/15 text-primary" : i === 1 ? "bg-secondary/15 text-secondary-foreground" : "bg-accent/20 text-accent-foreground"}`}
 									>
 										{accord}
 									</motion.span>

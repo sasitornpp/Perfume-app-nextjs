@@ -17,7 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Perfume } from "@/types/perfume";
-import { filterSuggestionsPerfumes } from "@/utils/functions/filter_perfume";
 import {
 	User,
 	Settings,
@@ -34,6 +33,22 @@ import { useSearchParams, useRouter } from "next/navigation";
 import PerfumeCard from "@/components/perfume_card";
 import { useDispatch } from "react-redux";
 import { updateBasket } from "@/redux/user/userReducer";
+import { createSelector } from "reselect";
+
+const selectTradablePerfumes = (state: RootState) =>
+	state.perfumes.tradablePerfumes;
+
+const selectFilteredTradablePerfumes = (perfume_ids: string[] | undefined) =>
+	createSelector([selectTradablePerfumes], (tradablePerfumes) =>
+		tradablePerfumes.filter((perfume) => perfume_ids?.includes(perfume.id)),
+	);
+
+const selectBasketItems = (profile: { basket?: string[] | null } | null) =>
+	createSelector([selectTradablePerfumes], (tradablePerfumes) =>
+		tradablePerfumes.filter((perfume) =>
+			profile?.basket?.includes(perfume.id),
+		),
+	);
 
 function ProfilePage() {
 	const searchParams = useSearchParams();
@@ -50,22 +65,16 @@ function ProfilePage() {
 
 	const perfume_ids = profile?.my_perfume || [];
 
-	const tradablePerfumes = useSelector((state: RootState) =>
-		state.perfumes.tradablePerfumes.filter((perfume) =>
-			perfume_ids?.includes(perfume.id),
-		),
-	);
-
-	const basketItems = useSelector((state: RootState) =>
-		state.perfumes.tradablePerfumes.filter((perfume) =>
-			profile?.basket?.includes(perfume.id),
-		),
-	);
+	const filteredTradablePerfumesSelector =
+		selectFilteredTradablePerfumes(perfume_ids);
+	const basketItemsSelector = selectBasketItems(profile);
+	const basketItems = useSelector(basketItemsSelector);
+	const tradablePerfumes = useSelector(filteredTradablePerfumesSelector);
 	const perfumes = useSelector((state: RootState) => state.perfumes.perfumes);
 
-	const [suggestionsPerfumes, setSuggestionsPerfumes] = useState<Perfume[]>(
-		[],
-	);
+	const suggestionsPerfumes = useSelector(
+        (state: RootState) => state.user.profile?.suggestions_perfumes || [],
+    );
 
 	const wishlistPerfumes = useSelector((state: RootState) => {
 		const allWishlistPerfumes = [
@@ -78,16 +87,6 @@ function ProfilePage() {
 		];
 		return allWishlistPerfumes;
 	});
-
-	useEffect(() => {
-		if (profile?.suggestions_perfumes) {
-			const filtered = filterSuggestionsPerfumes(
-				profile.suggestions_perfumes,
-				perfumes,
-			);
-			setSuggestionsPerfumes(filtered);
-		}
-	}, [profile?.suggestions_perfumes, perfumes]);
 
 	// Handle tab change and update URL
 	const handleTabChange = (value: string) => {
@@ -229,6 +228,15 @@ function ProfilePage() {
 							>
 								<Share2 className="h-4 w-4" />
 								<span>Share</span>
+							</Button>
+							<Button
+								variant="outline"
+								size="sm"
+								className="flex items-center gap-1"
+                                onClick={() => router.push("/profile/settings")}
+							>
+								<Settings className="h-4 w-4" />
+								Settings
 							</Button>
 						</div>
 					</div>
@@ -451,7 +459,7 @@ function ProfilePage() {
 											</div>
 										)}
 										{perfume.gender && (
-											<div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+											<div className="absolute top-2 right-2 bg-background text-foreground text-xs px-2 py-1 rounded-full">
 												{perfume.gender}
 											</div>
 										)}
@@ -528,7 +536,13 @@ function ProfilePage() {
 									Browse recommendations or search for
 									perfumes to add them to your basket
 								</p>
-								<Button onClick={() => router.push("/perfumes/trade")}>Explore Perfumes</Button>
+								<Button
+									onClick={() =>
+										router.push("/perfumes/trade")
+									}
+								>
+									Explore Perfumes
+								</Button>
 							</div>
 						)}
 					</div>

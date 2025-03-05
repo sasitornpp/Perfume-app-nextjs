@@ -5,10 +5,7 @@ import Image from "next/image";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/Store";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import {
-	getUniqueBrandsWithLogo,
-	filterSuggestionsPerfumes,
-} from "@/utils/functions/filter_perfume";
+import { getUniqueBrandsWithLogo } from "@/utils/functions/filter_perfume";
 import { Card, CardContent } from "@/components/ui/card";
 import { Perfume } from "@/types/perfume";
 import { Button } from "@/components/ui/button";
@@ -19,7 +16,6 @@ import {
 	Sparkles,
 	Search,
 	Compass,
-	TrendingUp,
 	Star,
 	ArrowRight,
 	Gift,
@@ -28,13 +24,13 @@ import {
 	BadgePercent,
 	ChevronRight,
 	Droplets,
-	Zap,
 } from "lucide-react";
 
 function PerfumeLandingPage() {
 	const unsortedPerfumes = useSelector(
 		(state: RootState) => state.perfumes.perfumes,
 	);
+
 	const perfumes = React.useMemo(
 		() =>
 			[...unsortedPerfumes].sort((a, b) => a.name.localeCompare(b.name)),
@@ -44,13 +40,13 @@ function PerfumeLandingPage() {
 	const perfumesBrand = getUniqueBrandsWithLogo(perfumes);
 	const router = useRouter();
 
-	const [suggestionsPerfumes, setSuggestionsPerfumes] = useState<Perfume[]>(
-		[],
+	const suggestionsPerfumes = useSelector(
+		(state: RootState) => state.user.profile?.suggestions_perfumes,
 	);
+
 	const [featuredPerfume, setFeaturedPerfume] = useState<Perfume | null>(
 		null,
 	);
-	const [activeTab, setActiveTab] = useState("trending");
 	const [isVisible, setIsVisible] = useState(false);
 	const [hoveredBrandIndex, setHoveredBrandIndex] = useState<number | null>(
 		null,
@@ -59,16 +55,12 @@ function PerfumeLandingPage() {
 	useEffect(() => {
 		setIsVisible(true);
 
-		if (profile?.suggestions_perfumes) {
-			const filtered = filterSuggestionsPerfumes(
-				profile.suggestions_perfumes,
-				perfumes,
-			);
-			setSuggestionsPerfumes(filtered);
-
-			if (filtered.length > 0) {
+		if (profile?.suggestions_perfumes && suggestionsPerfumes) {
+			if (suggestionsPerfumes.length > 0) {
 				setFeaturedPerfume(
-					filtered[Math.floor(Math.random() * filtered.length)],
+					suggestionsPerfumes[
+						Math.floor(Math.random() * suggestionsPerfumes.length)
+					],
 				);
 			} else if (perfumes.length > 0) {
 				setFeaturedPerfume(
@@ -117,35 +109,13 @@ function PerfumeLandingPage() {
 		},
 	};
 
-	// Filter for different perfume categories
-	const trendingPerfumes = perfumes.slice(0, 15);
-	const newArrivalsPerfumes = [...perfumes]
-		.sort(() => 0.5 - Math.random())
-		.slice(0, 15);
-	const bestSellersPerfumes = [...perfumes]
-		.sort(() => 0.5 - Math.random())
-		.slice(0, 15);
-
-	const displayPerfumes = () => {
-		switch (activeTab) {
-			case "trending":
-				return trendingPerfumes;
-			case "new":
-				return newArrivalsPerfumes;
-			case "best":
-				return bestSellersPerfumes;
-			default:
-				return trendingPerfumes;
-		}
-	};
-
 	return (
 		<motion.div
 			initial="hidden"
 			animate={isVisible ? "visible" : "hidden"}
 			variants={containerVariants}
 			className="max-w-7xl mx-auto px-4 sm:px-6 py-8 bg-background mt-16"
-            suppressHydrationWarning
+			suppressHydrationWarning
 		>
 			{/* Hero Section - Elegant and visually striking */}
 			<motion.div
@@ -153,7 +123,7 @@ function PerfumeLandingPage() {
 				className="rounded-xl overflow-hidden relative mb-12"
 			>
 				<div className="bg-gradient-to-br from-primary/90 to-primary/50 rounded-xl overflow-hidden">
-					<div className="absolute inset-0 bg-black opacity-5 z-10"></div>
+					<div className="absolute inset-0 bg-background opacity-5 z-10"></div>
 					<div className="grid md:grid-cols-2 gap-6 p-8 md:p-12 relative z-20">
 						<motion.div
 							variants={itemVariants}
@@ -373,7 +343,7 @@ function PerfumeLandingPage() {
 				</div>
 
 				<AnimatePresence>
-					{profile?.suggestions_perfumes ? (
+					{profile?.suggestions_perfumes && suggestionsPerfumes ? (
 						suggestionsPerfumes.length > 0 ? (
 							<motion.div
 								variants={fadeInVariants}
@@ -574,68 +544,13 @@ function PerfumeLandingPage() {
 						</Button>
 					</motion.div>
 				</div>
-
-				<motion.div
-					variants={itemVariants}
-					className="flex space-x-2 mb-6 border-b"
-				>
-					{[
-						{
-							id: "trending",
-							icon: <TrendingUp className="h-4 w-4 mr-2" />,
-							label: "Trending",
-						},
-						{
-							id: "new",
-							icon: <Zap className="h-4 w-4 mr-2" />,
-							label: "New Arrivals",
-						},
-						{
-							id: "best",
-							icon: <Star className="h-4 w-4 mr-2" />,
-							label: "Best Sellers",
-						},
-					].map((tab) => (
-						<motion.div
-							key={tab.id}
-							whileHover={{ y: -2 }}
-							whileTap={{ y: 0 }}
-						>
-							<Button
-								variant="ghost"
-								size="sm"
-								className={`relative rounded-none border-b-2 ${
-									activeTab === tab.id
-										? "border-primary text-primary font-medium"
-										: "border-transparent text-muted-foreground hover:text-foreground hover:border-accent/50"
-								}`}
-								onClick={() => setActiveTab(tab.id)}
-							>
-								{tab.icon} {tab.label}
-								{activeTab === tab.id && (
-									<motion.div
-										layoutId="activeTabIndicator"
-										className="absolute -bottom-[2px] left-0 right-0 h-0.5 bg-primary"
-										initial={false}
-										transition={{
-											type: "spring",
-											stiffness: 300,
-											damping: 30,
-										}}
-									/>
-								)}
-							</Button>
-						</motion.div>
-					))}
-				</motion.div>
-
 				<motion.div
 					variants={staggerVariants}
 					className="bg-card rounded-xl border shadow-sm hover:shadow-md transition-all overflow-hidden"
 				>
 					<AnimatePresence mode="wait">
 						<motion.div
-							key={activeTab}
+							key={profile?.suggestions_perfumes ? 1 : 2}
 							initial={{ opacity: 0, y: 20 }}
 							animate={{ opacity: 1, y: 0 }}
 							exit={{ opacity: 0, y: -20 }}
@@ -643,27 +558,31 @@ function PerfumeLandingPage() {
 						>
 							<ScrollArea className="w-full whitespace-nowrap py-6">
 								<div className="flex w-max space-x-6 px-6">
-									{displayPerfumes().map((perfume, index) => (
-										<motion.div
-											key={perfume.id}
-											initial={{ opacity: 0, y: 20 }}
-											animate={{ opacity: 1, y: 0 }}
-											transition={{
-												delay: index * 0.04,
-												duration: 0.3,
-											}}
-											whileHover={{
-												y: -8,
-												transition: { duration: 0.2 },
-											}}
-											className="transition-all duration-300"
-										>
-											<PerfumeCard
-												perfume={perfume}
-												index={index}
-											/>
-										</motion.div>
-									))}
+									{perfumes
+										.slice(0, 20)
+										.map((perfume, index) => (
+											<motion.div
+												key={perfume.id}
+												initial={{ opacity: 0, y: 20 }}
+												animate={{ opacity: 1, y: 0 }}
+												transition={{
+													delay: index * 0.04,
+													duration: 0.3,
+												}}
+												whileHover={{
+													y: -8,
+													transition: {
+														duration: 0.2,
+													},
+												}}
+												className="transition-all duration-300"
+											>
+												<PerfumeCard
+													perfume={perfume}
+													index={index}
+												/>
+											</motion.div>
+										))}
 								</div>
 								<ScrollBar orientation="horizontal" />
 							</ScrollArea>
@@ -756,7 +675,7 @@ function PerfumeLandingPage() {
 				<motion.div variants={fadeInVariants} className="mt-4">
 					<ScrollArea className="w-full whitespace-nowrap rounded-md">
 						<div className="flex w-max space-x-4 p-4">
-							{perfumesBrand.slice(6).map((brand, index) => (
+							{perfumesBrand.map((brand, index) => (
 								<motion.div
 									key={index}
 									initial={{ opacity: 0, scale: 0.9 }}

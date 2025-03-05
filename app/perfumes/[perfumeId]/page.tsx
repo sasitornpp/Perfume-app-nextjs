@@ -1,10 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/Store";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Star, Heart, ShoppingBag, ChevronDown } from "lucide-react";
+import {
+	ArrowLeft,
+	Star,
+	Heart,
+	ShoppingBag,
+	ChevronDown,
+	Loader2,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
 	Card,
@@ -21,50 +28,87 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
 import { useDispatch } from "react-redux";
-import { updateWishlist } from "@/redux/user/userReducer";
+import LoadingComponents from "@/components/loading";
+import { fetchPerfumeById } from "@/redux/perfume/perfumeReducer";
+import { AppDispatch } from "@/redux/Store";
+import CommentSection from "@/components/comment-section";
 
 function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 	const router = useRouter();
-	const dispatch = useDispatch();
-	const unwrappedParams = React.use(params); // Unwrap the params
-	const perfume = useSelector((state: RootState) =>
-		state.perfumes.perfumes.find((p) => p.id === unwrappedParams.perfumeId),
-	);
-	const wishlist = useSelector(
-		(state: RootState) => state.user.profile?.wishlist || [],
-	);
-	const isInWishlist = perfume ? wishlist.includes(perfume.id) : false;
+	const dispatch = useDispatch<AppDispatch>();
+	const unwrappedParams = use(params);
 
-	const handleFavoriteClick = (e: React.MouseEvent) => {
-		e.stopPropagation();
-		if (!perfume) return;
+	const perfumeState = useSelector(
+		(state: RootState) => state.perfumes.selectedPerfume,
+	);
 
-		if (isInWishlist) {
-			const updatedWishlist = wishlist.filter((id) => id !== perfume.id);
-			dispatch(updateWishlist({ wishlist: updatedWishlist }));
-		} else {
-			const updatedWishlist = [...wishlist, perfume.id];
-			dispatch(updateWishlist({ wishlist: updatedWishlist }));
+	useEffect(() => {
+		if (
+			!perfumeState.data ||
+			perfumeState.data.id !== unwrappedParams.perfumeId
+		) {
+			dispatch(
+				fetchPerfumeById({ perfumeId: unwrappedParams.perfumeId }),
+			);
 		}
-	};
+	}, [unwrappedParams.perfumeId, dispatch, perfumeState]);
+
+	const perfume = useSelector(
+		(state: RootState) => state.perfumes.selectedPerfume.data,
+	);
+
+	const errorMessages = useSelector(
+		(state: RootState) => state.perfumes.selectedPerfume.errorMessages,
+	);
+
+	const loading = useSelector((state: RootState) => state.perfumes.loading);
+
+	// const wishlist = useSelector(
+	// 	(state: RootState) => state.user.profile?.wishlist || [],
+	// );
+
+	// const isInWishlist = perfume ? wishlist.includes(perfume.id) : false;
+
+	// const handleFavoriteClick = (e: React.MouseEvent) => {
+	// 	e.stopPropagation();
+	// 	if (!perfume) return;
+
+	// 	if (isInWishlist) {
+	// 		const updatedWishlist = wishlist.filter((id) => id !== perfume.id);
+	// 		dispatch(updateWishlist({ wishlist: updatedWishlist }));
+	// 	} else {
+	// 		const updatedWishlist = [...wishlist, perfume.id];
+	// 		dispatch(updateWishlist({ wishlist: updatedWishlist }));
+	// 	}
+	// };
 
 	const [activeImage, setActiveImage] = useState(0);
 	const [showMore, setShowMore] = useState(false);
-	const [loadingProgress, setLoadingProgress] = useState(0);
+	// const [loadingProgress, setLoadingProgress] = useState(0);
 
-	useEffect(() => {
-		const timer = setTimeout(() => {
-			setLoadingProgress(100);
-		}, 500);
+	// useEffect(() => {
+	// 	const timer = setTimeout(() => {
+	// 		setLoadingProgress(100);
+	// 	}, 500);
 
-		return () => clearTimeout(timer);
-	}, []);
+	// 	return () => clearTimeout(timer);
+	// }, []);
 
 	const handleGoBack = () => {
 		router.back();
 	};
 
-	if (!perfume) {
+	if (loading) {
+		return (
+			<LoadingComponents
+				title="Loading Perfume Details"
+				description="Please wait while we fetch the fragrance
+							information..."
+			/>
+		);
+	}
+
+	if (!perfume || errorMessages) {
 		return (
 			<div className="container mx-auto px-4 py-8 min-h-screen flex flex-col items-center justify-center">
 				<motion.div
@@ -94,8 +138,8 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 								Perfume Not Found
 							</h2>
 							<p className="text-muted-foreground mb-6">
-								We couldn't find the fragrance you're looking
-								for.
+								{errorMessages ||
+									"The fragrance you're looking for is not available."}
 							</p>
 							<Button
 								onClick={() => router.push("/perfumes")}
@@ -125,7 +169,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 
 	return (
 		<div className="container mx-auto px-4 py-8 bg-background min-h-screen">
-			<Progress value={loadingProgress} className="w-full h-1 mb-6" />
+			{/* <Progress value={loading} className="w-full h-1 mb-6" /> */}
 
 			{/* Back Button Bar - Fixed Position */}
 			<div className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border/30 shadow-sm">
@@ -207,11 +251,11 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 									className="absolute top-4 right-4 p-2 bg-background/80 backdrop-blur-sm rounded-full shadow-md z-10"
 									whileHover={{ scale: 1.1 }}
 									whileTap={{ scale: 0.95 }}
-									onClick={handleFavoriteClick}
+									// onClick={handleFavoriteClick}
 								>
-									<Heart
+									{/* <Heart
 										className={`h-5 w-5 ${isInWishlist ? "fill-destructive text-destructive" : "text-foreground"}`}
-									/>
+									/> */}
 								</motion.button>
 							</motion.div>
 
@@ -238,6 +282,10 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 						</CardContent>
 					</Card>
 
+					<CommentSection
+						comments={perfume.comments}
+						perfumeId={unwrappedParams.perfumeId}
+					/>
 					{/* <Card className="w-full mt-6 border-border/50 bg-card shadow-sm rounded-lg">
 						<CardHeader className="pb-2">
 							<CardTitle className="text-lg font-medium text-card-foreground">
@@ -313,13 +361,10 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 								<div className="flex items-center bg-secondary/30 px-3 py-1.5 rounded-full">
 									<Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
 									<span className="ml-1 font-medium text-foreground">
-										{perfume.rating.toFixed(1)}
+										{(perfume.likes ?? 0).toFixed(1)}
 									</span>
 									<span className="mx-1 text-muted-foreground">
 										·
-									</span>
-									<span className="text-muted-foreground text-sm">
-										{perfume.totalVotes} reviews
 									</span>
 								</div>
 								<Badge className="bg-accent text-accent-foreground">
@@ -466,7 +511,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 												</h3>
 											</div>
 											<ul className="space-y-2 pl-1">
-												{perfume.topNotes?.map(
+												{perfume.top_notes?.map(
 													(note, index) => (
 														<motion.li
 															key={index}
@@ -511,7 +556,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 												</h3>
 											</div>
 											<ul className="space-y-2 pl-1">
-												{perfume.middleNotes?.map(
+												{perfume.middle_notes?.map(
 													(note, index) => (
 														<motion.li
 															key={index}
@@ -556,7 +601,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 												</h3>
 											</div>
 											<ul className="space-y-2 pl-1">
-												{perfume.baseNotes?.map(
+												{perfume.base_notes?.map(
 													(note, index) => (
 														<motion.li
 															key={index}

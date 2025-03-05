@@ -8,13 +8,14 @@ import { store } from "@/redux/Store";
 import { Provider } from "react-redux";
 import Container from "@/components/container-setup";
 import { Toaster } from "@/components/ui/sonner";
-// import Loading from "@/components/form/loading";
+import LoadingPage from "@/app/loading";
 
 export default function RootLayout({
 	children,
 }: {
 	readonly children: React.ReactNode;
 }) {
+
 	return (
 		<html
 			lang="en"
@@ -31,8 +32,8 @@ export default function RootLayout({
 					<Provider store={store}>
 						<Container>
 							<Toaster />
-							{/* <Loading>{children}</Loading>{" "} */}
-							{children}
+							<LoadingPage>{children}</LoadingPage>{" "}
+			
 						</Container>
 					</Provider>
 				</ThemeProvider>

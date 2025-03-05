@@ -1,3 +1,28 @@
+export interface User {
+	id?: string;
+	name: string;
+	avatar: string;
+}
+
+export interface Reply {
+	id?: string;
+	user_data: User;
+	text: string;
+    images: string[];
+	likes: string[];
+	created_at: string;
+}
+
+export interface Comments {
+	id?: string;
+	user_data: User;
+	text: string;
+    images: string[];
+	likes: string[];
+	created_at: string;
+	replies: Reply[];
+}
+
 export interface BasePerfume {
 	name: string;
 	brand: string;
@@ -5,17 +30,21 @@ export interface BasePerfume {
 	accords: string[];
 	descriptions: string;
 	perfumer: string;
-	topNotes: string[];
-	middleNotes: string[];
-	baseNotes: string[];
-	rating: number;
-	totalVotes: number;
+	top_notes: string[];
+	middle_notes: string[];
+	base_notes: string[];
+	likes: number;
 }
 
 export interface Perfume extends BasePerfume {
 	id: string;
 	images: string[];
+    comments: Comments[];
 	logo: string;
+}
+
+export interface suggestedPerfume extends Perfume {
+	match_score?: number;
 }
 
 export interface FetchPerfumeResult {
@@ -24,25 +53,29 @@ export interface FetchPerfumeResult {
 }
 
 export interface Filters {
-	searchQuery?: string;
-	brand?: string;
+	search_query: string | null;
+	brand_filter: string | null;
 	page: number;
-	gender?: string;
-	accords?: string[];
-	top_notes?: string[];
-	middle_notes?: string[];
-	base_notes?: string[];
+	gender_filter: string | null;
+	accords_filter: string[];
+	top_notes_filter: string[];
+	middle_notes_filter: string[];
+	base_notes_filter: string[];
+	rating_filter: number | 0;
+	items_per_page: number;
 }
 
-export const FiltersPerfumeValues = {
-	searchQuery: "",
-	brand: "",
+export const FiltersPerfumeValues: Filters = {
+	search_query: null,
+	brand_filter: null,
 	page: 1,
-	gender: "",
-	accords: [],
-	top_notes: [],
-	middle_notes: [],
-	base_notes: [],
+	gender_filter: null,
+	accords_filter: [],
+	top_notes_filter: [],
+	middle_notes_filter: [],
+	base_notes_filter: [],
+	rating_filter: 0,
+	items_per_page: 10,
 };
 
 interface BaseTradablePerfume {
@@ -74,9 +107,9 @@ export interface TradablePerfumeForInsert extends BaseTradablePerfume {
 export interface TradablePerfume extends BaseTradablePerfume {
 	id: string;
 	user_id: string;
-	rating?: number;
+	likes?: number;
 	total_votes?: number;
-    is_tradable?: boolean;
+	is_tradable?: boolean;
 	updated_at?: Date;
 	created_at?: Date;
 }

@@ -6,7 +6,6 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/redux/Store";
 import { motion, spring } from "framer-motion";
 import { Search as SearchIcon, Filter, X, ArrowLeft } from "lucide-react";
-import { filterTradablePerfume } from "@/utils/functions/filter_perfume";
 
 // UI Components
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -45,9 +44,7 @@ function Search() {
 	const [resultCount, setResultCount] = useState(0);
 	const perfumesPerPage = 12; // Reduced count for better presentation
 
-	// Apply filters
-	const filtersPerfume = filterTradablePerfume(perfumeState, filters);
-	const perfumesToShow = searchQuery ? filtersPerfume : perfumeState;
+	const perfumesToShow = perfumeState;
 
 	// Update result count
 	useEffect(() => {
@@ -64,7 +61,7 @@ function Search() {
 	// Handle filter changes
 	const handleChange = (key: keyof Filters, value: string | string[]) => {
 		setSearchQuery(true);
-		if (key === "searchQuery" && value === "") {
+		if (key === "search_query" && value === "") {
 			setSearchQuery(false);
 		}
 		setFilters((prev) => ({
@@ -204,9 +201,9 @@ function Search() {
 								: "border-border shadow-sm"
 						}`}
 						placeholder="Search perfumes by name..."
-						value={filters.searchQuery}
+						value={filters.search_query || ""}
 						onChange={(e) =>
-							handleChange("searchQuery", e.target.value)
+							handleChange("search_query", e.target.value)
 						}
 						onFocus={() => setSearchFocused(true)}
 						onBlur={() => setSearchFocused(false)}
@@ -215,12 +212,12 @@ function Search() {
 						className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
 						size={20}
 					/>
-					{filters.searchQuery && (
+					{filters.search_query && (
 						<Button
 							variant="ghost"
 							size="icon"
 							className="absolute right-3 top-1/2 transform -translate-y-1/2 hover:bg-transparent"
-							onClick={() => handleChange("searchQuery", "")}
+							onClick={() => handleChange("search_query", "")}
 						>
 							<X size={16} className="text-muted-foreground" />
 						</Button>
@@ -245,9 +242,9 @@ function Search() {
 											Gender
 										</label>
 										<Select
-											value={filters.gender}
+											value={filters.gender_filter || ""}
 											onValueChange={(value) =>
-												handleChange("gender", value)
+												handleChange("gender_filter", value)
 											}
 										>
 											<SelectTrigger className="w-full">

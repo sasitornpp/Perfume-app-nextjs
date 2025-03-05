@@ -33,7 +33,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 // Icons
 import {
 	AlignJustify,
@@ -44,7 +44,7 @@ import {
 	X,
 	Home,
 	ShoppingBag,
-	LogIn,
+	UserRound,
 	User,
 	AlertCircle,
 } from "lucide-react";
@@ -54,7 +54,7 @@ import { AccountDropdown } from "@/components/dropdown-options";
 
 // Types
 import { RootState } from "@/redux/Store";
-
+import { createSelector } from "reselect";
 // Animation variants
 const navItemVariants = {
 	hover: { scale: 1.05, transition: { duration: 0.2 } },
@@ -70,14 +70,20 @@ interface HeaderProps {
 	pathname: string;
 }
 
-function Header({ pathname }: HeaderProps) {
-	const router = useRouter();
-	const profile = useSelector((state: RootState) => state.user.profile);
-	const basketItems = useSelector((state: RootState) =>
-		state.perfumes.tradablePerfumes.filter((perfume) =>
+const selectTradablePerfumes = (state: RootState) =>
+	state.perfumes.tradablePerfumes;
+
+const selectBasketItems = (profile: { basket?: string[] | null } | null) =>
+	createSelector([selectTradablePerfumes], (tradablePerfumes) =>
+		tradablePerfumes.filter((perfume) =>
 			profile?.basket?.includes(perfume.id),
 		),
 	);
+function Header({ pathname }: HeaderProps) {
+	const router = useRouter();
+	const profile = useSelector((state: RootState) => state.user.profile);
+	const basketItemsSelector = selectBasketItems(profile);
+	const basketItems = useSelector(basketItemsSelector);
 	const user = useSelector((state: RootState) => state.user);
 	const isAuthenticated = user.user; // Simple check for authenticated user
 	// console.log(isAuthenticated);
@@ -311,7 +317,39 @@ function Header({ pathname }: HeaderProps) {
 
 							{/* Account or Login Button */}
 							{isAuthenticated ? (
-								<AccountDropdown />
+								<Button
+								variant="ghost"
+								size="icon"
+								className="rounded-full h-10 w-10 p-0 relative"
+                                onClick={() => router.push("/profile")}
+							>
+								<Avatar className="h-10 w-10 border-2 border-primary/20 hover:border-primary/50 transition-all duration-200">
+									{isAuthenticated ? (
+										<>
+											<AvatarImage
+												src={profile?.images || ""}
+												alt="Profile"
+											/>
+											<AvatarFallback className="bg-primary/10 text-primary">
+												{profile?.name?.charAt(0) ||
+													user?.user?.email?.charAt(0) ||
+													"U"}
+											</AvatarFallback>
+										</>
+									) : (
+										<AvatarFallback className="bg-muted">
+											<UserRound className="h-5 w-5 text-muted-foreground" />
+										</AvatarFallback>
+									)}
+								</Avatar>
+								{isAuthenticated && (
+									<Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center bg-primary">
+										<span className="sr-only">
+											Notifications
+										</span>
+									</Badge>
+								)}
+							</Button>
 							) : (
 								<TooltipProvider>
 									<Tooltip>

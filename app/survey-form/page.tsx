@@ -23,7 +23,6 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/redux/Store";
 import { useDispatch } from "react-redux";
 import Link from "next/link";
-import { fetchProfile } from "@/utils/supabase/api/profiles";
 import { Camera, UserCircle2, UserCheck, X } from "lucide-react";
 import { AppDispatch } from "@/redux/Store";
 import {
@@ -36,6 +35,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { createProfile } from "@/redux/user/userReducer";
+
 function UserProfileForm() {
 	const dispatch = useDispatch<AppDispatch>();
 	const user = useSelector((state: RootState) => state.user.user);

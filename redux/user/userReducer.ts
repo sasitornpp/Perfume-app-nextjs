@@ -5,6 +5,7 @@ import { supabaseClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Profile } from "@/types/profile";
 import { type useRouter } from "next/navigation";
+import { suggestedPerfume, Filters } from "@/types/perfume";
 
 interface UserState {
 	user: User | null;
@@ -189,17 +190,18 @@ export const updateProfile = createAsyncThunk(
 	"user/updateProfile",
 	async (
 		data: { columns: string; values: any },
-		{ rejectWithValue, dispatch },
+		{ rejectWithValue, dispatch, getState },
 	) => {
 		try {
-			const user = (await supabaseClient.auth.getUser()).data;
-			if (!user || !user.user) throw new Error("User not found");
-			console.log(data);
+			// Get current user from state
+			const state = getState() as { user: UserState };
+			const userId = state.user.user?.id;
+
 			const { data: profileData, error: profileError } =
 				await supabaseClient
 					.from("profiles")
 					.update({ [data.columns]: data.values })
-					.eq("id", user.user.id)
+					.eq("id", userId)
 					.select()
 					.single();
 
@@ -210,6 +212,35 @@ export const updateProfile = createAsyncThunk(
 
 			await dispatch(fetchUserData());
 			return profileData;
+		} catch (error: any) {
+			return rejectWithValue(error.message);
+		}
+	},
+);
+
+export const fetchSuggestedPerfumes = createAsyncThunk(
+	"perfume/fetchSuggestedPerfumes",
+	async (
+		{ filters }: { filters: Filters },
+		{ rejectWithValue, dispatch },
+	) => {
+		try {
+			console.log("Fetching suggested perfumes with filters:", filters);
+			const { data, error } = await supabaseClient
+				.rpc("filter_perfumes", filters)
+				.select();
+			if (error) throw error;
+
+			const perfumes = data as suggestedPerfume[];
+
+			dispatch(
+				updateProfile({
+					columns: "suggestions_perfumes",
+					values: perfumes,
+				}),
+			);
+
+			return perfumes;
 		} catch (error: any) {
 			return rejectWithValue(error.message);
 		}
@@ -243,6 +274,17 @@ const userSlice = createSlice({
 				state.profile = {
 					...state.profile,
 					basket: action.payload.basket,
+				};
+			}
+		},
+		updateProfile: (
+			state,
+			action: PayloadAction<{ [key: string]: any }>,
+		) => {
+			if (state.profile) {
+				state.profile = {
+					...state.profile,
+					...action.payload,
 				};
 			}
 		},
@@ -317,7 +359,26 @@ const userSlice = createSlice({
 				state.loading = false;
 				state.error = null;
 				state.profileNotCreated = false;
-			});
+			})
+			.addCase(fetchSuggestedPerfumes.pending, (state) => {
+				state.loading = true;
+			})
+			.addCase(
+				fetchSuggestedPerfumes.fulfilled,
+				(state, action: PayloadAction<suggestedPerfume[]>) => {
+					if (state.profile) {
+						state.profile.suggestions_perfumes = action.payload;
+					}
+					state.loading = false;
+				},
+			)
+			.addCase(
+				fetchSuggestedPerfumes.rejected,
+				(state, action: PayloadAction<any>) => {
+					state.error = action.payload;
+					state.loading = false;
+				},
+			);
 	},
 });
 
