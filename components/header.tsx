@@ -70,29 +70,17 @@ interface HeaderProps {
 	pathname: string;
 }
 
-const selectTradablePerfumes = (state: RootState) =>
-	state.perfumes.tradablePerfumes;
-
-const selectBasketItems = (profile: { basket?: string[] | null } | null) =>
-	createSelector([selectTradablePerfumes], (tradablePerfumes) =>
-		tradablePerfumes.filter((perfume) =>
-			profile?.basket?.includes(perfume.id),
-		),
-	);
 function Header({ pathname }: HeaderProps) {
 	const router = useRouter();
 	const profile = useSelector((state: RootState) => state.user.profile);
-	const basketItemsSelector = selectBasketItems(profile);
-	const basketItems = useSelector(basketItemsSelector);
 	const user = useSelector((state: RootState) => state.user);
-	const isAuthenticated = user.user; // Simple check for authenticated user
+	const isAuthenticated = useSelector((state: RootState) => state.user.user);
 	// console.log(isAuthenticated);
 	const [isScrolled, setIsScrolled] = useState(false);
 	const [showAuthWarning, setShowAuthWarning] = useState(false);
 
-	const wishlist = useSelector(
-		(state: RootState) => state.user.profile?.wishlist,
-	);
+
+    console.log(useSelector((state: RootState) => state.user));
 
 	// Handle scroll effect
 	useEffect(() => {
@@ -129,13 +117,8 @@ function Header({ pathname }: HeaderProps) {
 			href: "/perfumes/home",
 			label: "Home",
 			icon: <Home className="w-4 h-4 mr-2" />,
-		},
-		{
-			href: "/perfumes/trade",
-			label: "Shop",
-			icon: <ShoppingBag className="w-4 h-4 mr-2" />,
-			requiresAuth: true,
-		},
+			requiresAuth: false,
+		}
 	];
 
 	return (
@@ -270,7 +253,7 @@ function Header({ pathname }: HeaderProps) {
 											<span className="sr-only">
 												Wishlist
 											</span>
-											{isAuthenticated &&
+											{/* {isAuthenticated &&
 												wishlist &&
 												wishlist.length > 0 && (
 													<Badge
@@ -279,7 +262,7 @@ function Header({ pathname }: HeaderProps) {
 													>
 														{wishlist.length}
 													</Badge>
-												)}
+												)} */}
 										</Button>
 									</TooltipTrigger>
 									<TooltipContent>
@@ -304,7 +287,7 @@ function Header({ pathname }: HeaderProps) {
 								}
 							>
 								<ShoppingCart className="h-5 w-5" />
-								<span className="sr-only">Shopping cart</span>
+								{/* <span className="sr-only">Shopping cart</span>
 								{isAuthenticated && basketItems?.length > 0 && (
 									<Badge
 										variant="default"
@@ -312,7 +295,7 @@ function Header({ pathname }: HeaderProps) {
 									>
 										{basketItems?.length}
 									</Badge>
-								)}
+								)} */}
 							</Button>
 
 							{/* Account or Login Button */}
@@ -359,7 +342,7 @@ function Header({ pathname }: HeaderProps) {
 												size="sm"
 												className="hidden sm:flex items-center gap-1 border-primary/20 hover:border-primary transition-colors"
 												onClick={() =>
-													router.push("/auth/sign-in")
+													router.push("/login")
 												}
 											>
 												<User className="h-4 w-4 text-primary" />

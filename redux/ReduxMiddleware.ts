@@ -1,8 +1,6 @@
 import { Middleware } from "@reduxjs/toolkit";
 import {
-	updateWishlist,
 	updateProfile,
-	updateBasket,
 } from "@/redux/user/userReducer";
 import { store } from "@/redux/Store";
 
@@ -12,35 +10,35 @@ const syncWishlistToSupabaseMiddleware: Middleware =
 		const actionType = (action as { type: string }).type;
 		try {
 			switch (actionType) {
-				case updateWishlist.type: {
-					const addAction = action as ReturnType<
-						typeof updateWishlist
-					>;
-					const wishList = addAction.payload;
+				// case updateWishlist.type: {
+				// 	const addAction = action as ReturnType<
+				// 		typeof updateWishlist
+				// 	>;
+				// 	const wishList = addAction.payload;
 
-					await store.dispatch(
-						updateProfile({
-							columns: "wishlist",
-							values: wishList.wishlist,
-						}),
-					);
+				// 	await store.dispatch(
+				// 		updateProfile({
+				// 			columns: "wishlist",
+				// 			values: wishList.wishlist,
+				// 		}),
+				// 	);
 
-					break;
-				}
+				// 	break;
+				// }
 
-				case updateBasket.type: {
-					const addAction = action as ReturnType<typeof updateBasket>;
-					const basket = addAction.payload;
+				// case updateBasket.type: {
+				// 	const addAction = action as ReturnType<typeof updateBasket>;
+				// 	const basket = addAction.payload;
 
-					await store.dispatch(
-						updateProfile({
-							columns: "basket",
-							values: basket.basket,
-						}),
-					);
+				// 	await store.dispatch(
+				// 		updateProfile({
+				// 			columns: "basket",
+				// 			values: basket.basket,
+				// 		}),
+				// 	);
 
-					break;
-				}
+				// 	break;
+				// }
 
 				default:
 					break;

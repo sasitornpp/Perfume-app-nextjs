@@ -1,46 +1,172 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import {
 	Perfume,
-	TradablePerfumeForInsert,
-	TradablePerfume,
+	PerfumeForInsert,
+	PerfumeMostViews,
+	PerfumeUniqueData,
 } from "@/types/perfume";
 import { supabaseClient } from "@/utils/supabase/client";
 import { Profile } from "@/types/profile";
-import { v4 as uuidv4 } from "uuid";
-import { Comments, Reply, User } from "@/types/perfume";
+import {
+	uploadImagesToSupabase,
+	rollbackUploadedFiles,
+} from "@/utils/functions/image_process";
+import { Comments, Reply } from "@/types/perfume";
 
 interface PerfumeState {
 	perfumes: Perfume[];
-	tradablePerfumes: TradablePerfume[];
 	perfumes_by_page: {
 		[page: number]: Perfume[];
 	};
 	selectedPerfume: { data: Perfume | null; errorMessages: string | null };
-	selectedTradablePerfume: {
-		data: TradablePerfume | null;
-		errorMessages: string | null;
-	};
-	most_views_by_date: (Perfume | TradablePerfume)[];
-	most_views_all_time: (Perfume | TradablePerfume)[];
+	most_views_by_date: PerfumeMostViews[];
+	most_views_all_time: PerfumeMostViews[];
 	loading: boolean;
 	error: string | null;
 	fetchedPerfumePages: number[];
-	fetchedTradablePerfumePages: number[];
+	perfume_unique_data: PerfumeUniqueData;
 }
 
 const initialState: PerfumeState = {
 	perfumes: [],
 	perfumes_by_page: {},
-	tradablePerfumes: [],
 	selectedPerfume: { data: null, errorMessages: null },
-	selectedTradablePerfume: { data: null, errorMessages: null },
 	most_views_by_date: [],
 	most_views_all_time: [],
 	loading: false,
 	error: null,
 	fetchedPerfumePages: [],
-	fetchedTradablePerfumePages: [],
+	perfume_unique_data: {
+		brand: [],
+		perfumer: [],
+		accords: [],
+		top_notes: [],
+		middle_notes: [],
+		base_notes: [],
+	},
 };
+
+// Replace the existing toggleLikeComment function
+
+export const toggleLikeComment = createAsyncThunk(
+	"perfume/toggleLikeComment",
+	async (
+		{ commentId, userId }: { commentId: string; userId: string },
+		{ rejectWithValue, getState },
+	) => {
+		try {
+			const state = getState() as { user: { profile: Profile } };
+			const user = state.user.profile;
+
+			if (!user || !user.id) {
+				throw new Error("User must be logged in to like a comment");
+			}
+
+			// Get the current comment data
+			const { data: comment, error: fetchError } = await supabaseClient
+				.from("comments")
+				.select("likes")
+				.eq("id", commentId)
+				.single();
+
+			if (fetchError) throw fetchError;
+
+			// Check if user already liked the comment
+			const likes: string[] = comment.likes || [];
+			const userIndex = likes.indexOf(userId);
+
+			// Toggle like status
+			let updatedLikes: string[];
+			if (userIndex !== -1) {
+				// User already liked, so unlike
+				updatedLikes = [...likes];
+				updatedLikes.splice(userIndex, 1);
+			} else {
+				// User hasn't liked, so add like
+				updatedLikes = [...likes, userId];
+			}
+
+			// Update the comment with new likes array
+			const { error: updateError } = await supabaseClient
+				.from("comments")
+				.update({ likes: updatedLikes })
+				.eq("id", commentId);
+
+			if (updateError) throw updateError;
+
+			return {
+				commentId,
+				likes: updatedLikes,
+				userId,
+			};
+		} catch (error: any) {
+			return rejectWithValue(
+				error.message || "Failed to toggle like on comment",
+			);
+		}
+	},
+);
+
+export const toggleLikeReply = createAsyncThunk(
+	"perfume/toggleLikeReply",
+	async (
+		{ replyId, userId }: { replyId: string; userId: string },
+		{ rejectWithValue, getState },
+	) => {
+		try {
+			const state = getState() as { user: { profile: Profile } };
+			const user = state.user.profile;
+
+			if (!user || !user.id) {
+				throw new Error("User must be logged in to like a reply");
+			}
+
+			// Get the current reply data
+			const { data: reply, error: fetchError } = await supabaseClient
+				.from("reply")
+				.select("likes, comments_id")
+				.eq("id", replyId)
+				.single();
+
+			if (fetchError) throw fetchError;
+
+			// Check if user already liked the reply
+			const likes: string[] = reply.likes || [];
+			const commentId = reply.comments_id;
+			const userIndex = likes.indexOf(userId);
+
+			// Toggle like status
+			let updatedLikes: string[];
+			if (userIndex !== -1) {
+				// User already liked, so unlike
+				updatedLikes = [...likes];
+				updatedLikes.splice(userIndex, 1);
+			} else {
+				// User hasn't liked, so add like
+				updatedLikes = [...likes, userId];
+			}
+
+			// Update the reply with new likes array
+			const { error: updateError } = await supabaseClient
+				.from("reply")
+				.update({ likes: updatedLikes })
+				.eq("id", replyId);
+
+			if (updateError) throw updateError;
+
+			return {
+				replyId,
+				commentId,
+				likes: updatedLikes,
+				userId,
+			};
+		} catch (error: any) {
+			return rejectWithValue(
+				error.message || "Failed to toggle like on reply",
+			);
+		}
+	},
+);
 
 // Add to your perfumeReducer.ts
 export const deleteComment = createAsyncThunk(
@@ -60,7 +186,7 @@ export const deleteComment = createAsyncThunk(
 			// First, get the comment to check if user is authorized to delete it
 			const { data: comment, error: fetchError } = await supabaseClient
 				.from("comments")
-				.select("user, images")
+				.select("user")
 				.eq("id", commentId)
 				.single();
 
@@ -71,68 +197,6 @@ export const deleteComment = createAsyncThunk(
 				throw new Error(
 					"You don't have permission to delete this comment",
 				);
-			}
-
-			// Get all image paths to delete from the comment
-			let imagePathsToDelete: string[] = [];
-
-			// Extract paths from comment images
-			if (comment.images && comment.images.length > 0) {
-				const commentImagePaths = comment.images
-					.map((url: string) => {
-						try {
-							const urlObj = new URL(url);
-							const pathMatch = urlObj.pathname.match(
-								/\/storage\/v1\/object\/public\/IMAGES\/(.*)/,
-							);
-							return pathMatch ? pathMatch[1] : null;
-						} catch {
-							return null;
-						}
-					})
-					.filter(Boolean) as string[];
-
-				imagePathsToDelete = [
-					...imagePathsToDelete,
-					...commentImagePaths,
-				];
-			}
-
-			// Get all replies for this comment
-			const { data: replies, error: repliesError } = await supabaseClient
-				.from("reply")
-				.select("images")
-				.eq("comments_id", commentId);
-
-			if (!repliesError && replies && replies.length > 0) {
-				// Extract paths from reply images
-				for (const reply of replies) {
-					if (reply.images && reply.images.length > 0) {
-						const replyImagePaths = reply.images
-							.map((url: string) => {
-								try {
-									const urlObj = new URL(url);
-									const pathMatch = urlObj.pathname.match(
-										/\/storage\/v1\/object\/public\/IMAGES\/(.*)/,
-									);
-									return pathMatch ? pathMatch[1] : null;
-								} catch {
-									return null;
-								}
-							})
-							.filter(Boolean) as string[];
-
-						imagePathsToDelete = [
-							...imagePathsToDelete,
-							...replyImagePaths,
-						];
-					}
-				}
-			}
-
-			// Delete all collected images
-			if (imagePathsToDelete.length > 0) {
-				await rollbackUploadedFiles(imagePathsToDelete);
 			}
 
 			// Delete the comment (this will also delete all replies due to cascade delete in database)
@@ -167,7 +231,7 @@ export const deleteReply = createAsyncThunk(
 			// First, get the reply to check if user is authorized to delete it
 			const { data: reply, error: fetchError } = await supabaseClient
 				.from("reply")
-				.select("user, images")
+				.select("user")
 				.eq("id", replyId)
 				.single();
 
@@ -178,29 +242,6 @@ export const deleteReply = createAsyncThunk(
 				throw new Error(
 					"You don't have permission to delete this reply",
 				);
-			}
-
-			// Extract paths from reply images
-			let imagePathsToDelete: string[] = [];
-			if (reply.images && reply.images.length > 0) {
-				imagePathsToDelete = reply.images
-					.map((url: string) => {
-						try {
-							const urlObj = new URL(url);
-							const pathMatch = urlObj.pathname.match(
-								/\/storage\/v1\/object\/public\/IMAGES\/(.*)/,
-							);
-							return pathMatch ? pathMatch[1] : null;
-						} catch {
-							return null;
-						}
-					})
-					.filter(Boolean) as string[];
-			}
-
-			// Delete images if any
-			if (imagePathsToDelete.length > 0) {
-				await rollbackUploadedFiles(imagePathsToDelete);
 			}
 
 			// Delete the reply
@@ -218,49 +259,24 @@ export const deleteReply = createAsyncThunk(
 	},
 );
 
-// Updated addComment to handle file uploads
 export const addComment = createAsyncThunk(
 	"perfume/addComment",
 	async (
 		{
 			perfumeId,
 			text,
-			imagesFiles = [],
 		}: {
 			perfumeId: string;
 			text: string;
-			imagesFiles?: File[];
 		},
 		{ rejectWithValue, getState },
 	) => {
-		let uploadedImages = null;
-
 		try {
 			const state = getState() as { user: { profile: Profile } };
 			const user = state.user.profile;
 
 			if (!user || !user.id) {
 				throw new Error("User must be logged in to comment");
-			}
-
-			// Upload images if any
-			let imageUrls: string[] = [];
-			if (imagesFiles.length > 0) {
-				uploadedImages = await uploadImagesToSupabase(
-					"Comments",
-					imagesFiles,
-				);
-
-				if (
-					!uploadedImages?.results ||
-					uploadedImages.results.length === 0
-				) {
-					throw new Error("Failed to upload one or more images");
-				}
-
-				imageUrls = uploadedImages.results.map(
-					(file) => file.publicUrl,
-				);
 			}
 
 			// Insert the comment into the database
@@ -270,21 +286,13 @@ export const addComment = createAsyncThunk(
 					perfumes_id: perfumeId,
 					user: user.id,
 					text,
-					images: imageUrls,
+					images: [],
 					likes: [],
 				})
 				.select()
 				.single();
 
 			if (error) {
-				// Rollback uploaded images if database insert fails
-				if (uploadedImages && uploadedImages.uploadedFiles.length > 0) {
-					await rollbackUploadedFiles(
-						uploadedImages.uploadedFiles.map(
-							(file) => file.filePath,
-						),
-					);
-				}
 				throw error;
 			}
 
@@ -297,7 +305,6 @@ export const addComment = createAsyncThunk(
 					avatar: user.images || "",
 				},
 				text: newComment.text,
-				images: imageUrls,
 				likes: newComment.likes || [],
 				created_at: newComment.created_at,
 				replies: [],
@@ -310,49 +317,24 @@ export const addComment = createAsyncThunk(
 	},
 );
 
-// Updated addReply to handle file uploads
 export const addReply = createAsyncThunk(
 	"perfume/addReply",
 	async (
 		{
 			commentId,
 			text,
-			imagesFiles = [],
 		}: {
 			commentId: string;
 			text: string;
-			imagesFiles?: File[];
 		},
 		{ rejectWithValue, getState },
 	) => {
-		let uploadedImages = null;
-
 		try {
 			const state = getState() as { user: { profile: Profile } };
 			const user = state.user.profile;
 
 			if (!user || !user.id) {
 				throw new Error("User must be logged in to reply");
-			}
-
-			// Upload images if any
-			let imageUrls: string[] = [];
-			if (imagesFiles.length > 0) {
-				uploadedImages = await uploadImagesToSupabase(
-					"Replies",
-					imagesFiles,
-				);
-
-				if (
-					!uploadedImages?.results ||
-					uploadedImages.results.length === 0
-				) {
-					throw new Error("Failed to upload one or more images");
-				}
-
-				imageUrls = uploadedImages.results.map(
-					(file) => file.publicUrl,
-				);
 			}
 
 			// Insert the reply into the database
@@ -362,21 +344,13 @@ export const addReply = createAsyncThunk(
 					comments_id: commentId,
 					user: user.id,
 					text,
-					images: imageUrls,
+					images: [],
 					likes: [],
 				})
 				.select()
 				.single();
 
 			if (error) {
-				// Rollback uploaded images if database insert fails
-				if (uploadedImages && uploadedImages.uploadedFiles.length > 0) {
-					await rollbackUploadedFiles(
-						uploadedImages.uploadedFiles.map(
-							(file) => file.filePath,
-						),
-					);
-				}
 				throw error;
 			}
 
@@ -389,7 +363,6 @@ export const addReply = createAsyncThunk(
 					avatar: user.images || "",
 				},
 				text: newReply.text,
-				images: imageUrls,
 				likes: newReply.likes || [],
 				created_at: newReply.created_at,
 			};
@@ -403,67 +376,6 @@ export const addReply = createAsyncThunk(
 		}
 	},
 );
-
-const uploadImagesToSupabase = async (folder_name: string, images: File[]) => {
-	const uploadedFiles: { filePath: string; publicUrl: string }[] = [];
-
-	try {
-		const results = await Promise.all(
-			images.map(async (file) => {
-				const fileExt = file.name.split(".").pop();
-				const fileName = `${uuidv4()}.${fileExt}`;
-				const filePath = `${folder_name}/${fileName}`;
-
-				try {
-					const { error } = await supabaseClient.storage
-						.from("IMAGES")
-						.upload(filePath, file);
-
-					if (error) {
-						return null;
-					}
-
-					const { data: publicUrlData } = supabaseClient.storage
-						.from("IMAGES")
-						.getPublicUrl(filePath);
-
-					if (!publicUrlData) {
-						return null;
-					}
-
-					uploadedFiles.push({
-						filePath,
-						publicUrl: publicUrlData.publicUrl,
-					});
-					return { filePath, publicUrl: publicUrlData.publicUrl };
-				} catch (error) {
-					return null;
-				}
-			}),
-		);
-
-		return {
-			uploadedFiles,
-			results: results.filter(
-				(result): result is { filePath: string; publicUrl: string } =>
-					result !== null,
-			),
-		};
-	} catch (error) {
-		await rollbackUploadedFiles(uploadedFiles.map((file) => file.filePath));
-		return { uploadedFiles: [], results: [] };
-	}
-};
-
-const rollbackUploadedFiles = async (filePaths: string[]) => {
-	try {
-		if (filePaths.length === 0) return;
-		// console.log(filePaths);
-		await supabaseClient.storage.from("IMAGES").remove(filePaths);
-	} catch (error) {
-		console.error("Error during rollback:", error);
-	}
-};
 
 export const fetchPerfumeById = createAsyncThunk(
 	"perfume/fetchPerfumeById",
@@ -559,7 +471,6 @@ export const fetchPerfumeById = createAsyncThunk(
 						.match({
 							perfume_id: perfumeId,
 							view_date: today,
-							source_table: "perfumes",
 						})
 						.single();
 
@@ -578,7 +489,6 @@ export const fetchPerfumeById = createAsyncThunk(
 						.match({
 							perfume_id: perfumeId,
 							view_date: today,
-							source_table: "perfumes",
 						});
 					console.log(
 						"View count updated to:",
@@ -592,7 +502,6 @@ export const fetchPerfumeById = createAsyncThunk(
 							perfume_id: perfumeId,
 							view_date: today,
 							views_count: 1,
-							source_table: "perfumes",
 						});
 					console.log("View insert error:", error);
 					console.log("New view count inserted");
@@ -645,46 +554,13 @@ export const fetchPerfumes = createAsyncThunk(
 	},
 );
 
-// Fetch Tradable Perfumes with Pagination
-export const fetchTradablePerfumes = createAsyncThunk(
-	"perfume/fetchTradablePerfumes",
-	async (
-		{
-			pageNumber,
-			itemsPerPage,
-		}: { pageNumber: number; itemsPerPage: number },
-		{ rejectWithValue, getState },
-	) => {
-		// Access the current state
-		const state = getState() as { perfumes: PerfumeState };
-
-		// Skip fetching if the page has already been fetched
-		if (state.perfumes.fetchedTradablePerfumePages.includes(pageNumber)) {
-			return []; // Return empty array to indicate no new data
-		}
-		try {
-			const { data, error } = await supabaseClient
-				.rpc("get_tradable_perfumes_paginated", {
-					page_number: pageNumber,
-					items_per_page: itemsPerPage,
-				})
-				.select();
-			if (error) throw error;
-			return data as TradablePerfume[];
-		} catch (error: any) {
-			return rejectWithValue(error.message);
-		}
-	},
-);
-
-// Add Tradable Perfume
-export const addTradablePerfume = createAsyncThunk(
-	"perfume/addTradablePerfume",
+export const addPerfume = createAsyncThunk(
+	"perfume/addPerfume",
 	async (
 		{
 			perfumeData,
 			userProfile,
-		}: { perfumeData: TradablePerfumeForInsert; userProfile: Profile },
+		}: { perfumeData: PerfumeForInsert; userProfile: Profile },
 		{ rejectWithValue },
 	) => {
 		let uploadedImages = null;
@@ -693,7 +569,7 @@ export const addTradablePerfume = createAsyncThunk(
 			if (!userProfile) throw new Error("User profile not found");
 			if (perfumeData.imagesFiles?.length) {
 				uploadedImages = await uploadImagesToSupabase(
-					"TradablePerfume",
+					"Perfume", // Changed from TradablePerfume
 					perfumeData.imagesFiles,
 				);
 				if (!uploadedImages?.uploadedFiles) {
@@ -706,12 +582,10 @@ export const addTradablePerfume = createAsyncThunk(
 			const { imagePreviews, imagesFiles, ...perfumeDataToInsert } =
 				perfumeData;
 			const { data, error } = await supabaseClient
-				.from("tradable_perfumes")
+				.from("perfumes") // Changed from tradable_perfumes
 				.insert([
 					{
 						...perfumeDataToInsert,
-						user_name: userProfile.name,
-						user_id: userProfile.id,
 						images: perfumeData.images ?? [],
 					},
 				])
@@ -729,9 +603,9 @@ export const addTradablePerfume = createAsyncThunk(
 				throw error;
 			}
 
-			return data as TradablePerfume;
+			return data as Perfume;
 		} catch (error: any) {
-			console.error("Error adding tradable perfume:", error);
+			console.error("Error adding perfume:", error);
 			if (uploadedImages) {
 				await rollbackUploadedFiles(
 					uploadedImages.uploadedFiles.map((file) => file.filePath),
@@ -745,26 +619,17 @@ export const addTradablePerfume = createAsyncThunk(
 // Fetch Top 5 Views By Date
 export const fetchTop5ViewsByDate = createAsyncThunk(
 	"perfume/fetchTop5ViewsByDate",
-	async (
-		{
-			date,
-			sourceTable,
-		}: { date: Date; sourceTable?: "perfumes" | "tradable_perfumes" },
-		{ rejectWithValue },
-	) => {
+	async ({ date }: { date: Date }, { rejectWithValue }) => {
 		try {
 			const dateString = date.toISOString().split("T")[0];
 			console.log("Date string:", dateString);
 			const { data, error } = await supabaseClient
 				.rpc("get_top_5_views_by_date", {
 					target_date: dateString,
-					target_source_table: sourceTable || null,
 				})
 				.select();
 			if (error) throw error;
-			return data.map(
-				(item) => item.perfume_data as Perfume | TradablePerfume,
-			);
+			return data as PerfumeMostViews[];
 		} catch (error: any) {
 			return rejectWithValue(error.message);
 		}
@@ -772,22 +637,30 @@ export const fetchTop5ViewsByDate = createAsyncThunk(
 );
 
 // Fetch Top 5 Views All Time
-export const fetchTop5ViewsAllTime = createAsyncThunk(
+export const fetchTop3ViewsAllTime = createAsyncThunk(
 	"perfume/fetchTop5ViewsAllTime",
-	async (
-		{ sourceTable }: { sourceTable?: "perfumes" | "tradable_perfumes" },
-		{ rejectWithValue },
-	) => {
+	async (_, { rejectWithValue }) => {
 		try {
 			const { data, error } = await supabaseClient
-				.rpc("get_top_5_views_all_time", {
-					target_source_table: sourceTable || null,
-				})
+				.rpc("get_top_3_views_all_time")
 				.select();
 			if (error) throw error;
-			return data.map(
-				(item) => item.perfume_data as Perfume | TradablePerfume,
-			);
+			return data.map((item) => item.perfume_data as PerfumeMostViews);
+		} catch (error: any) {
+			return rejectWithValue(error.message);
+		}
+	},
+);
+
+export const fetchUniqueData = createAsyncThunk(
+	"perfume/fetchUniqueData",
+	async (_, { rejectWithValue }) => {
+		try {
+			const { data, error } = await supabaseClient
+				.rpc("fetch_unique_perfume_data")
+				.select();
+			if (error) throw error;
+			return data as unknown as PerfumeUniqueData;
 		} catch (error: any) {
 			return rejectWithValue(error.message);
 		}
@@ -797,41 +670,7 @@ export const fetchTop5ViewsAllTime = createAsyncThunk(
 const perfumeSlice = createSlice({
 	name: "perfume",
 	initialState,
-	reducers: {
-		setPerfumes: (state, action: PayloadAction<Perfume[]>) => {
-			state.perfumes = action.payload;
-		},
-		addPerfumes: (state, action: PayloadAction<Perfume[]>) => {
-			const newPerfumes = action.payload.filter(
-				(perfume) => !state.perfumes.some((p) => p.id === perfume.id),
-			);
-			state.perfumes = [...state.perfumes, ...newPerfumes];
-		},
-		addTradablePerfumes: (
-			state,
-			action: PayloadAction<TradablePerfume[]>,
-		) => {
-			const newTradablePerfumes = action.payload.filter(
-				(perfume) =>
-					!state.tradablePerfumes.some((p) => p.id === perfume.id),
-			);
-			state.tradablePerfumes = [
-				...state.tradablePerfumes,
-				...newTradablePerfumes,
-			];
-		},
-		removeTradablePerfume: (state, action: PayloadAction<string>) => {
-			state.tradablePerfumes = state.tradablePerfumes.filter(
-				(item) => item.id !== action.payload,
-			);
-		},
-		// addComments: (state, action: PayloadAction<{ perfumeId: string; comment: string }>) => {
-		// 	const perfume = state.perfumes.find((p) => p.id === action.payload.perfumeId);
-		// 	if (perfume) {
-		// 		perfume.comments.push({ text: action.payload.comment });
-		// 	}
-		// },
-	},
+	reducers: {},
 	extraReducers: (builder) => {
 		builder
 			// fetchPerfumes
@@ -865,56 +704,7 @@ const perfumeSlice = createSlice({
 				state.error = action.payload as string;
 				state.loading = false;
 			})
-			// fetchTradablePerfumes
-			.addCase(fetchTradablePerfumes.pending, (state) => {
-				state.loading = true;
-				state.error = null;
-			})
-			.addCase(fetchTradablePerfumes.fulfilled, (state, action) => {
-				const newTradablePerfumes = action.payload.filter(
-					(perfume) =>
-						!state.tradablePerfumes.some(
-							(p) => p.id === perfume.id,
-						),
-				);
-				state.tradablePerfumes = [
-					...state.tradablePerfumes,
-					...newTradablePerfumes,
-				];
 
-				// Only add pageNumber if it’s not already in the array
-				if (
-					!state.fetchedTradablePerfumePages.includes(
-						action.meta.arg.pageNumber,
-					)
-				) {
-					state.fetchedTradablePerfumePages.push(
-						action.meta.arg.pageNumber,
-					);
-				}
-
-				state.loading = false;
-			})
-			.addCase(fetchTradablePerfumes.rejected, (state, action) => {
-				state.error = action.payload as string;
-				state.loading = false;
-			})
-			// addTradablePerfume
-			.addCase(addTradablePerfume.pending, (state) => {
-				state.loading = true;
-				state.error = null;
-			})
-			.addCase(addTradablePerfume.fulfilled, (state, action) => {
-				state.tradablePerfumes = [
-					action.payload,
-					...state.tradablePerfumes,
-				];
-				state.loading = false;
-			})
-			.addCase(addTradablePerfume.rejected, (state, action) => {
-				state.error = action.payload as string;
-				state.loading = false;
-			})
 			// fetchTop5ViewsByDate
 			.addCase(fetchTop5ViewsByDate.pending, (state) => {
 				state.loading = true;
@@ -929,15 +719,15 @@ const perfumeSlice = createSlice({
 				state.loading = false;
 			})
 			// fetchTop5ViewsAllTime
-			.addCase(fetchTop5ViewsAllTime.pending, (state) => {
+			.addCase(fetchTop3ViewsAllTime.pending, (state) => {
 				state.loading = true;
 				state.error = null;
 			})
-			.addCase(fetchTop5ViewsAllTime.fulfilled, (state, action) => {
+			.addCase(fetchTop3ViewsAllTime.fulfilled, (state, action) => {
 				state.most_views_all_time = action.payload;
 				state.loading = false;
 			})
-			.addCase(fetchTop5ViewsAllTime.rejected, (state, action) => {
+			.addCase(fetchTop3ViewsAllTime.rejected, (state, action) => {
 				state.error = action.payload as string;
 				state.loading = false;
 			})
@@ -1051,14 +841,82 @@ const perfumeSlice = createSlice({
 			.addCase(deleteReply.rejected, (state, action) => {
 				state.loading = false;
 				state.error = action.payload as string;
+			}) // Replace the existing toggleLikeComment and toggleLikeReply cases in the extraReducers section
+
+			.addCase(toggleLikeComment.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(toggleLikeComment.fulfilled, (state, action) => {
+				state.loading = false;
+
+				// Update the likes array for the specified comment
+				if (state.selectedPerfume.data) {
+					state.selectedPerfume.data.comments =
+						state.selectedPerfume.data.comments.map((comment) => {
+							if (comment.id === action.payload.commentId) {
+								return {
+									...comment,
+									likes: action.payload.likes,
+								};
+							}
+							return comment;
+						});
+				}
+			})
+			.addCase(toggleLikeComment.rejected, (state, action) => {
+				state.loading = false;
+				state.error = action.payload as string;
+			})
+			.addCase(toggleLikeReply.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(toggleLikeReply.fulfilled, (state, action) => {
+				state.loading = false;
+
+				// Update the likes array for the specified reply
+				if (state.selectedPerfume.data) {
+					state.selectedPerfume.data.comments =
+						state.selectedPerfume.data.comments.map((comment) => {
+							if (comment.id === action.payload.commentId) {
+								return {
+									...comment,
+									replies: comment.replies.map((reply) => {
+										if (
+											reply.id === action.payload.replyId
+										) {
+											return {
+												...reply,
+												likes: action.payload.likes,
+											};
+										}
+										return reply;
+									}),
+								};
+							}
+							return comment;
+						});
+				}
+			})
+			.addCase(toggleLikeReply.rejected, (state, action) => {
+				state.loading = false;
+				state.error = action.payload as string;
+			})
+			.addCase(fetchUniqueData.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(fetchUniqueData.fulfilled, (state, action) => {
+				state.perfume_unique_data = action.payload;
+				state.loading = false;
+			})
+			.addCase(fetchUniqueData.rejected, (state, action) => {
+				state.error = action.payload as string;
+				state.loading = false;
 			});
 	},
 });
 
-export const {
-	setPerfumes,
-	addPerfumes,
-	addTradablePerfumes,
-	removeTradablePerfume,
-} = perfumeSlice.actions;
+export const {} = perfumeSlice.actions;
 export default perfumeSlice.reducer;

@@ -145,26 +145,6 @@ function UserProfileForm() {
 		inactive: { scale: 1, boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)" },
 	};
 
-	if (!user) {
-		return (
-			<div className="flex h-[70vh] items-center justify-center">
-				<motion.div
-					initial={{ opacity: 0, y: 20 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ duration: 0.5 }}
-					className="text-center"
-				>
-					<div className="mb-4">
-						<UserCircle2 className="mx-auto h-16 w-16 text-muted-foreground animate-pulse" />
-					</div>
-					<p className="text-muted-foreground">
-						Loading your profile...
-					</p>
-				</motion.div>
-			</div>
-		);
-	}
-
 	return (
 		<AnimatePresence>
 			{success ? (

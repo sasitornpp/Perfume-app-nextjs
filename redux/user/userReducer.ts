@@ -5,11 +5,15 @@ import { supabaseClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Profile } from "@/types/profile";
 import { type useRouter } from "next/navigation";
-import { suggestedPerfume, Filters } from "@/types/perfume";
+import { suggestedPerfume, Filters, Perfume } from "@/types/perfume";
+import { fetch_user_result } from "@/types/profile";
 
 interface UserState {
 	user: User | null;
 	profile: Profile | null;
+	perfumes: Perfume[] | null;
+	albums: any[] | null;
+	basket: any[] | null;
 	loading: boolean;
 	error: string | null;
 	profileNotCreated: boolean;
@@ -18,6 +22,9 @@ interface UserState {
 const initialState: UserState = {
 	user: null,
 	profile: null,
+	perfumes: null,
+	albums: null,
+	basket: null,
 	loading: false,
 	error: null,
 	profileNotCreated: false,
@@ -45,7 +52,8 @@ export const signInUser = createAsyncThunk(
 			});
 			if (error) throw new Error(error.message);
 
-			router.push("/survey-form");
+			router.push("/perfumes/home");
+			window.location.reload();
 			return true;
 		} catch (error: any) {
 			return rejectWithValue(error.message);
@@ -102,23 +110,20 @@ export const fetchUserData = createAsyncThunk(
 			if (userError || !user)
 				throw new Error(userError?.message || "User not found");
 
-			const { data: profile, error: profileError } = await supabaseClient
-				.from("profiles")
-				.select("*")
-				.eq("id", user.user.id)
-				.single();
+			const { data, error: profileError } = await supabaseClient.rpc(
+				"fetch_user",
+				{
+					user_id: user.user.id,
+				},
+			);
 
-			// Handle profile errors properly
-			if (profileError && profileError.code !== "PGRST116") {
-				console.error("Profile fetch error:", profileError);
-				return rejectWithValue(profileError.message);
-			}
+			const profile = data as fetch_user_result;
 
 			if (profileError) {
 				return { user, profile: null, profileNotCreated: true };
 			}
 
-			return { user, profile, profileNotCreated: false };
+			return { user, ...profile, profileNotCreated: false };
 		} catch (error: any) {
 			return rejectWithValue(error.message);
 		}
@@ -258,36 +263,6 @@ const userSlice = createSlice({
 			state.error = null;
 			state.profileNotCreated = false;
 		},
-		updateWishlist: (
-			state,
-			action: PayloadAction<{ wishlist: string[] }>,
-		) => {
-			if (state.profile) {
-				state.profile = {
-					...state.profile,
-					wishlist: action.payload.wishlist,
-				};
-			}
-		},
-		updateBasket: (state, action: PayloadAction<{ basket: string[] }>) => {
-			if (state.profile) {
-				state.profile = {
-					...state.profile,
-					basket: action.payload.basket,
-				};
-			}
-		},
-		updateProfile: (
-			state,
-			action: PayloadAction<{ [key: string]: any }>,
-		) => {
-			if (state.profile) {
-				state.profile = {
-					...state.profile,
-					...action.payload,
-				};
-			}
-		},
 	},
 	extraReducers: (builder) => {
 		builder
@@ -302,12 +277,26 @@ const userSlice = createSlice({
 					action: PayloadAction<{
 						user: { user: User };
 						profile: Profile | null;
+						albums?: any[] | null;
+						basket?: any[] | null;
+						perfumes?: Perfume[] | null;
 						profileNotCreated: boolean;
 					}>,
 				) => {
-					state.user = action.payload.user.user;
-					state.profile = action.payload.profile;
-					state.profileNotCreated = action.payload.profileNotCreated;
+					const {
+						user,
+						profile,
+						albums,
+						basket,
+						perfumes,
+						profileNotCreated,
+					} = action.payload;
+					state.user = user.user;
+					state.profile = profile;
+					state.albums = albums || null;
+					state.basket = basket || null;
+					state.perfumes = perfumes || null;
+					state.profileNotCreated = profileNotCreated;
 					state.loading = false;
 				},
 			)
@@ -353,13 +342,6 @@ const userSlice = createSlice({
 					state.loading = false;
 				},
 			)
-			.addCase(logoutUser.fulfilled, (state) => {
-				state.user = null;
-				state.profile = null;
-				state.loading = false;
-				state.error = null;
-				state.profileNotCreated = false;
-			})
 			.addCase(fetchSuggestedPerfumes.pending, (state) => {
 				state.loading = true;
 			})
@@ -378,9 +360,27 @@ const userSlice = createSlice({
 					state.error = action.payload;
 					state.loading = false;
 				},
+			)
+			.addCase(logoutUser.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(logoutUser.fulfilled, (state) => {
+				state.user = null;
+				state.profile = null;
+				state.loading = false;
+				state.error = null;
+				state.profileNotCreated = false;
+			})
+			.addCase(
+				logoutUser.rejected,
+				(state, action: PayloadAction<any>) => {
+					state.error = action.payload;
+					state.loading = false;
+				},
 			);
 	},
 });
 
-export const { logout, updateWishlist, updateBasket } = userSlice.actions;
+export const { logout } = userSlice.actions;
 export default userSlice.reducer;

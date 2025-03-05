@@ -354,42 +354,6 @@ function Search() {
 									</Select>
 								</div>
 
-								{/* Rating filter */}
-								<div>
-									<label className="block text-sm font-medium mb-2">
-										Minimum Rating ({filters.rating_filter})
-									</label>
-									<div className="flex items-center gap-2">
-										<Slider
-											value={[filters.rating_filter]}
-											min={0}
-											max={5}
-											step={0.01}
-											onValueChange={(value) =>
-												handleChange(
-													"rating_filter",
-													value[0],
-												)
-											}
-											className="py-4"
-										/>
-										<div className="flex text-yellow-500">
-											{[...Array(5)].map((_, i) => (
-												<Star
-													key={i}
-													size={16}
-													fill={
-														i <
-														filters.rating_filter
-															? "currentColor"
-															: "none"
-													}
-												/>
-											))}
-										</div>
-									</div>
-								</div>
-
 								{/* Accords filter */}
 								<div>
 									<label className="block text-sm font-medium mb-2">
@@ -619,7 +583,6 @@ function Search() {
 				{(filters.search_query ||
 					filters.brand_filter ||
 					filters.gender_filter ||
-					filters.rating_filter > 0 ||
 					filters.accords_filter.length > 0 ||
 					filters.top_notes_filter.length > 0 ||
 					filters.middle_notes_filter.length > 0 ||
@@ -673,21 +636,6 @@ function Search() {
 							</Badge>
 						)}
 
-						{filters.rating_filter > 0 && (
-							<Badge variant="secondary" className="px-3 py-1">
-								Rating: {filters.rating_filter}+
-								<Button
-									variant="ghost"
-									size="icon"
-									className="ml-1 h-4 w-4 p-0"
-									onClick={() =>
-										handleChange("rating_filter", 0)
-									}
-								>
-									<X size={12} />
-								</Button>
-							</Badge>
-						)}
 
 						{filters.accords_filter.map((accord) => (
 							<Badge

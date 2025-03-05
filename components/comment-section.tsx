@@ -11,8 +11,6 @@ import {
 	MoreHorizontal,
 	Send,
 	Smile,
-	Image as ImageIcon,
-	X,
 	Trash2,
 	Edit,
 	AlertCircle,
@@ -46,8 +44,11 @@ import {
 	addReply,
 	deleteComment,
 	deleteReply,
+	toggleLikeReply,
+	toggleLikeComment,
 } from "@/redux/perfume/perfumeReducer";
 import { AppDispatch } from "@/redux/Store";
+
 const CommentSection = ({
 	comments: initialComments,
 	perfumeId,
@@ -62,11 +63,8 @@ const CommentSection = ({
 	const [replyText, setReplyText] = useState("");
 	const [showEmoji, setShowEmoji] = useState(false);
 	const [showEmojiForReply, setShowEmojiForReply] = useState(false);
-	const [commentImages, setCommentImages] = useState<string[]>([]);
-	const [replyImages, setReplyImages] = useState<string[]>([]);
-	const fileInputRef = useRef<HTMLInputElement>(null);
-	const replyFileInputRef = useRef<HTMLInputElement>(null);
 	const { theme } = useTheme();
+	const dispatch = useDispatch<AppDispatch>();
 
 	const handleDeleteComment = async (commentId: string, userId: string) => {
 		// Check if this comment belongs to the user
@@ -122,62 +120,18 @@ const CommentSection = ({
 		}
 	};
 
-	const handleImageUpload = (
-		e: React.ChangeEvent<HTMLInputElement>,
-		forReply: boolean = false,
-	) => {
-		const files = e.target.files;
-		if (!files || files.length === 0) return;
-
-		const newImages: string[] = [];
-		Array.from(files).forEach((file) => {
-			const reader = new FileReader();
-			reader.onload = (e) => {
-				if (e.target?.result) {
-					if (forReply) {
-						setReplyImages((prev) => [
-							...prev,
-							e.target!.result as string,
-						]);
-					} else {
-						setCommentImages((prev) => [
-							...prev,
-							e.target!.result as string,
-						]);
-					}
-				}
-			};
-			reader.readAsDataURL(file);
-		});
-
-		// Reset file input
-		e.target.value = "";
-	};
-
-	// Inside component:
-	const dispatch = useDispatch<AppDispatch>();
-
 	const handleCommentSubmit = async () => {
-		if (!commentText.trim() && fileInputRef.current?.files?.length === 0)
-			return;
+		if (!commentText.trim()) return;
 
 		try {
-			// Get files from the file input
-			const files = fileInputRef.current?.files
-				? Array.from(fileInputRef.current.files)
-				: [];
-
 			await dispatch(
 				addComment({
-					perfumeId: perfumeId, // Add this prop to your component
+					perfumeId: perfumeId,
 					text: commentText,
-					imagesFiles: files,
 				}),
 			).unwrap();
 
 			setCommentText("");
-			if (fileInputRef.current) fileInputRef.current.value = "";
-			setCommentImages([]);
 			setShowEmoji(false);
 
 			toast("Comment posted!", {
@@ -193,26 +147,17 @@ const CommentSection = ({
 	};
 
 	const handleReplySubmit = async (commentId: string) => {
-		if (!replyText.trim() && replyFileInputRef.current?.files?.length === 0)
-			return;
+		if (!replyText.trim()) return;
 
 		try {
-			// Get files from the file input
-			const files = replyFileInputRef.current?.files
-				? Array.from(replyFileInputRef.current.files)
-				: [];
-
 			await dispatch(
 				addReply({
 					commentId,
 					text: replyText,
-					imagesFiles: files,
 				}),
 			).unwrap();
 
 			setReplyText("");
-			if (replyFileInputRef.current) replyFileInputRef.current.value = "";
-			setReplyImages([]);
 			setReplyingTo(null);
 			setShowEmojiForReply(false);
 
@@ -233,54 +178,51 @@ const CommentSection = ({
 		isReply = false,
 		parentId?: string | null,
 	) => {
-		const userId = user?.id || "guest123";
+		const userId = user?.id;
 
-		if (isReply) {
-			const updatedComments = comments.map((comment) => {
-				if (comment.id === parentId) {
-					const updatedReplies = comment.replies.map((reply) => {
-						if (reply.id === commentId) {
-							// Check if user already liked
-							const alreadyLiked = reply.likes.includes(userId);
-
-							return {
-								...reply,
-								likes: alreadyLiked
-									? reply.likes.filter((id) => id !== userId)
-									: [...reply.likes, userId],
-							};
-						}
-						return reply;
-					});
-					return { ...comment, replies: updatedReplies };
-				}
-				return comment;
+		if (!userId) {
+			toast("Authentication required", {
+				description: "Please sign in to like comments",
+				duration: 3000,
 			});
-			setComments(updatedComments);
-		} else {
-			const updatedComments = comments.map((comment) => {
-				if (comment.id === commentId) {
-					// Check if user already liked
-					const alreadyLiked = comment.likes.includes(userId);
-
-					return {
-						...comment,
-						likes: alreadyLiked
-							? comment.likes.filter((id) => id !== userId)
-							: [...comment.likes, userId],
-					};
-				}
-				return comment;
-			});
-			setComments(updatedComments);
+			return;
 		}
-	};
 
-	const removeImage = (index: number, forReply: boolean = false) => {
-		if (forReply) {
-			setReplyImages((prev) => prev.filter((_, i) => i !== index));
-		} else {
-			setCommentImages((prev) => prev.filter((_, i) => i !== index));
+		try {
+			if (isReply) {
+				dispatch(
+					toggleLikeReply({
+						replyId: commentId,
+						userId,
+					}),
+				)
+					.unwrap()
+					.catch((error) => {
+						toast("Error updating like", {
+							description: String(error),
+							duration: 3000,
+						});
+					});
+			} else {
+				dispatch(
+					toggleLikeComment({
+						commentId,
+						userId,
+					}),
+				)
+					.unwrap()
+					.catch((error) => {
+						toast("Error updating like", {
+							description: String(error),
+							duration: 3000,
+						});
+					});
+			}
+		} catch (error) {
+			toast("Error updating like", {
+				description: "An unexpected error occurred",
+				duration: 3000,
+			});
 		}
 	};
 
@@ -328,12 +270,7 @@ const CommentSection = ({
 				<div className="space-y-4">
 					<div className="flex gap-3">
 						<Avatar className="h-8 w-8">
-							<AvatarImage
-								src={
-									user?.images ||
-									"https://i.pravatar.cc/150?img=12"
-								}
-							/>
+							<AvatarImage src={user?.images || ""} />
 							<AvatarFallback>
 								{user?.name ? getInitials(user.name) : "U"}
 							</AvatarFallback>
@@ -347,49 +284,8 @@ const CommentSection = ({
 								className="min-h-[60px] w-full resize-none border rounded-md mb-2"
 							/>
 
-							{commentImages.length > 0 && (
-								<div className="flex flex-wrap gap-2 my-2">
-									{commentImages.map((img, index) => (
-										<div key={index} className="relative">
-											<img
-												src={img}
-												alt="Comment attachment"
-												className="h-16 w-16 object-cover rounded-md"
-											/>
-											<button
-												className="absolute top-0 right-0 bg-background/50 rounded-full p-0.5"
-												onClick={() =>
-													removeImage(index)
-												}
-											>
-												<X className="h-3 w-3 text-foreground" />
-											</button>
-										</div>
-									))}
-								</div>
-							)}
-
 							<div className="flex justify-between items-center mt-2">
 								<div className="flex gap-2">
-									<input
-										type="file"
-										ref={fileInputRef}
-										accept="image/*"
-										multiple
-										className="hidden"
-										onChange={(e) => handleImageUpload(e)}
-									/>
-									<Button
-										variant="outline"
-										size="sm"
-										onClick={() =>
-											fileInputRef.current?.click()
-										}
-									>
-										<ImageIcon className="h-4 w-4 mr-1" />{" "}
-										Add Image
-									</Button>
-
 									<Button
 										variant="outline"
 										size="sm"
@@ -425,10 +321,7 @@ const CommentSection = ({
 
 								<Button
 									size="sm"
-									disabled={
-										!commentText.trim() &&
-										commentImages.length === 0
-									}
+									disabled={!commentText.trim()}
 									onClick={handleCommentSubmit}
 								>
 									<Send className="h-5 w-5" />
@@ -539,25 +432,6 @@ const CommentSection = ({
 											<p className="mt-1 text-card-foreground">
 												{comment.text}
 											</p>
-
-											{/* Comment Images */}
-											{comment.images &&
-												comment.images.length > 0 && (
-													<div
-														className={`grid gap-2 mt-2 ${comment.images.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}
-													>
-														{comment.images.map(
-															(img, i) => (
-																<img
-																	key={i}
-																	src={img}
-																	alt="Comment attachment"
-																	className="rounded-md max-h-60 w-full object-cover"
-																/>
-															),
-														)}
-													</div>
-												)}
 										</div>
 
 										<div className="flex items-center gap-4 pl-1">
@@ -626,7 +500,7 @@ const CommentSection = ({
 															<AvatarImage
 																src={
 																	user?.images ||
-																	"https://i.pravatar.cc/150?img=12"
+																	""
 																}
 															/>
 															<AvatarFallback>
@@ -653,74 +527,8 @@ const CommentSection = ({
 																className="min-h-[60px] resize-none mb-2"
 															/>
 
-															{replyImages.length >
-																0 && (
-																<div className="flex flex-wrap gap-2 mb-2">
-																	{replyImages.map(
-																		(
-																			img,
-																			index,
-																		) => (
-																			<div
-																				key={
-																					index
-																				}
-																				className="relative"
-																			>
-																				<img
-																					src={
-																						img
-																					}
-																					alt="Reply attachment"
-																					className="h-16 w-16 object-cover rounded-md"
-																				/>
-																				<button
-																					className="absolute top-0 right-0 bg-background rounded-full p-0.5"
-																					onClick={() =>
-																						removeImage(
-																							index,
-																							true,
-																						)
-																					}
-																				>
-																					<X className="h-3 w-3 text-foreground" />
-																				</button>
-																			</div>
-																		),
-																	)}
-																</div>
-															)}
-
 															<div className="flex justify-between items-center">
 																<div className="flex gap-2">
-																	<input
-																		type="file"
-																		ref={
-																			replyFileInputRef
-																		}
-																		accept="image/*"
-																		multiple
-																		className="hidden"
-																		onChange={(
-																			e,
-																		) =>
-																			handleImageUpload(
-																				e,
-																				true,
-																			)
-																		}
-																	/>
-																	<Button
-																		variant="outline"
-																		size="sm"
-																		onClick={() =>
-																			replyFileInputRef.current?.click()
-																		}
-																	>
-																		<ImageIcon className="h-4 w-4 mr-1" />{" "}
-																		Image
-																	</Button>
-
 																	<Button
 																		variant="outline"
 																		size="sm"
@@ -776,9 +584,6 @@ const CommentSection = ({
 																			setReplyText(
 																				"",
 																			);
-																			setReplyImages(
-																				[],
-																			);
 																		}}
 																	>
 																		Cancel
@@ -787,9 +592,7 @@ const CommentSection = ({
 																	<Button
 																		size="sm"
 																		disabled={
-																			!replyText.trim() &&
-																			replyImages.length ===
-																				0
+																			!replyText.trim()
 																		}
 																		onClick={() =>
 																			handleReplySubmit(
@@ -824,7 +627,7 @@ const CommentSection = ({
 																		reply
 																			.user_data
 																			?.avatar ||
-																		"https://i.pravatar.cc/150?img=12"
+																		""
 																	}
 																/>
 																<AvatarFallback>
@@ -925,35 +728,6 @@ const CommentSection = ({
 																			reply.text
 																		}
 																	</p>
-
-																	{/* Reply Images */}
-																	{reply.images &&
-																		reply
-																			.images
-																			.length >
-																			0 && (
-																			<div
-																				className={`grid gap-2 mt-2 ${reply.images.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}
-																			>
-																				{reply.images.map(
-																					(
-																						img,
-																						i,
-																					) => (
-																						<img
-																							key={
-																								i
-																							}
-																							src={
-																								img
-																							}
-																							alt="Reply attachment"
-																							className="rounded-md max-h-48 w-full object-cover"
-																						/>
-																					),
-																				)}
-																			</div>
-																		)}
 																</div>
 
 																<div className="flex items-center gap-3 pl-1">

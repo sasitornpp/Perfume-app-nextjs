@@ -8,36 +8,19 @@ import { RootState } from "@/redux/Store";
 import { suggestedPerfume } from "@/types/perfume";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Heart } from "lucide-react";
+import { Heart, RefreshCcw } from "lucide-react";
 import { useDispatch } from "react-redux";
-import { updateWishlist } from "@/redux/user/userReducer";
-import { TradablePerfume } from "@/types/perfume";
 
 function PerfumeCard({
 	perfume,
 	index,
 }: {
-	perfume: suggestedPerfume | TradablePerfume;
+	perfume: suggestedPerfume;
 	index: number;
 }) {
 	const [isHovered, setIsHovered] = useState(false);
 	const dispatch = useDispatch();
 	const user = useSelector((state: RootState) => state.user.user);
-	const wishlist = useSelector(
-		(state: RootState) => state.user.profile?.wishlist || [],
-	);
-	const isInWishlist = wishlist.includes(perfume.id);
-
-	const handleFavoriteClick = (e: React.MouseEvent) => {
-		e.stopPropagation();
-		if (isInWishlist) {
-			const updatedWishlist = wishlist.filter((id) => id !== perfume.id);
-			dispatch(updateWishlist({ wishlist: updatedWishlist }));
-		} else {
-			const updatedWishlist = [...wishlist, perfume.id];
-			dispatch(updateWishlist({ wishlist: updatedWishlist }));
-		}
-	};
 
 	const shuffledAccords = Array.isArray(perfume.accords)
 		? [...perfume.accords].sort(() => 0.5 - Math.random()).slice(0, 3)
@@ -65,27 +48,40 @@ function PerfumeCard({
 				onMouseLeave={() => setIsHovered(false)}
 			>
 				{/* Favorite button moved outside of Link */}
-				<div
-					className="absolute top-4 right-4 z-10 cursor-pointer p-2 rounded-full bg-background/80 backdrop-blur-sm transition-all duration-300"
-					onClick={handleFavoriteClick}
-				>
-					<Heart
-						size={20}
-						className={`transition-colors ${isInWishlist ? "fill-destructive text-destructive" : "text-muted-foreground"}`}
-					/>
+				<div className="absolute top-4 right-4 z-10 flex space-x-2">
+					<div
+						className="cursor-pointer p-2 rounded-full bg-background/80 backdrop-blur-sm transition-all duration-300"
+						// onClick={handleFavoriteClick}
+					>
+						<Heart
+							size={20}
+							className={`transition-colors fill-destructive text-destructive`}
+						/>
+					</div>
+
+					{isTradable && (
+						<div className="cursor-pointer p-2 rounded-full bg-background/80 backdrop-blur-sm transition-all duration-300">
+							<RefreshCcw
+								size={20}
+								className="transition-colors text-green-500"
+							/>
+						</div>
+					)}
 				</div>
 
-                {/* Match score positioned at top-left */}
-                {"match_score" in perfume && (
-                    <div className="absolute top-4 left-4 z-10">
-                        <div className="flex flex-col items-center justify-center rounded-full bg-background/80 backdrop-blur-sm text-primary w-16 h-16 text-center">
-                            <span className="text-xs font-medium">
-                                {Math.round(perfume.match_score ?? 0)}%
-                            </span>
-                            <span className="text-[0.6rem] font-medium">match</span>
-                        </div>
-                    </div>
-                )}
+				{/* Match score positioned at top-left */}
+				{"match_score" in perfume && (
+					<div className="absolute top-4 left-4 z-10">
+						<div className="flex flex-col items-center justify-center rounded-full bg-background/80 backdrop-blur-sm text-primary w-16 h-16 text-center">
+							<span className="text-xs font-medium">
+								{Math.round(perfume.match_score ?? 0)}%
+							</span>
+							<span className="text-[0.6rem] font-medium">
+								match
+							</span>
+						</div>
+					</div>
+				)}
 
 				<Link
 					href={`${isTradable ? `/perfumes/trade/${perfume.id}` : `/perfumes/${perfume.id}`}`}
@@ -99,14 +95,16 @@ function PerfumeCard({
 									rotate: isHovered ? -3 : 0,
 								}}
 							>
-								<Image
-									src={perfume.images[0].toString()}
-									alt={`${perfume.name} by ${perfume.brand}`}
-									width={180}
-									height={180}
-									priority={index < 2}
-									className="object-contain drop-shadow-md transition-all duration-300"
-								/>
+								{perfume.images.length > 0 && (
+									<Image
+										src={perfume.images[0].toString()}
+										alt={`${perfume.name} by ${perfume.brand}`}
+										width={180}
+										height={180}
+										priority={index < 2}
+										className="object-contain drop-shadow-md transition-all duration-300"
+									/>
+								)}
 							</motion.div>
 
 							{isHovered && (

@@ -15,8 +15,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Perfume } from "@/types/perfume";
 import {
 	User,
 	Settings,
@@ -28,34 +26,20 @@ import {
 	Star,
 	ClipboardCheck,
 	ArrowRight,
+	Album,
 } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import PerfumeCard from "@/components/perfume_card";
 import { useDispatch } from "react-redux";
-import { updateBasket } from "@/redux/user/userReducer";
-import { createSelector } from "reselect";
-
-const selectTradablePerfumes = (state: RootState) =>
-	state.perfumes.tradablePerfumes;
-
-const selectFilteredTradablePerfumes = (perfume_ids: string[] | undefined) =>
-	createSelector([selectTradablePerfumes], (tradablePerfumes) =>
-		tradablePerfumes.filter((perfume) => perfume_ids?.includes(perfume.id)),
-	);
-
-const selectBasketItems = (profile: { basket?: string[] | null } | null) =>
-	createSelector([selectTradablePerfumes], (tradablePerfumes) =>
-		tradablePerfumes.filter((perfume) =>
-			profile?.basket?.includes(perfume.id),
-		),
-	);
+import { Separator } from "@/components/ui/separator";
+import AlbumCard from "@/components/album-card";
 
 function ProfilePage() {
 	const searchParams = useSearchParams();
 	const dispatch = useDispatch();
 	const router = useRouter();
 	const queryTab = searchParams.get("q");
-	const validTabs = ["my-perfumes", "wishlist", "basket", "recommendations"];
+	const validTabs = ["my-perfumes", "albums", "basket", "recommendations"];
 	const activeTab = validTabs.includes(queryTab ?? "")
 		? (queryTab ?? "my-perfumes")
 		: "my-perfumes";
@@ -63,44 +47,35 @@ function ProfilePage() {
 	const profile = useSelector((state: RootState) => state.user.profile);
 	const isProfileComplete = !!profile && Object.keys(profile).length > 0;
 
-	const perfume_ids = profile?.my_perfume || [];
+	// const perfume_ids = profile?.my_perfume || [];
 
-	const filteredTradablePerfumesSelector =
-		selectFilteredTradablePerfumes(perfume_ids);
-	const basketItemsSelector = selectBasketItems(profile);
-	const basketItems = useSelector(basketItemsSelector);
-	const tradablePerfumes = useSelector(filteredTradablePerfumesSelector);
-	const perfumes = useSelector((state: RootState) => state.perfumes.perfumes);
+	const my_perfumes = useSelector(
+		(state: RootState) => state.user.perfumes || [],
+	);
+	const my_albums = useSelector(
+		(state: RootState) => state.user?.albums || [],
+	);
 
 	const suggestionsPerfumes = useSelector(
-        (state: RootState) => state.user.profile?.suggestions_perfumes || [],
-    );
+		(state: RootState) => state.user.profile?.suggestions_perfumes || [],
+	);
 
-	const wishlistPerfumes = useSelector((state: RootState) => {
-		const allWishlistPerfumes = [
-			...state.perfumes.perfumes.filter((perfume) =>
-				profile?.wishlist?.includes(perfume.id),
-			),
-			...state.perfumes.tradablePerfumes.filter((perfume) =>
-				profile?.wishlist?.includes(perfume.id),
-			),
-		];
-		return allWishlistPerfumes;
-	});
+	const my_baskets = useSelector(
+		(state: RootState) => state.user?.basket || [],
+	);
 
 	// Handle tab change and update URL
 	const handleTabChange = (value: string) => {
 		router.push(`/profile?q=${value}`, { scroll: false });
 	};
 
-	const basket = useSelector(
-		(state: RootState) => state.user.profile?.basket || [],
-	);
 
 	const handleRemoveBasket = (id: string) => {
-		const updatedBasket = basket.filter((item) => item !== id);
-		dispatch(updateBasket({ basket: updatedBasket }));
+		const updatedBasket = my_baskets.filter((item) => item !== id);
+		// dispatch(updateBasket({ basket: updatedBasket }));
 	};
+
+    // console.log(profile);
 
 	// If profile doesn't exist, show the create profile UI
 	if (!isProfileComplete) {
@@ -212,10 +187,10 @@ function ProfilePage() {
 					<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 						<div>
 							<h1 className="text-2xl font-bold">
-								{profile?.name || "Your Profile"}
+								{profile.name || "Your Profile"}
 							</h1>
 							<p className="text-muted-foreground">
-								{profile?.bio ||
+								{profile.bio ||
 									"Add a bio to tell people about yourself"}
 							</p>
 						</div>
@@ -233,7 +208,7 @@ function ProfilePage() {
 								variant="outline"
 								size="sm"
 								className="flex items-center gap-1"
-                                onClick={() => router.push("/profile/settings")}
+								onClick={() => router.push("/profile/settings")}
 							>
 								<Settings className="h-4 w-4" />
 								Settings
@@ -262,18 +237,12 @@ function ProfilePage() {
 					</div>
 
 					<div className="flex gap-2 mt-4">
-						<Badge
+						{/* <Badge
 							variant="secondary"
 							className="bg-primary/10 hover:bg-primary/20"
 						>
 							{perfume_ids.length} Perfumes
-						</Badge>
-						<Badge
-							variant="secondary"
-							className="bg-primary/10 hover:bg-primary/20"
-						>
-							{tradablePerfumes.length} Available for Trade
-						</Badge>
+						</Badge> */}
 					</div>
 				</div>
 			</div>
@@ -300,11 +269,11 @@ function ProfilePage() {
 						<span>Recommendations</span>
 					</TabsTrigger>
 					<TabsTrigger
-						value="wishlist"
+						value="albums"
 						className="flex items-center gap-2"
 					>
 						<Heart className="h-4 w-4" />
-						<span>Wishlist</span>
+						<span>My Albums</span>
 					</TabsTrigger>
 					<TabsTrigger
 						value="basket"
@@ -318,8 +287,8 @@ function ProfilePage() {
 				{/* My Perfumes Tab */}
 				<TabsContent value="my-perfumes">
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-						{perfume_ids.length > 0 ? (
-							tradablePerfumes.map((perfume) => (
+						{my_perfumes.length > 0 ? (
+							my_perfumes.map((perfume) => (
 								<Card
 									key={perfume.id}
 									className="overflow-hidden group"
@@ -409,19 +378,15 @@ function ProfilePage() {
 				</TabsContent>
 
 				{/* Recommendations Tab */}
-				<TabsContent value="wishlist">
+				<TabsContent value="albums">
 					<div className="flex flex-wrap gap-4 justify-center">
-						{wishlistPerfumes.length > 0 ? (
-							wishlistPerfumes.map((perfume, index) => (
-								<PerfumeCard
-									key={perfume.id}
-									perfume={perfume}
-									index={index}
-								/>
+						{my_albums.length > 0 ? (
+							my_albums.map((album) => (
+								<AlbumCard key={album.id} album={album} />
 							))
 						) : (
 							<div className="col-span-full p-8 text-center">
-								<Heart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+								<Album className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
 								<h3 className="text-lg font-medium mb-2">
 									No wishlist added yet
 								</h3>
@@ -437,8 +402,8 @@ function ProfilePage() {
 				{/* Basket Tab */}
 				<TabsContent value="basket">
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-						{basketItems.length > 0 ? (
-							basketItems.map((perfume) => (
+						{my_baskets.length > 0 ? (
+							my_baskets.map((perfume) => (
 								<Card
 									key={perfume.id}
 									className="overflow-hidden group transition-all duration-300 hover:shadow-lg"
@@ -547,17 +512,17 @@ function ProfilePage() {
 						)}
 					</div>
 
-					{basketItems.length > 0 && (
+					{my_baskets.length > 0 && (
 						<div className="mt-6 p-4 bg-card rounded-lg border">
 							<div className="flex justify-between items-center mb-4">
 								<h3 className="font-medium">Basket Summary</h3>
-								<span>{basketItems.length} items</span>
+								<span>{my_baskets.length} items</span>
 							</div>
 							<Separator className="mb-4" />
 							<div className="flex justify-between items-center mb-6">
 								<span className="font-bold">Total</span>
 								<span className="font-bold">
-									{basketItems
+									{my_baskets
 										.reduce(
 											(total, item) =>
 												total +

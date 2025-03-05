@@ -163,7 +163,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 	// ];
 
 	const truncatedDescription =
-		perfume?.descriptions?.length > 150
+		perfume?.descriptions && perfume.descriptions.length > 150
 			? `${perfume.descriptions.substring(0, 150)}...`
 			: (perfume?.descriptions ?? "");
 
@@ -282,10 +282,6 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 						</CardContent>
 					</Card>
 
-					<CommentSection
-						comments={perfume.comments}
-						perfumeId={unwrappedParams.perfumeId}
-					/>
 					{/* <Card className="w-full mt-6 border-border/50 bg-card shadow-sm rounded-lg">
 						<CardHeader className="pb-2">
 							<CardTitle className="text-lg font-medium text-card-foreground">
@@ -358,16 +354,24 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 							</div>
 
 							<div className="flex flex-wrap items-center gap-3 mt-2">
-								<div className="flex items-center bg-secondary/30 px-3 py-1.5 rounded-full">
-									<Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-									<span className="ml-1 font-medium text-foreground">
-										{(perfume.likes ?? 0).toFixed(1)}
-									</span>
-									<span className="mx-1 text-muted-foreground">
-										·
-									</span>
-								</div>
-								<Badge className="bg-accent text-accent-foreground">
+								<Button
+									className="flex items-center"
+									variant={"link"}
+								>
+									<Heart className="h-4 w-4" />
+								</Button>
+								<span className="font-medium text-foreground bg-secondary/30 px-3 py-1 rounded-full">
+									{perfume.likes >= 1000
+										? perfume.likes >= 1000000
+											? (perfume.likes / 1000000).toFixed(
+													1,
+												) + "M"
+											: (perfume.likes / 1000).toFixed(
+													1,
+												) + "K"
+										: perfume.likes}
+								</span>
+								<Badge className="bg-accent text-accent-foreground rounded-full">
 									{perfume.gender}
 								</Badge>
 								<Badge
@@ -387,23 +391,24 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 											? perfume.descriptions
 											: truncatedDescription}
 									</p>
-									{perfume?.descriptions?.length > 150 && (
-										<Button
-											variant="ghost"
-											size="sm"
-											onClick={() =>
-												setShowMore(!showMore)
-											}
-											className="mt-2 text-primary p-0 h-auto"
-										>
-											{showMore
-												? "Show less"
-												: "Read more"}
-											<ChevronDown
-												className={`ml-1 h-4 w-4 transition-transform ${showMore ? "rotate-180" : ""}`}
-											/>
-										</Button>
-									)}
+									{perfume?.descriptions &&
+										perfume.descriptions.length > 150 && (
+											<Button
+												variant="ghost"
+												size="sm"
+												onClick={() =>
+													setShowMore(!showMore)
+												}
+												className="mt-2 text-primary p-0 h-auto"
+											>
+												{showMore
+													? "Show less"
+													: "Read more"}
+												<ChevronDown
+													className={`ml-1 h-4 w-4 transition-transform ${showMore ? "rotate-180" : ""}`}
+												/>
+											</Button>
+										)}
 								</motion.div>
 							</AnimatePresence>
 
@@ -705,6 +710,10 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 					</Card>
 				</motion.div>
 			</div>
+			<CommentSection
+				comments={perfume.comments}
+				perfumeId={unwrappedParams.perfumeId}
+			/>
 		</div>
 	);
 }

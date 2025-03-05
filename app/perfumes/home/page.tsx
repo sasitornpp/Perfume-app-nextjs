@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/Store";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { getUniqueBrandsWithLogo } from "@/utils/functions/filter_perfume";
 import { Card, CardContent } from "@/components/ui/card";
 import { Perfume } from "@/types/perfume";
 import { Button } from "@/components/ui/button";
@@ -31,13 +30,19 @@ function PerfumeLandingPage() {
 		(state: RootState) => state.perfumes.perfumes,
 	);
 
+	// console.log(useSelector(
+	// 	(state: RootState) => state.perfumes.perfume_unique_data,
+	// ));
+
 	const perfumes = React.useMemo(
 		() =>
 			[...unsortedPerfumes].sort((a, b) => a.name.localeCompare(b.name)),
 		[unsortedPerfumes],
 	);
 	const profile = useSelector((state: RootState) => state.user.profile);
-	const perfumesBrand = getUniqueBrandsWithLogo(perfumes);
+	const perfumesBrand = useSelector(
+		(state: RootState) => state.perfumes.perfume_unique_data.brand,
+	);
 	const router = useRouter();
 
 	const suggestionsPerfumes = useSelector(
@@ -636,7 +641,7 @@ function PerfumeLandingPage() {
 									>
 										<Image
 											src={brand.logo}
-											alt={brand.brand}
+											alt={brand.name}
 											width={80}
 											height={80}
 											priority={index < 2}
@@ -665,7 +670,7 @@ function PerfumeLandingPage() {
 													: "var(--foreground)",
 										}}
 									>
-										{brand.brand}
+										{brand.name}
 									</motion.span>
 								</CardContent>
 							</Card>
@@ -700,14 +705,14 @@ function PerfumeLandingPage() {
 											>
 												<Image
 													src={brand.logo}
-													alt={brand.brand}
+													alt={brand.name}
 													width={60}
 													height={60}
 													className="object-contain"
 												/>
 											</motion.div>
 											<span className="text-xs font-medium text-center mt-4 truncate w-full">
-												{brand.brand}
+												{brand.name}
 											</span>
 										</CardContent>
 									</Card>

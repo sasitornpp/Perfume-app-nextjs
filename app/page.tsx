@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import Autoplay from "embla-carousel-autoplay";
 import Image from "next/image";
@@ -33,28 +33,42 @@ const getPerfumeState = (state: RootState) => state.perfumes;
 const selectCarouselItems = createSelector(
 	[getPerfumeState],
 	(perfumeState) => {
-		const data = perfumeState.most_views_by_date as (
-			| Perfume
-			| { perfume: Perfume; shuffledAccords: string[] }
-		)[];
+		const data = perfumeState.most_views_by_date || [];
+
+		// If no data, return empty array
+		if (!data.length) return [];
+
 		return data.map((item) => {
-			if ("perfume" in item && "shuffledAccords" in item) {
+			if (
+				item &&
+				typeof item === "object" &&
+				"perfume" in item &&
+				"shuffledAccords" in item
+			) {
+				// Already in the correct format
 				return item;
-			} else {
-				return {
-					perfume: item as Perfume,
-					shuffledAccords: [],
-				};
 			}
+
+			// Create random sample of accords for display if available
+			const perfumeItem = item as Perfume;
+			const accords = perfumeItem?.accords || [];
+
+			// Get up to 3 random accords
+			const shuffledAccords =
+				accords.length > 0
+					? [...accords].sort(() => 0.5 - Math.random()).slice(0, 3)
+					: [];
+
+			return {
+				perfume: perfumeItem,
+				shuffledAccords,
+			};
 		});
 	},
 );
 
 function Home() {
-	const [activeIndex, setActiveIndex] = useState(0);
-
 	const carouselItems = useSelector(selectCarouselItems) as CarouselItem[];
-
 	// Animate on first load
 	const [isLoaded, setIsLoaded] = useState(false);
 	useEffect(() => {
@@ -65,6 +79,21 @@ function Home() {
 	const trendingPerfumes = useSelector(
 		(state: RootState) => state.perfumes.most_views_all_time,
 	);
+
+	const carouselRef = useRef<any>(null);
+	const [activeIndex, setActiveIndex] = useState(0);
+
+	useEffect(() => {
+		if (carouselRef.current) {
+			const api = carouselRef.current.__emblaApi;
+			if (api) {
+				setActiveIndex(api.selectedScrollSnap());
+				api.on("select", () => {
+					setActiveIndex(api.selectedScrollSnap());
+				});
+			}
+		}
+	}, []);
 
 	return (
 		<div className="flex flex-col items-center w-full px-4 pb-16 bg-gradient-to-b from-background to-background/50 mt-20">
@@ -153,15 +182,17 @@ function Home() {
 
 				{carouselItems.length > 0 ? (
 					<Carousel
+						ref={carouselRef}
 						className="w-full"
 						plugins={[Autoplay({ delay: 4000 })]}
 						opts={{ loop: true }}
-						onSelect={(event: React.SyntheticEvent) => {
-							const target = event.target as HTMLElement;
-							const index = parseInt(
-								target.getAttribute("data-index") || "0",
-							);
-							setActiveIndex(index);
+						onSelect={() => {
+							if (carouselRef.current) {
+								const api = (carouselRef.current as any)
+									?.__emblaApi;
+								if (api)
+									setActiveIndex(api.selectedScrollSnap());
+							}
 						}}
 					>
 						<CarouselContent>
@@ -194,7 +225,8 @@ function Home() {
 																			perfume.logo
 																		}
 																		alt={
-																			perfume.brand
+																			perfume.brand ||
+																			""
 																		}
 																		fill
 																		className="object-cover"
@@ -240,14 +272,7 @@ function Home() {
 								),
 							)}
 						</CarouselContent>
-						<div className="flex justify-center mt-4 gap-1">
-							{carouselItems.map((_, index) => (
-								<div
-									key={index}
-									className={`w-2 h-2 rounded-full transition-all duration-300 ${activeIndex === index ? "bg-primary w-4" : "bg-primary/30"}`}
-								/>
-							))}
-						</div>
+
 						<CarouselPrevious className="left-2" />
 						<CarouselNext className="right-2" />
 					</Carousel>

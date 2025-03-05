@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, FormEvent, ChangeEvent, useEffect } from "react";
+import React, { useState, FormEvent, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ProgressCircle } from "@/components/form/trade-form/progress-circle";
@@ -12,10 +12,10 @@ import {
 	CardDescription,
 } from "@/components/ui/card";
 import {
-	TradablePerfumeForInsert,
-	TradablePerfumeInitialState,
+	PerfumeForInsert,
+	PerfumeInitialState,
 } from "@/types/perfume";
-import { addTradablePerfume } from "@/redux/perfume/perfumeReducer";
+import { addPerfume } from "@/redux/perfume/perfumeReducer";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDispatch } from "react-redux";
@@ -35,8 +35,8 @@ function Trade() {
 
 	const profile = useSelector((state: RootState) => state.user.profile);
 
-	const [formData, setFormData] = useState<TradablePerfumeForInsert>(
-		TradablePerfumeInitialState,
+	const [formData, setFormData] = useState<PerfumeForInsert>(
+		PerfumeInitialState,
 	);
 
 	useEffect(() => {
@@ -50,8 +50,8 @@ function Trade() {
 		];
 		const filledRequired = requiredFields.filter(
 			(field) =>
-				formData[field as keyof TradablePerfumeForInsert] &&
-				formData[field as keyof TradablePerfumeForInsert] !== 0,
+				formData[field as keyof PerfumeForInsert] &&
+				formData[field as keyof PerfumeForInsert] !== 0,
 		).length;
 
 		// Additional fields that add to completion percentage
@@ -66,17 +66,17 @@ function Trade() {
 		];
 		const filledBonus = bonusFields.filter(
 			(field) =>
-				formData[field as keyof TradablePerfumeForInsert] &&
-				formData[field as keyof TradablePerfumeForInsert] !== "",
+				formData[field as keyof PerfumeForInsert] &&
+				formData[field as keyof PerfumeForInsert] !== "",
 		).length;
 
 		// Notes fields
 		const hasTopNotes =
-			formData.top_note?.some((note) => note !== "") || false;
-		const hasMiddleNotes = formData.middle_note?.some(
+			formData.top_notes?.some((note) => note !== "") || false;
+		const hasMiddleNotes = formData.middle_notes?.some(
 			(note) => note !== "",
 		);
-		const hasBaseNotes = formData.base_note?.some((note) => note !== "");
+		const hasBaseNotes = formData.base_notes?.some((note) => note !== "");
 		const notesCount = [hasTopNotes, hasMiddleNotes, hasBaseNotes].filter(
 			Boolean,
 		).length;
@@ -112,14 +112,14 @@ function Trade() {
 				throw new Error("User profile is required");
 			}
 			dispatch(
-				addTradablePerfume({
+				addPerfume({
 					perfumeData: formData,
 					userProfile: profile,
 				}),
 			);
 			// console.log(formData)
 			// console.log("Listing created successfully ");
-			// router.push("/perfumes/trade");
+			router.push("/perfumes/trade");
 		} catch (error) {
 			console.error("Error creating listing:", error);
 		} finally {
