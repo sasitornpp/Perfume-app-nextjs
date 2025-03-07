@@ -241,10 +241,14 @@ export const updateProfile = createAsyncThunk(
 					}
 				}
 
-				// Upload the new image
+				// Add timestamp to avoid caching issues
+				const timestamp = Date.now();
+				const fileName = `${userId}_${timestamp}`;
+
+				// Upload the new image with the timestamp in the name
 				const { error: uploadError } = await supabaseClient.storage
 					.from("IMAGES")
-					.upload(`Avatars/${userId}`, formData.newImageFile);
+					.upload(`Avatars/${fileName}`, formData.newImageFile);
 
 				if (uploadError) {
 					throw new Error(
@@ -255,7 +259,7 @@ export const updateProfile = createAsyncThunk(
 				// Get the public URL
 				const { data: publicUrlData } = supabaseClient.storage
 					.from("IMAGES")
-					.getPublicUrl(`Avatars/${userId}`);
+					.getPublicUrl(`Avatars/${fileName}`);
 
 				updateData.images = publicUrlData?.publicUrl || null;
 			} else if (formData.images === null && state.user.profile?.images) {
@@ -293,7 +297,6 @@ export const updateProfile = createAsyncThunk(
 		}
 	},
 );
-
 export const fetchSuggestedPerfumes = createAsyncThunk(
 	"perfume/fetchSuggestedPerfumes",
 	async (
@@ -312,8 +315,8 @@ export const fetchSuggestedPerfumes = createAsyncThunk(
 			dispatch(
 				updateProfile({
 					formData: {
-						suggestions_perfumes: perfumes
-					} as ProfileSettingsProps
+						suggestions_perfumes: perfumes,
+					} as ProfileSettingsProps,
 				}),
 			);
 

@@ -370,10 +370,16 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 						<CardContent className="pb-4">
 							<AnimatePresence mode="wait">
 								<motion.div>
-									<p className="text-card-foreground leading-relaxed">
+									<p className="text-card-foreground leading-relaxed break-words whitespace-pre-wrap overflow-hidden">
 										{showMore
 											? perfume.descriptions
-											: truncatedDescription}
+											: perfume?.descriptions
+												? perfume.descriptions.length >
+													150
+													? `${perfume.descriptions.substring(0, 150)}...`
+													: perfume?.descriptions
+												: perfume?.descriptions ||
+													"No description available"}
 									</p>
 									{perfume?.descriptions &&
 										perfume.descriptions.length > 150 && (
