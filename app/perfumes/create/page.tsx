@@ -36,6 +36,8 @@ function Trade() {
 	const [formData, setFormData] =
 		useState<PerfumeForInsert>(PerfumeInitialState);
 
+    // console.log("formData:", formData);
+
 	useEffect(() => {
 		// Calculate form completion progress
 		const requiredFields = [

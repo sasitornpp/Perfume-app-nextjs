@@ -287,3 +287,58 @@ export interface PerfumeUniqueData {
 	accords: string[];
 	perfumer: string[];
 }
+
+
+export interface Album {
+    id?: string;
+    user_id?: string;
+    title: string;
+    descriptions: string;
+    private: boolean;
+    likes: string[];
+    images: string | null;
+    created_at: string;
+    perfumes_id: string[];
+}
+
+export interface AlbumForInsert extends Omit<Album, 'id' | 'created_at'> {
+    id?: string;
+    imageFile: File | null;
+}
+
+export interface AlbumWithPerfume extends Album {
+    perfumes: Perfume[];
+}
+
+export const AlbumInitialState: AlbumForInsert = {
+    title: "",
+    descriptions: "",
+    private: false,
+    likes: [],
+    images: null,
+    imageFile: null,
+    perfumes_id: []
+};
+
+
+export interface Basket {
+    id?: string;
+    amount: number;
+    user_id: string;
+    perfume_id: string;
+    created_at: string;
+}
+
+export interface BasketWithPerfume extends Basket {
+    perfume: Perfume;
+}
+
+export interface BasketForInsert extends Omit<Basket, 'id' | 'created_at'> {
+    id?: string;
+}
+
+export const BasketInitialState: BasketForInsert = {
+    amount: 1,
+    user_id: '',
+    perfume_id: ''
+};

@@ -11,10 +11,17 @@ import {
 	uploadImagesToSupabase,
 	rollbackUploadedFiles,
 } from "@/utils/functions/image_process";
-import { Comments, Reply } from "@/types/perfume";
+import { Comments, Reply, Filters } from "@/types/perfume";
+import {
+	addNewTotalPage,
+	clearPerfumesPage,
+} from "@/redux/pagination/paginationReducer";
 
+// Update the PerfumeState interface to include currentFilters
 interface PerfumeState {
-	perfumes: Perfume[];
+	perfumes_filters_by_page: {
+		[page: number]: Perfume[];
+	};
 	perfumes_by_page: {
 		[page: number]: Perfume[];
 	};
@@ -24,11 +31,14 @@ interface PerfumeState {
 	loading: boolean;
 	error: string | null;
 	fetchedPerfumePages: number[];
+	fetchedFilteredPages: number[];
 	perfume_unique_data: PerfumeUniqueData;
+	currentFilters: Filters | null;
+	totalFilteredCount: number;
 }
 
 const initialState: PerfumeState = {
-	perfumes: [],
+	perfumes_filters_by_page: {},
 	perfumes_by_page: {},
 	selectedPerfume: { data: null, errorMessages: null },
 	most_views_by_date: [],
@@ -36,6 +46,7 @@ const initialState: PerfumeState = {
 	loading: false,
 	error: null,
 	fetchedPerfumePages: [],
+	fetchedFilteredPages: [],
 	perfume_unique_data: {
 		brand: [],
 		perfumer: [],
@@ -44,10 +55,11 @@ const initialState: PerfumeState = {
 		middle_notes: [],
 		base_notes: [],
 	},
+	currentFilters: null,
+	totalFilteredCount: 0,
 };
 
 // Replace the existing toggleLikeComment function
-
 export const toggleLikeComment = createAsyncThunk(
 	"perfume/toggleLikeComment",
 	async (
@@ -706,12 +718,8 @@ const perfumeSlice = createSlice({
 					return;
 				}
 
-				const newPerfumes = action.payload.data.filter(
-					(perfume) =>
-						!state.perfumes.some((p) => p.id === perfume.id),
-				);
-				state.perfumes = [...state.perfumes, ...newPerfumes];
-				state.perfumes_by_page[action.payload.page] = newPerfumes;
+				state.perfumes_by_page[action.payload.page] =
+					action.payload.data;
 				if (
 					!state.fetchedPerfumePages.includes(
 						action.meta.arg.pageNumber,
@@ -987,23 +995,6 @@ const perfumeSlice = createSlice({
 							}
 							return perfume;
 						});
-				});
-
-				// Update the main perfumes array for consistency
-				state.perfumes = state.perfumes.map((perfume) => {
-					if (perfume.id === action.payload.perfumeId) {
-						const likes = [...(perfume.likes || [])];
-						const userIndex = likes.indexOf(action.payload.userId);
-
-						if (userIndex !== -1) {
-							likes.splice(userIndex, 1);
-						} else {
-							likes.push(action.payload.userId);
-						}
-
-						return { ...perfume, likes };
-					}
-					return perfume;
 				});
 			})
 			.addCase(toggleLikePerfume.rejected, (state, action) => {

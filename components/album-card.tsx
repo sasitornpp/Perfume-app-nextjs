@@ -35,9 +35,11 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ album }) => {
 
 	// Get up to 4 perfume images to display
 	const perfumeImages: (string | null)[] = album.perfumes
-		.filter((perfume) => perfume.images && perfume.images.length > 0)
-		.map((perfume) => perfume.images?.[0])
-		.slice(0, 4);
+		? album.perfumes
+			.filter((perfume) => perfume.images && perfume.images.length > 0)
+			.map((perfume) => perfume.images?.[0])
+			.slice(0, 4)
+		: [];
 
 	// Fill with placeholder if less than 4 images
 	while (perfumeImages.length < 4) {

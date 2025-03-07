@@ -314,7 +314,7 @@ export function ProfileSettings({ profile }: { profile: Profile }) {
 			{/* Image Preview Modal */}
 			{showImagePreviewModal && imagePreview && (
 				<div
-					className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+					className="fixed inset-0 bg-background/70 flex items-center justify-center z-50"
 					onClick={() => setShowImagePreviewModal(false)}
 				>
 					<div

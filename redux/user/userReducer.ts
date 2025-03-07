@@ -10,6 +10,11 @@ import {
 	Perfume,
 	PerfumeForInsert,
 	PerfumeForUpdate,
+	AlbumWithPerfume,
+	AlbumForInsert,
+	Album,
+	BasketWithPerfume,
+	Basket,
 } from "@/types/perfume";
 import {
 	fetch_user_result,
@@ -25,8 +30,8 @@ interface UserState {
 	user: User | null;
 	profile: Profile | null;
 	perfumes: Perfume[] | null;
-	albums: any[] | null;
-	basket: any[] | null;
+	albums: Album[] | null;
+	basket: Basket[] | null;
 	loading: boolean;
 	error: string | null;
 	profileNotCreated: boolean;
@@ -605,6 +610,78 @@ export const removePerfume = createAsyncThunk(
 	},
 );
 
+export const addNewAlbum = createAsyncThunk(
+	"user/addNewAlbum",
+	async (
+		{ album }: { album: AlbumForInsert },
+		{ rejectWithValue, getState },
+	) => {
+        console.log("Adding new album with data state 1 :", album);
+		try {
+			const state = getState() as { user: UserState };
+			const profile = state.user.profile;
+
+			if (!profile) throw new Error("User profile is required");
+
+			// Handle image uploads if there are any files
+			let imageUrl: string | null = null;
+			if (album.imageFile) {
+				const folderName = `albums/${profile.id}`;
+				const fileName = `${album.title}_${Date.now()}`;
+				const filePath = `${folderName}/${fileName}`;
+
+				// Upload image to storage
+				const { error: uploadError } = await supabaseClient.storage
+					.from("IMAGES")
+					.upload(filePath, album.imageFile);
+
+				if (uploadError) {
+					throw new Error(
+						`Error uploading album image: ${uploadError.message}`,
+					);
+				}
+
+				// Get public URL of uploaded image
+				const { data: publicUrlData } = supabaseClient.storage
+					.from("IMAGES")
+					.getPublicUrl(filePath);
+
+				imageUrl = publicUrlData?.publicUrl || null;
+			}
+
+            // Prepare album data for insertion by removing file objects
+            const { imageFile, ...cleanedAlbumData } = album;
+
+            // Add the image URL to the album data
+            const albumToInsert = {
+                ...cleanedAlbumData,
+                images: imageUrl,  // Use the uploaded image URL
+                user_id: profile.id,
+            };
+
+            console.log("Adding new album with data state 2:", albumToInsert);
+
+			const { data, error } = await supabaseClient
+				.from("albums")
+				.insert([albumToInsert])
+				.select();
+
+			if (error) {
+				// If there was an error, remove the uploaded image
+				if (imageUrl) {
+					const filePath = imageUrl.split("/IMAGES/")[1];
+					await rollbackUploadedFiles([filePath]);
+				}
+				throw error;
+			}
+
+			return data;
+		} catch (error: any) {
+			return rejectWithValue(error.message);
+		}
+	},
+);
+
 const userSlice = createSlice({
 	name: "user",
 	initialState,
@@ -804,6 +881,37 @@ const userSlice = createSlice({
 					state.loading = false;
 					state.error =
 						action.payload.message || "Failed to remove perfume";
+				},
+			)
+			.addCase(addNewAlbum.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(
+				addNewAlbum.fulfilled,
+				(state, action: PayloadAction<Album[]>) => {
+					state.loading = false;
+					if (state.albums && action.payload.length > 0) {
+						// Create a set of existing album IDs for quick lookup
+						const existingIds = new Set(
+							state.albums.map((album) => album.id),
+						);
+						// Filter out any new albums that already exist in the state
+						const uniqueNewAlbums = action.payload.filter(
+							(album) => !existingIds.has(album.id),
+						);
+						state.albums = [...state.albums, ...uniqueNewAlbums];
+					} else if (action.payload.length > 0) {
+						state.albums = action.payload;
+					}
+				},
+			)
+			.addCase(
+				addNewAlbum.rejected,
+				(state, action: PayloadAction<any>) => {
+					state.loading = false;
+					state.error =
+						action.payload.message || "Failed to add album";
 				},
 			);
 	},

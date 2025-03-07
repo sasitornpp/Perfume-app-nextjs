@@ -46,20 +46,7 @@ function TabNotes({
 	) => void;
 	setFormData: React.Dispatch<React.SetStateAction<PerfumeForInsert | PerfumeForUpdate>>;
 }) {
-	const NOTE_TYPES = [
-		{
-			type: "Top",
-			field: "top_notes",
-		},
-		{
-			type: "Middle",
-			field: "middle_notes",
-		},
-		{
-			type: "Base",
-			field: "base_notes",
-		},
-	] as const;
+
 	const handleArrayChange = (
 		type: keyof PerfumeForInsert,
 		index: number,

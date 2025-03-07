@@ -26,19 +26,6 @@ import {
 } from "lucide-react";
 
 function PerfumeLandingPage() {
-	const unsortedPerfumes = useSelector(
-		(state: RootState) => state.perfumes.perfumes,
-	);
-
-	console.log(useSelector(
-		(state: RootState) => state.perfumes.perfume_unique_data,
-	));
-
-	const perfumes = React.useMemo(
-		() =>
-			[...unsortedPerfumes].sort((a, b) => a.name.localeCompare(b.name)),
-		[unsortedPerfumes],
-	);
 	const profile = useSelector((state: RootState) => state.user.profile);
 	const perfumesBrand = useSelector(
 		(state: RootState) => state.perfumes.perfume_unique_data.brand,
@@ -57,6 +44,10 @@ function PerfumeLandingPage() {
 		null,
 	);
 
+	const perfumes = useSelector(
+		(state: RootState) => state.perfumes.perfumes_by_page[1],
+	);
+
 	useEffect(() => {
 		setIsVisible(true);
 
@@ -67,13 +58,9 @@ function PerfumeLandingPage() {
 						Math.floor(Math.random() * suggestionsPerfumes.length)
 					],
 				);
-			} else if (perfumes.length > 0) {
-				setFeaturedPerfume(
-					perfumes[Math.floor(Math.random() * perfumes.length)],
-				);
 			}
 		}
-	}, [profile?.suggestions_perfumes, perfumes]);
+	}, [profile?.suggestions_perfumes]);
 
 	// Animation variants
 	const containerVariants = {
@@ -158,8 +145,8 @@ function PerfumeLandingPage() {
 								className="text-primary-foreground/90 mb-8 text-lg"
 							>
 								Explore our curated collection of premium
-								fragrances tailored to your unique preferences
-								and personality.
+								fragrances tailored to your unique preferences{" "}
+								<br /> and personality.
 							</motion.p>
 							{!profile?.suggestions_perfumes ? (
 								<motion.div
@@ -563,31 +550,38 @@ function PerfumeLandingPage() {
 						>
 							<ScrollArea className="w-full whitespace-nowrap py-6">
 								<div className="flex w-max space-x-6 px-6">
-									{perfumes
-										.slice(0, 20)
-										.map((perfume, index) => (
-											<motion.div
-												key={perfume.id}
-												initial={{ opacity: 0, y: 20 }}
-												animate={{ opacity: 1, y: 0 }}
-												transition={{
-													delay: index * 0.04,
-													duration: 0.3,
-												}}
-												whileHover={{
-													y: -8,
-													transition: {
-														duration: 0.2,
-													},
-												}}
-												className="transition-all duration-300"
-											>
-												<PerfumeCard
-													perfume={perfume}
-													index={index}
-												/>
-											</motion.div>
-										))}
+									{perfumes &&
+										perfumes
+											.slice(0, 20)
+											.map((perfume, index) => (
+												<motion.div
+													key={perfume.id}
+													initial={{
+														opacity: 0,
+														y: 20,
+													}}
+													animate={{
+														opacity: 1,
+														y: 0,
+													}}
+													transition={{
+														delay: index * 0.04,
+														duration: 0.3,
+													}}
+													whileHover={{
+														y: -8,
+														transition: {
+															duration: 0.2,
+														},
+													}}
+													className="transition-all duration-300"
+												>
+													<PerfumeCard
+														perfume={perfume}
+														index={index}
+													/>
+												</motion.div>
+											))}
 								</div>
 								<ScrollBar orientation="horizontal" />
 							</ScrollArea>

@@ -1,51 +1,29 @@
 import { Middleware } from "@reduxjs/toolkit";
-import {
-	updateProfile,
-} from "@/redux/user/userReducer";
 import { store } from "@/redux/Store";
+import { setPerfumesPage } from "@/redux/pagination/paginationReducer";
+import {
+	fetchPerfumesByFilters,
+	Filters,
+} from "@/redux/filters/filterPerfumesReducer";
 
-const syncWishlistToSupabaseMiddleware: Middleware =
-	() => (next) => async (action) => {
-		next(action);
-		const actionType = (action as { type: string }).type;
-		try {
-			switch (actionType) {
-				// case updateWishlist.type: {
-				// 	const addAction = action as ReturnType<
-				// 		typeof updateWishlist
-				// 	>;
-				// 	const wishList = addAction.payload;
+const syncReduxMiddleware: Middleware = () => (next) => async (action) => {
+	next(action);
+	const typedAction = action as { type: string; payload?: Filters };
 
-				// 	await store.dispatch(
-				// 		updateProfile({
-				// 			columns: "wishlist",
-				// 			values: wishList.wishlist,
-				// 		}),
-				// 	);
+	try {
+		switch (typedAction.type) {
+			case setPerfumesPage.type:
+				console.log("setPerfumesPage triggered");
+				const result = await store.dispatch(fetchPerfumesByFilters());
+				console.log("fetchPerfumesByFilters result:", result);
+				break;
 
-				// 	break;
-				// }
-
-				// case updateBasket.type: {
-				// 	const addAction = action as ReturnType<typeof updateBasket>;
-				// 	const basket = addAction.payload;
-
-				// 	await store.dispatch(
-				// 		updateProfile({
-				// 			columns: "basket",
-				// 			values: basket.basket,
-				// 		}),
-				// 	);
-
-				// 	break;
-				// }
-
-				default:
-					break;
-			}
-		} catch (error) {
-			console.error("Supabase sync failed:", error);
+			default:
+				break;
 		}
-	};
+	} catch (error) {
+		console.error(error);
+	}
+};
 
-export default syncWishlistToSupabaseMiddleware;
+export default syncReduxMiddleware;

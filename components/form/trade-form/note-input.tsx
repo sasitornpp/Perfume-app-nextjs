@@ -26,12 +26,11 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
 
 interface NoteInputProps {
 	type: string;
 	notes: string[];
-	suggestions?: string[]; // Available notes for autocomplete
+	suggestions?: string[];
 	onAddNote: () => void;
 	onNotesChange: (notes: string[]) => void;
 	onRemoveNote: (index: number) => void;

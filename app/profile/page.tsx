@@ -27,12 +27,16 @@ import {
 	ClipboardCheck,
 	ArrowRight,
 	Album,
+	PlusCircle,
 } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import PerfumeCard from "@/components/perfume_card";
 import { useDispatch } from "react-redux";
 import { Separator } from "@/components/ui/separator";
 import AlbumCard from "@/components/album-card";
+import CreateAlbumButton from "@/components/form/create-album-button";
+import { getPerfumeById } from "@/utils/supabase/api/perfume";
+import { Perfume } from "@/types/perfume";
 
 function ProfilePage() {
 	const searchParams = useSearchParams();
@@ -70,7 +74,9 @@ function ProfilePage() {
 	};
 
 	const handleRemoveBasket = (id: string) => {
-		const updatedBasket = my_baskets.filter((item) => item !== id);
+		const updatedBasket = my_baskets.filter(
+			(item) => item.perfume_id !== id,
+		);
 		// dispatch(updateBasket({ basket: updatedBasket }));
 	};
 
@@ -285,32 +291,62 @@ function ProfilePage() {
 
 				{/* My Perfumes Tab */}
 				<TabsContent value="my-perfumes">
-					<div className="flex flex-wrap justify-center gap-4">
-						{my_perfumes.length > 0 ? (
-							my_perfumes.map((perfume, index) => (
-								<PerfumeCard
-									key={perfume.id}
-									perfume={perfume}
-									index={index}
-								/>
-							))
-						) : (
-							<div className="col-span-full p-8 text-center">
-								<Sprout className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-								<h3 className="text-lg font-medium mb-2">
-									No perfumes added yet
-								</h3>
-								<p className="text-muted-foreground mb-4">
-									Start building your collection by adding
-									perfumes you own
-								</p>
-								<Button
-									onClick={() =>
-										router.push("/perfumes/create")
-									}
-								>
-									Add Your First Perfume
-								</Button>
+					<div className="flex flex-wrap justify-center gap-4 p-4">
+						{my_perfumes.length !== 0 && (
+							<>
+								{my_perfumes.map((perfume, index) => (
+									<PerfumeCard
+										key={perfume.id}
+										perfume={perfume}
+										index={index}
+									/>
+								))}
+								<div className="transition-all duration-300 hover:z-50 my-4">
+									<Card
+										className="w-[300px] overflow-hidden border-2 relative rounded-lg cursor-pointer"
+										onClick={() =>
+											router.push("/perfumes/create")
+										}
+									>
+										<CardContent className="flex flex-col h-[420px] p-0 overflow-hidden">
+											<div className="relative overflow-hidden w-full  h-full from-background to-muted flex items-center justify-center">
+												<div>
+													<div className="flex items-center justify-center bg-primary/10 p-6 rounded-full">
+														<PlusCircle className="h-16 w-16 text-primary" />
+													</div>
+												</div>
+											</div>
+										</CardContent>
+									</Card>
+								</div>
+							</>
+						)}
+						{/* Empty State - Only shown when no perfumes exist and replaces the card above */}
+						{my_perfumes.length === 0 && (
+							<div className="w-full max-w-md p-8 text-center bg-card rounded-lg border border-border shadow-sm my-8">
+								<div className="flex flex-col items-center">
+									<div className="rounded-full bg-muted p-4 mb-4">
+										<Sprout className="h-8 w-8 text-muted-foreground" />
+									</div>
+									<h3 className="text-xl font-medium mb-2">
+										Start Your Collection
+									</h3>
+									<p className="text-muted-foreground mb-6 max-w-xs">
+										Track your fragrances, record
+										impressions, and build your personal
+										scent library
+									</p>
+									<Button
+										size="lg"
+										onClick={() =>
+											router.push("/perfumes/create")
+										}
+										className="gap-2"
+									>
+										<PlusCircle className="h-4 w-4" />
+										Add Your First Perfume
+									</Button>
+								</div>
 							</div>
 						)}
 					</div>
@@ -342,13 +378,26 @@ function ProfilePage() {
 					</div>
 				</TabsContent>
 
-				{/* Recommendations Tab */}
 				<TabsContent value="albums">
+					<div className="mb-6 flex justify-end">
+						<CreateAlbumButton
+							onCreateAlbum={(albumData) => {
+								// Handle the new album creation here
+								console.log("New album:", albumData);
+								// You might want to call an API or update your state here
+							}}
+						/>
+					</div>
 					<div className="flex flex-wrap gap-4 justify-center">
 						{my_albums.length > 0 ? (
-							my_albums.map((album) => (
-								<AlbumCard key={album.id} album={album} />
-							))
+							my_albums.map((album) =>
+								album.id ? (
+									<AlbumCard
+										key={album.id}
+										album={album as any}
+									/>
+								) : null,
+							)
 						) : (
 							<div className="col-span-full p-8 text-center">
 								<Album className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -368,94 +417,116 @@ function ProfilePage() {
 				<TabsContent value="basket">
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 						{my_baskets.length > 0 ? (
-							my_baskets.map((perfume) => (
-								<Card
-									key={perfume.id}
-									className="overflow-hidden group transition-all duration-300 hover:shadow-lg"
-								>
-									<div className="h-48 bg-accent/20 relative">
-										{perfume.images &&
-										perfume.images.length > 0 ? (
-											<img
-												src={perfume.images[0]}
-												alt={perfume.name}
-												className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-											/>
-										) : (
-											<div className="w-full h-full flex items-center justify-center bg-accent/10">
-												<span className="text-muted-foreground">
-													No image
+							my_baskets.map((perfumeId) => {
+								const [perfume, setPerfume] =
+									useState<Perfume | null>(null);
+
+								useEffect(() => {
+									const fetchPerfume = async () => {
+										const perfumeData =
+											await getPerfumeById({
+												id: perfumeId.perfume_id,
+											});
+										setPerfume(perfumeData);
+									};
+
+									fetchPerfume();
+								}, [perfumeId.perfume_id]);
+
+								if (!perfume) return <div>Loading...</div>;
+
+								return (
+									<Card
+										key={perfume.id}
+										className="overflow-hidden group transition-all duration-300 hover:shadow-lg"
+									>
+										<div className="h-48 bg-accent/20 relative">
+											{perfume.images &&
+											perfume.images.length > 0 ? (
+												<img
+													src={perfume.images[0]}
+													alt={perfume.name}
+													className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+												/>
+											) : (
+												<div className="w-full h-full flex items-center justify-center bg-accent/10">
+													<span className="text-muted-foreground">
+														No image
+													</span>
+												</div>
+											)}
+											{perfume.gender && (
+												<div className="absolute top-2 right-2 bg-background text-foreground text-xs px-2 py-1 rounded-full">
+													{perfume.gender}
+												</div>
+											)}
+										</div>
+										<CardHeader className="pb-1">
+											<div className="flex justify-between items-start">
+												<div>
+													<CardTitle className="text-base font-medium">
+														{perfume.name}
+													</CardTitle>
+													<CardDescription className="text-sm text-primary/80">
+														{perfume.brand}
+													</CardDescription>
+												</div>
+												<Badge
+													variant="outline"
+													className="ml-2 text-xs"
+												>
+													{perfume.concentration ||
+														"EDP"}
+												</Badge>
+											</div>
+											{perfume.scent_type && (
+												<p className="text-xs text-muted-foreground mt-1">
+													{perfume.scent_type}
+												</p>
+											)}
+										</CardHeader>
+										<CardFooter className="pt-0 flex justify-between items-center">
+											<div>
+												<span className="font-semibold text-primary">
+													฿
+													{perfume.price?.toLocaleString()}
+												</span>
+												<span className="text-xs text-muted-foreground ml-1">
+													{perfume.volume}ml
 												</span>
 											</div>
-										)}
-										{perfume.gender && (
-											<div className="absolute top-2 right-2 bg-background text-foreground text-xs px-2 py-1 rounded-full">
-												{perfume.gender}
-											</div>
-										)}
-									</div>
-									<CardHeader className="pb-1">
-										<div className="flex justify-between items-start">
-											<div>
-												<CardTitle className="text-base font-medium">
-													{perfume.name}
-												</CardTitle>
-												<CardDescription className="text-sm text-primary/80">
-													{perfume.brand}
-												</CardDescription>
-											</div>
-											<Badge
-												variant="outline"
-												className="ml-2 text-xs"
+											<Button
+												variant="destructive"
+												size="sm"
+												className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+												onClick={() =>
+													handleRemoveBasket(
+														perfume.id,
+													)
+												}
 											>
-												{perfume.concentration || "EDP"}
-											</Badge>
-										</div>
-										{perfume.scent_type && (
-											<p className="text-xs text-muted-foreground mt-1">
-												{perfume.scent_type}
-											</p>
-										)}
-									</CardHeader>
-									<CardFooter className="pt-0 flex justify-between items-center">
-										<div>
-											<span className="font-semibold text-primary">
-												฿
-												{perfume.price.toLocaleString()}
-											</span>
-											<span className="text-xs text-muted-foreground ml-1">
-												{perfume.volume}ml
-											</span>
-										</div>
-										<Button
-											variant="destructive"
-											size="sm"
-											className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-											onClick={() =>
-												handleRemoveBasket(perfume.id)
-											}
-										>
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												width="16"
-												height="16"
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="currentColor"
-												strokeWidth="2"
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												className="mr-1"
-											>
-												<path d="M3 6h18"></path>
-												<path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-												<path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-											</svg>
-											Remove
-										</Button>
-									</CardFooter>
-								</Card>
-							))
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													width="16"
+													height="16"
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													strokeWidth="2"
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													className="mr-1"
+												>
+													<path d="M3 6h18"></path>
+													<path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+													<path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+												</svg>
+												Remove
+											</Button>
+										</CardFooter>
+									</Card>
+								);
+							})
 						) : (
 							<div className="col-span-full p-8 text-center">
 								<ShoppingBasket className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -476,37 +547,6 @@ function ProfilePage() {
 							</div>
 						)}
 					</div>
-
-					{my_baskets.length > 0 && (
-						<div className="mt-6 p-4 bg-card rounded-lg border">
-							<div className="flex justify-between items-center mb-4">
-								<h3 className="font-medium">Basket Summary</h3>
-								<span>{my_baskets.length} items</span>
-							</div>
-							<Separator className="mb-4" />
-							<div className="flex justify-between items-center mb-6">
-								<span className="font-bold">Total</span>
-								<span className="font-bold">
-									{my_baskets
-										.reduce(
-											(total, item) =>
-												total +
-												parseFloat(
-													String(
-														item.price || "",
-													).replace("$", "") || "0",
-												),
-											0,
-										)
-										.toFixed(2)}{" "}
-									THB
-								</span>
-							</div>
-							<Button className="w-full">
-								Proceed to Checkout
-							</Button>
-						</div>
-					)}
 				</TabsContent>
 			</Tabs>
 		</div>

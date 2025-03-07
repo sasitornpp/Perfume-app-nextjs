@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { supabaseClient } from "@/utils/supabase/client";
 
-interface PerfumeState {
+export interface PaginationState {
 	loading: boolean;
 	error: string | null;
 	perfumesPage: number;
@@ -9,7 +9,7 @@ interface PerfumeState {
 	perfumesTotalPage: number;
 }
 
-const initialState: PerfumeState = {
+const initialState: PaginationState = {
 	loading: false,
 	error: null,
 	perfumesPage: 1,
@@ -33,8 +33,8 @@ export const fetchTotalCount = createAsyncThunk(
 	},
 );
 
-const perfumeSlice = createSlice({
-	name: "perfume",
+const paginationSlice = createSlice({
+	name: "pagination",
 	initialState,
 	reducers: {
 		setPerfumesPage: (state, action: PayloadAction<number>) => {
@@ -49,6 +49,9 @@ const perfumeSlice = createSlice({
 		clearPerfumesPage: (state) => {
 			state.perfumesPage = 1;
 		},
+        addNewTotalPage: (state, action: PayloadAction<number>) => {
+            state.perfumesTotalPage = action.payload;
+        },
 	},
 	extraReducers: (builder) => {
 		// extraReducers
@@ -77,5 +80,6 @@ export const {
 	nextPerfumesPage,
 	prevPerfumesPage,
 	clearPerfumesPage,
-} = perfumeSlice.actions;
-export default perfumeSlice.reducer;
+    addNewTotalPage
+} = paginationSlice.actions;
+export default paginationSlice.reducer;

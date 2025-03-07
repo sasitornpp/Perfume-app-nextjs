@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FiltersPerfumeValues, Filters } from "@/types/perfume";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/Store";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,7 +9,6 @@ import {
 	Filter,
 	X,
 	ArrowLeft,
-	Star,
 	Loader2,
 } from "lucide-react";
 
@@ -18,13 +16,6 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
 	Pagination,
@@ -37,87 +28,81 @@ import {
 } from "@/components/ui/pagination";
 import PerfumeCard from "@/components/perfume_card";
 import { useDispatch } from "react-redux";
-import { setPerfumesPage } from "@/redux/pagination/paginationReducer";
-import { Slider } from "@/components/ui/slider";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { setPerfumesPage, fetchTotalCount } from "@/redux/pagination/paginationReducer";
 import LoadingComponents from "@/components/loading";
+import {
+	initialValues,
+	Filters,
+	setFilters,
+	clearFilters as clear_Filters,
+	setFiltersAndFetch,
+} from "@/redux/filters/filterPerfumesReducer";
+import SearchSidebar from "@/components/sidebar/search-sidebar";
+import { AppDispatch } from "@/redux/Store";
 
 function Search() {
-	const dispatch = useDispatch();
+	const dispatch = useDispatch<AppDispatch>();
 	const loading = useSelector((state: RootState) => state.perfumes.loading);
-	const perfumeState = useSelector(
+	const perfumes = useSelector(
 		(state: RootState) => state.perfumes.perfumes_by_page,
 	);
-	console.log(loading);
+
+	const [formFilters, setFormFilters] = useState<Filters | null>(
+		initialValues,
+	);
+
+	const isUseFilters = useSelector(
+		(state: RootState) => state.filters.Filters,
+	);
+
+	const perfumeFilters = useSelector(
+		(state: RootState) => state.filters.perfumes,
+	);
+
 	const [searchQuery, setSearchQuery] = useState(false);
-	const [searchInput, setSearchInput] = useState("");
-	const [filters, setFilters] = useState<Filters>(FiltersPerfumeValues);
+
+	// console.log("filters:", formFilters);
 	const pagination = useSelector((state: RootState) => state.pagination);
 
 	const [showFilters, setShowFilters] = useState(false);
 	const [searchFocused, setSearchFocused] = useState(false);
 	const [resultCount, setResultCount] = useState(0);
 
-	// Sample options for dropdown filters
-	// These would ideally come from your API or data source
-	const accordOptions = [
-		"Citrus",
-		"Floral",
-		"Woody",
-		"Oriental",
-		"Fresh",
-		"Spicy",
-		"Fruity",
-	];
-	const noteOptions = [
-		"Bergamot",
-		"Lavender",
-		"Rose",
-		"Jasmine",
-		"Vanilla",
-		"Sandalwood",
-		"Patchouli",
-	];
-
-	// Apply filters
-	const allPerfumes = Object.values(perfumeState).flat();
-	const perfumesToShow = perfumeState;
-
 	// Update result count
 	useEffect(() => {
 		setResultCount(
-			Array.isArray(perfumesToShow)
-				? perfumesToShow.length
-				: Object.values(perfumesToShow).flat().length,
+			Array.isArray(perfumes)
+				? perfumes.length
+				: Object.values(perfumes).flat().length,
 		);
-	}, [perfumesToShow]);
+	}, [perfumes]);
 
 	// Calculate total pages for pagination
 	const totalPages = useSelector(
 		(state: RootState) => state.pagination.perfumesTotalPage,
 	);
-	const paginatedPerfumes = perfumeState[pagination.perfumesPage] ?? [];
+	const paginatedPerfumes = isUseFilters
+		? (perfumeFilters[pagination.perfumesPage] ?? [])
+		: (perfumes[pagination.perfumesPage] ?? []);
 
 	// Handle filter changes
 	const handleChange = (key: keyof Filters, value: any) => {
-		if (key === "search_query") {
-			setSearchInput(value as string);
-			return;
-		}
-
 		setSearchQuery(true);
-		setFilters((prev) => ({
-			...prev,
-			[key]: value,
-		}));
+		setFormFilters(
+			(prev) =>
+				({
+					...prev,
+					[key]: value,
+				}) as Filters,
+		);
 		dispatch(setPerfumesPage(1));
 	};
 
 	// Handle array-type filters (like notes and accords)
 	const handleArrayFilter = (key: keyof Filters, value: string) => {
 		setSearchQuery(true);
-		setFilters((prev) => {
+		setFormFilters((prev) => {
+			if (!prev) return prev;
 			const currentArray = prev[key] as string[];
 			const newArray = currentArray.includes(value)
 				? currentArray.filter((item) => item !== value)
@@ -126,7 +111,7 @@ function Search() {
 			return {
 				...prev,
 				[key]: newArray,
-			};
+			} as Filters;
 		});
 		dispatch(setPerfumesPage(1));
 	};
@@ -134,25 +119,26 @@ function Search() {
 	// Handle search button click
 	const handleSearch = () => {
 		setSearchQuery(true);
-		setFilters((prev) => ({
-			...prev,
-			searchQuery: searchInput,
-		}));
-		dispatch(setPerfumesPage(1));
+		if (formFilters) {
+			dispatch(setFiltersAndFetch(formFilters));
+		}
 	};
 
 	// Clear search input
 	const clearSearchInput = () => {
-		setSearchInput("");
-		if (filters.search_query) {
-			setFilters((prev) => ({
-				...prev,
-				searchQuery: "",
-			}));
+		if (formFilters?.search_query) {
+			setFormFilters((prev) => {
+				if (!prev) return null;
+				return {
+					...prev,
+					searchQuery: "",
+					search_query: prev.search_query ?? null,
+				} as Filters;
+			});
 
 			// If there are no other filters active, turn off search query mode
 			if (
-				Object.values(filters).every(
+				Object.values(formFilters).every(
 					(val) => !val || (Array.isArray(val) && val.length === 0),
 				)
 			) {
@@ -164,16 +150,10 @@ function Search() {
 	// Clear all filters
 	const clearFilters = () => {
 		setSearchQuery(false);
-		setSearchInput("");
-		setFilters(FiltersPerfumeValues);
+		setFormFilters(null);
+		dispatch(clear_Filters());
+        dispatch(fetchTotalCount());
 		dispatch(setPerfumesPage(1));
-	};
-
-	// Handle Enter key in search input
-	const handleKeyDown = (e: React.KeyboardEvent) => {
-		if (e.key === "Enter") {
-			handleSearch();
-		}
 	};
 
 	// Generate pagination items
@@ -268,231 +248,11 @@ function Search() {
 			{/* Filter sidebar */}
 			<AnimatePresence>
 				{showFilters && (
-					<motion.div
-						initial={{ x: "100%", opacity: 0.5 }}
-						animate={{ x: 0, opacity: 1 }}
-						exit={{ x: "100%", opacity: 0.5 }}
-						transition={{
-							type: "spring",
-							damping: 25,
-							stiffness: 300,
-						}}
-						className="fixed right-0 top-24 bottom-0 w-[320px] md:w-[380px] bg-card shadow-lg z-40 overflow-hidden rounded-lg"
-					>
-						<div className="flex items-center justify-between p-4 border-b">
-							<h2 className="text-xl font-semibold">Filters</h2>
-							<Button
-								variant="ghost"
-								size="icon"
-								onClick={() => setShowFilters(false)}
-							>
-								<X size={18} />
-							</Button>
-						</div>
-						<ScrollArea className="h-[calc(100vh-68px)] px-4 py-6">
-							<div className="space-y-6 pr-2">
-								{/* Brand filter */}
-								<div>
-									<label className="block text-sm font-medium mb-2">
-										Brand
-									</label>
-									<Select
-										value={
-											filters.brand_filter ?? undefined
-										}
-										onValueChange={(value) =>
-											handleChange("brand_filter", value)
-										}
-									>
-										<SelectTrigger className="w-full">
-											<SelectValue placeholder="Select brand" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="chanel">
-												Chanel
-											</SelectItem>
-											<SelectItem value="dior">
-												Dior
-											</SelectItem>
-											<SelectItem value="gucci">
-												Gucci
-											</SelectItem>
-											<SelectItem value="tom-ford">
-												Tom Ford
-											</SelectItem>
-											<SelectItem value="jo-malone">
-												Jo Malone
-											</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
-
-								{/* Gender filter */}
-								<div>
-									<label className="block text-sm font-medium mb-2">
-										Gender
-									</label>
-									<Select
-										value={
-											filters.gender_filter ?? undefined
-										}
-										onValueChange={(value) =>
-											handleChange("gender_filter", value)
-										}
-									>
-										<SelectTrigger className="w-full">
-											<SelectValue placeholder="Select gender" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="women">
-												Women
-											</SelectItem>
-											<SelectItem value="men">
-												Men
-											</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
-
-								{/* Accords filter */}
-								<div>
-									<label className="block text-sm font-medium mb-2">
-										Accords
-									</label>
-									<div className="grid grid-cols-2 gap-2">
-										{accordOptions.map((accord) => (
-											<div
-												key={accord}
-												className="flex items-center space-x-2"
-											>
-												<Checkbox
-													id={`accord-${accord}`}
-													checked={filters.accords_filter.includes(
-														accord,
-													)}
-													onCheckedChange={() =>
-														handleArrayFilter(
-															"accords_filter",
-															accord,
-														)
-													}
-												/>
-												<Label
-													htmlFor={`accord-${accord}`}
-												>
-													{accord}
-												</Label>
-											</div>
-										))}
-									</div>
-								</div>
-
-								{/* Top notes filter */}
-								<div>
-									<label className="block text-sm font-medium mb-2">
-										Top Notes
-									</label>
-									<div className="grid grid-cols-2 gap-2">
-										{noteOptions.map((note) => (
-											<div
-												key={`top-${note}`}
-												className="flex items-center space-x-2"
-											>
-												<Checkbox
-													id={`top-${note}`}
-													checked={filters.top_notes_filter.includes(
-														note,
-													)}
-													onCheckedChange={() =>
-														handleArrayFilter(
-															"top_notes_filter",
-															note,
-														)
-													}
-												/>
-												<Label htmlFor={`top-${note}`}>
-													{note}
-												</Label>
-											</div>
-										))}
-									</div>
-								</div>
-
-								{/* Middle notes filter */}
-								<div>
-									<label className="block text-sm font-medium mb-2">
-										Middle Notes
-									</label>
-									<div className="grid grid-cols-2 gap-2">
-										{noteOptions.map((note) => (
-											<div
-												key={`middle-${note}`}
-												className="flex items-center space-x-2"
-											>
-												<Checkbox
-													id={`middle-${note}`}
-													checked={filters.middle_notes_filter.includes(
-														note,
-													)}
-													onCheckedChange={() =>
-														handleArrayFilter(
-															"middle_notes_filter",
-															note,
-														)
-													}
-												/>
-												<Label
-													htmlFor={`middle-${note}`}
-												>
-													{note}
-												</Label>
-											</div>
-										))}
-									</div>
-								</div>
-
-								{/* Base notes filter */}
-								<div>
-									<label className="block text-sm font-medium mb-2">
-										Base Notes
-									</label>
-									<div className="grid grid-cols-2 gap-2">
-										{noteOptions.map((note) => (
-											<div
-												key={`base-${note}`}
-												className="flex items-center space-x-2"
-											>
-												<Checkbox
-													id={`base-${note}`}
-													checked={filters.base_notes_filter.includes(
-														note,
-													)}
-													onCheckedChange={() =>
-														handleArrayFilter(
-															"base_notes_filter",
-															note,
-														)
-													}
-												/>
-												<Label htmlFor={`base-${note}`}>
-													{note}
-												</Label>
-											</div>
-										))}
-									</div>
-								</div>
-
-								{/* Clear filters button */}
-								<Button
-									variant="destructive"
-									className="w-full mt-4"
-									onClick={clearFilters}
-								>
-									Clear All Filters
-								</Button>
-							</div>
-						</ScrollArea>
-					</motion.div>
+					<SearchSidebar
+						formFilters={formFilters}
+						setFormFilters={setFormFilters}
+						setShowFilters={setShowFilters}
+					/>
 				)}
 			</AnimatePresence>
 
@@ -543,9 +303,13 @@ function Search() {
 									: "border-border shadow-sm"
 							}`}
 							placeholder="Search perfumes by name..."
-							value={searchInput}
-							onChange={(e) => setSearchInput(e.target.value)}
-							onKeyDown={handleKeyDown}
+							value={formFilters?.search_query ?? ""}
+							onChange={(e) =>
+								handleChange("search_query", e.target.value)
+							}
+							onKeyDown={(e) =>
+								e.key === "Enter" && handleSearch()
+							}
 							onFocus={() => setSearchFocused(true)}
 							onBlur={() => setSearchFocused(false)}
 							disabled={loading}
@@ -567,7 +331,7 @@ function Search() {
 						className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
 						size={20}
 					/>
-					{searchInput && !loading && (
+					{!loading && (
 						<Button
 							variant="ghost"
 							size="icon"
@@ -580,17 +344,17 @@ function Search() {
 				</motion.div>
 
 				{/* Active filters display */}
-				{(filters.search_query ||
-					filters.brand_filter ||
-					filters.gender_filter ||
-					filters.accords_filter.length > 0 ||
-					filters.top_notes_filter.length > 0 ||
-					filters.middle_notes_filter.length > 0 ||
-					filters.base_notes_filter.length > 0) && (
+				{(formFilters?.search_query ||
+					formFilters?.brand_filter ||
+					formFilters?.gender_filter ||
+					(formFilters?.accords_filter?.length ?? 0) > 0 ||
+					(formFilters?.top_notes_filter?.length ?? 0) > 0 ||
+					(formFilters?.middle_notes_filter.length ?? 0) > 0 ||
+					(formFilters?.base_notes_filter.length ?? 0) > 0) && (
 					<div className="flex flex-wrap gap-2 mt-2">
-						{filters.search_query && (
+						{formFilters?.search_query && (
 							<Badge variant="secondary" className="px-3 py-1">
-								Search: {filters.search_query}
+								Search: {formFilters?.search_query}
 								<Button
 									variant="ghost"
 									size="icon"
@@ -604,9 +368,9 @@ function Search() {
 							</Badge>
 						)}
 
-						{filters.brand_filter && (
+						{formFilters?.brand_filter && (
 							<Badge variant="secondary" className="px-3 py-1">
-								Brand: {filters.brand_filter}
+								Brand: {formFilters?.brand_filter}
 								<Button
 									variant="ghost"
 									size="icon"
@@ -620,9 +384,9 @@ function Search() {
 							</Badge>
 						)}
 
-						{filters.gender_filter && (
+						{formFilters?.gender_filter && (
 							<Badge variant="secondary" className="px-3 py-1">
-								Gender: {filters.gender_filter}
+								Gender: {formFilters?.gender_filter}
 								<Button
 									variant="ghost"
 									size="icon"
@@ -636,8 +400,7 @@ function Search() {
 							</Badge>
 						)}
 
-
-						{filters.accords_filter.map((accord) => (
+						{formFilters?.accords_filter.map((accord) => (
 							<Badge
 								key={accord}
 								variant="secondary"
@@ -660,7 +423,7 @@ function Search() {
 							</Badge>
 						))}
 
-						{filters.top_notes_filter.map((note) => (
+						{formFilters?.top_notes_filter.map((note) => (
 							<Badge
 								key={`top-${note}`}
 								variant="secondary"
@@ -683,7 +446,7 @@ function Search() {
 							</Badge>
 						))}
 
-						{filters.middle_notes_filter.map((note) => (
+						{formFilters?.middle_notes_filter.map((note) => (
 							<Badge
 								key={`mid-${note}`}
 								variant="secondary"
@@ -706,7 +469,7 @@ function Search() {
 							</Badge>
 						))}
 
-						{filters.base_notes_filter.map((note) => (
+						{formFilters?.base_notes_filter.map((note) => (
 							<Badge
 								key={`base-${note}`}
 								variant="secondary"
