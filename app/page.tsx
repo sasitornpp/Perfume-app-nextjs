@@ -220,17 +220,19 @@ function Home() {
 														<div className="absolute bottom-0 left-0 right-0 p-4 text-white">
 															<div className="flex items-center gap-2 mb-2">
 																<div className="relative w-6 h-6 rounded-full overflow-hidden">
-																	<Image
-																		src={
-																			perfume.logo
-																		}
-																		alt={
-																			perfume.brand ||
-																			""
-																		}
-																		fill
-																		className="object-cover"
-																	/>
+																	{perfume.logo && (
+																		<Image
+																			src={
+																				perfume.logo
+																			}
+																			alt={
+																				perfume.brand ||
+																				"test"
+																			}
+																			fill
+																			className="object-cover"
+																		/>
+																	)}
 																</div>
 																<span className="text-sm font-medium">
 																	{
@@ -339,7 +341,7 @@ function Home() {
 											<div className="ml-auto flex items-center bg-primary/10 px-2 py-1 rounded-full">
 												<span className="text-sm font-medium text-primary">
 													★{" "}
-													{perfume.likes?.toFixed(
+													{perfume.likes?.length?.toFixed(
 														1,
 													) ?? "N/A"}
 												</span>

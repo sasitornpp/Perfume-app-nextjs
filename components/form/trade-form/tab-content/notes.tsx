@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Droplets, Info, Plus, X } from "lucide-react";
+import { Droplets, Info, Plus, Search, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -14,8 +14,23 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { TabsContent } from "@/components/ui/tabs";
-import { TradablePerfumeForInsert } from "@/types/perfume";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
+
+import {
+	Command,
+	CommandInput,
+	CommandItem,
+	CommandList,
+} from "@/components/ui/command";
+
+import { PerfumeForInsert, PerfumeForUpdate  } from "@/types/perfume";
 import NoteInput from "../note-input";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/Store";
 
 function TabNotes({
 	containerVariants,
@@ -25,28 +40,28 @@ function TabNotes({
 }: {
 	containerVariants: any;
 	itemVariants: any;
-	formData: TradablePerfumeForInsert;
+	formData: PerfumeForInsert | PerfumeForUpdate ;
 	handleChange: (
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
 	) => void;
-	setFormData: React.Dispatch<React.SetStateAction<TradablePerfumeForInsert>>;
+	setFormData: React.Dispatch<React.SetStateAction<PerfumeForInsert | PerfumeForUpdate>>;
 }) {
 	const NOTE_TYPES = [
 		{
 			type: "Top",
-			field: "top_note",
+			field: "top_notes",
 		},
 		{
 			type: "Middle",
-			field: "middle_note",
+			field: "middle_notes",
 		},
 		{
 			type: "Base",
-			field: "base_note",
+			field: "base_notes",
 		},
 	] as const;
 	const handleArrayChange = (
-		type: keyof TradablePerfumeForInsert,
+		type: keyof PerfumeForInsert,
 		index: number,
 		value: string,
 	) => {
@@ -58,17 +73,14 @@ function TabNotes({
 		}));
 	};
 
-	const addArrayItem = (type: keyof TradablePerfumeForInsert) => {
+	const addArrayItem = (type: keyof PerfumeForInsert) => {
 		setFormData((prev) => ({
 			...prev,
 			[type]: [...(prev[type] as string[]), ""],
 		}));
 	};
 
-	const removeArrayItem = (
-		type: keyof TradablePerfumeForInsert,
-		index: number,
-	) => {
+	const removeArrayItem = (type: keyof PerfumeForInsert, index: number) => {
 		const newArray = (formData[type] as string[]).filter(
 			(_, i) => i !== index,
 		);
@@ -77,6 +89,23 @@ function TabNotes({
 			[type]: newArray,
 		}));
 	};
+
+	const perfumeAccords = useSelector(
+		(state: RootState) => state.perfumes.perfume_unique_data.accords,
+	);
+
+	const perfumeTopNotes = useSelector(
+		(state: RootState) => state.perfumes.perfume_unique_data.top_notes,
+	);
+
+	const perfumeMiddleNotes = useSelector(
+		(state: RootState) => state.perfumes.perfume_unique_data.middle_notes,
+	);
+
+	const perfumeBaseNotes = useSelector(
+		(state: RootState) => state.perfumes.perfume_unique_data.base_notes,
+	);
+
 	return (
 		<TabsContent value="notes" className="m-0 p-6">
 			<motion.div
@@ -90,26 +119,65 @@ function TabNotes({
 					<h3 className="text-lg font-medium">Fragrance Pyramid</h3>
 				</div>
 
-				{NOTE_TYPES.map((noteConfig) => (
-					<NoteInput
-						key={noteConfig.field}
-						type={noteConfig.type}
-						notes={formData[noteConfig.field] || []}
-						onAddNote={() => addArrayItem(noteConfig.field)}
-						onRemoveNote={(index) =>
-							removeArrayItem(noteConfig.field, index)
-						}
-						onChangeNote={(index, value) =>
-							handleArrayChange(noteConfig.field, index, value)
-						}
-						onNotesChange={(notes) =>
-							setFormData((prev) => ({
-								...prev,
-								[noteConfig.field]: notes,
-							}))
-						}
-					/>
-				))}
+				<NoteInput
+					key="top_notes"
+					type="Top"
+					notes={formData.top_notes || []}
+					suggestions={perfumeTopNotes}
+					onAddNote={() => addArrayItem("top_notes")}
+					onRemoveNote={(index) =>
+						removeArrayItem("top_notes", index)
+					}
+					onChangeNote={(index, value) =>
+						handleArrayChange("top_notes", index, value)
+					}
+					onNotesChange={(notes) =>
+						setFormData((prev) => ({
+							...prev,
+							top_notes: notes,
+						}))
+					}
+				/>
+
+				<NoteInput
+					key="middle_notes"
+					type="Middle"
+					notes={formData.middle_notes || []}
+					suggestions={perfumeMiddleNotes}
+					onAddNote={() => addArrayItem("middle_notes")}
+					onRemoveNote={(index) =>
+						removeArrayItem("middle_notes", index)
+					}
+					onChangeNote={(index, value) =>
+						handleArrayChange("middle_notes", index, value)
+					}
+					onNotesChange={(notes) =>
+						setFormData((prev) => ({
+							...prev,
+							middle_notes: notes,
+						}))
+					}
+				/>
+
+				<NoteInput
+					key="base_notes"
+					type="Base"
+					notes={formData.base_notes || []}
+					suggestions={perfumeBaseNotes}
+					onAddNote={() => addArrayItem("base_notes")}
+					onRemoveNote={(index) =>
+						removeArrayItem("base_notes", index)
+					}
+					onChangeNote={(index, value) =>
+						handleArrayChange("base_notes", index, value)
+					}
+					onNotesChange={(notes) =>
+						setFormData((prev) => ({
+							...prev,
+							base_notes: notes,
+						}))
+					}
+				/>
 
 				<motion.div
 					variants={itemVariants}
@@ -138,6 +206,8 @@ function TabNotes({
 							</TooltipProvider>
 						</Label>
 					</div>
+
+					{/* Update Accords Section to use the same autocomplete approach */}
 					<AnimatePresence>
 						{formData.accords?.map((accord, index) => (
 							<motion.div
@@ -159,18 +229,65 @@ function TabNotes({
 								}}
 								className="flex items-center space-x-2 mb-2"
 							>
-								<Input
-									value={accord}
-									onChange={(e) =>
-										handleArrayChange(
-											"accords",
-											index,
-											e.target.value,
-										)
-									}
-									placeholder="e.g., Woody, Citrus, Powdery"
-									className="border-input bg-background"
-								/>
+								<Popover>
+									<div className="relative flex-1">
+										<PopoverTrigger asChild>
+											<div className="relative w-full">
+												<Input
+													value={accord}
+													onChange={(e) =>
+														handleArrayChange(
+															"accords",
+															index,
+															e.target.value,
+														)
+													}
+													placeholder="e.g., Woody, Citrus, Powdery"
+													className="border-input bg-background pr-8"
+												/>
+												<Button
+													type="button"
+													variant="ghost"
+													size="icon"
+													className="absolute right-1 top-1 h-6 w-6 p-0 text-muted-foreground"
+												>
+													<Search className="h-4 w-4" />
+												</Button>
+											</div>
+										</PopoverTrigger>
+										<PopoverContent
+											className="w-full p-0"
+											align="start"
+										>
+											<Command>
+												<CommandInput
+													placeholder="Search accords..."
+													className="h-9"
+												/>
+												<CommandList>
+													{perfumeAccords
+														.slice(0, 20)
+														.map((accord) => (
+															<CommandItem
+																key={accord}
+																onSelect={() =>
+																	handleArrayChange(
+																		"accords",
+																		index,
+																		accord,
+																	)
+																}
+																className="cursor-pointer"
+															>
+																{accord}
+															</CommandItem>
+														))}
+												</CommandList>
+											</Command>
+										</PopoverContent>
+									</div>
+								</Popover>
+
 								{(formData.accords || []).length > 1 && (
 									<Button
 										type="button"

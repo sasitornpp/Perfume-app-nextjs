@@ -6,11 +6,12 @@ import { RootState } from "@/redux/Store";
 import { useRouter } from "next/navigation";
 import {
 	ArrowLeft,
-	Star,
 	Heart,
 	ShoppingBag,
 	ChevronDown,
-	Loader2,
+	Share2,
+	Pencil,
+	Trash2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -25,13 +26,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
 import { useDispatch } from "react-redux";
 import LoadingComponents from "@/components/loading";
 import { fetchPerfumeById } from "@/redux/perfume/perfumeReducer";
 import { AppDispatch } from "@/redux/Store";
 import CommentSection from "@/components/comment-section";
+import { toggleLikePerfume } from "@/redux/perfume/perfumeReducer";
+import { removePerfume } from "@/redux/user/userReducer";
 
 function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 	const router = useRouter();
@@ -61,38 +63,25 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 		(state: RootState) => state.perfumes.selectedPerfume.errorMessages,
 	);
 
+	const user = useSelector((state: RootState) => state.user.user);
+
 	const loading = useSelector((state: RootState) => state.perfumes.loading);
 
-	// const wishlist = useSelector(
-	// 	(state: RootState) => state.user.profile?.wishlist || [],
-	// );
-
-	// const isInWishlist = perfume ? wishlist.includes(perfume.id) : false;
-
-	// const handleFavoriteClick = (e: React.MouseEvent) => {
-	// 	e.stopPropagation();
-	// 	if (!perfume) return;
-
-	// 	if (isInWishlist) {
-	// 		const updatedWishlist = wishlist.filter((id) => id !== perfume.id);
-	// 		dispatch(updateWishlist({ wishlist: updatedWishlist }));
-	// 	} else {
-	// 		const updatedWishlist = [...wishlist, perfume.id];
-	// 		dispatch(updateWishlist({ wishlist: updatedWishlist }));
-	// 	}
-	// };
+	const handleLikes = () => {
+		if (user) {
+			dispatch(
+				toggleLikePerfume({
+					perfumeId: unwrappedParams.perfumeId,
+					userId: user.id,
+				}),
+			);
+		} else {
+			router.push("/login");
+		}
+	};
 
 	const [activeImage, setActiveImage] = useState(0);
 	const [showMore, setShowMore] = useState(false);
-	// const [loadingProgress, setLoadingProgress] = useState(0);
-
-	// useEffect(() => {
-	// 	const timer = setTimeout(() => {
-	// 		setLoadingProgress(100);
-	// 	}, 500);
-
-	// 	return () => clearTimeout(timer);
-	// }, []);
 
 	const handleGoBack = () => {
 		router.back();
@@ -153,14 +142,6 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 			</div>
 		);
 	}
-
-	// // Calculate sentiment scores for visualization
-	// const sentimentCategories = [
-	// 	{ name: "Longevity", score: Math.floor(perfume.rating * 10) },
-	// 	{ name: "Sillage", score: Math.floor(perfume.rating * 12) - 10 },
-	// 	{ name: "Value", score: Math.floor(perfume.rating * 9) },
-	// 	{ name: "Uniqueness", score: Math.floor(perfume.rating * 11) - 5 },
-	// ];
 
 	const truncatedDescription =
 		perfume?.descriptions && perfume.descriptions.length > 150
@@ -239,14 +220,27 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 								transition={{ duration: 0.5 }}
 								className="relative aspect-square w-full overflow-hidden rounded-xl bg-accent/5 justify-center items-center flex"
 							>
-								<Image
-									src={perfume.images[activeImage]}
-									alt={`${perfume.name} - Image ${activeImage + 1}`}
-									width={400}
-									height={500}
-									className="object-cover transition-transform hover:scale-105 duration-700"
-									priority
-								/>
+								{perfume.images && perfume.images.length > 0 ? (
+									<Image
+										src={perfume.images[activeImage]}
+										alt={`${perfume.name} - Image ${activeImage + 1}`}
+										width={400}
+										height={500}
+										className="object-cover transition-transform hover:scale-105 duration-700"
+										priority
+									/>
+								) : (
+									<div className="flex flex-col items-center justify-center w-full h-full bg-muted/20 p-8 text-center">
+										<ShoppingBag className="h-16 w-16 text-muted-foreground mb-2" />
+										<p className="text-muted-foreground font-medium">
+											No image available
+										</p>
+										<p className="text-xs text-muted-foreground mt-1">
+											This fragrance doesn't have any
+											photos yet
+										</p>
+									</div>
+								)}
 								<motion.button
 									className="absolute top-4 right-4 p-2 bg-background/80 backdrop-blur-sm rounded-full shadow-md z-10"
 									whileHover={{ scale: 1.1 }}
@@ -254,72 +248,41 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 									// onClick={handleFavoriteClick}
 								>
 									{/* <Heart
-										className={`h-5 w-5 ${isInWishlist ? "fill-destructive text-destructive" : "text-foreground"}`}
-									/> */}
+            className={`h-5 w-5 ${isInWishlist ? "fill-destructive text-destructive" : "text-foreground"}`}
+        /> */}
 								</motion.button>
 							</motion.div>
 
 							<div className="flex mt-4 gap-3 overflow-x-auto pb-2 scrollbar-hide rounded-lg">
-								{perfume.images.map((image, index) => (
-									<motion.div
-										key={index}
-										className={`relative aspect-square w-20 h-20 flex-shrink-0 overflow-hidden rounded-md cursor-pointer border-2 ${
-											activeImage === index
-												? "border-primary"
-												: "border-transparent"
-										}`}
-										onClick={() => setActiveImage(index)}
-									>
-										<Image
-											src={image}
-											alt={`${perfume.name} thumbnail ${index + 1}`}
-											fill
-											className="object-cover"
-										/>
-									</motion.div>
-								))}
+								{perfume.images && perfume.images.length > 0 ? (
+									perfume.images.map((image, index) => (
+										<motion.div
+											key={index}
+											className={`relative aspect-square w-20 h-20 flex-shrink-0 overflow-hidden rounded-md cursor-pointer border-2 ${
+												activeImage === index
+													? "border-primary"
+													: "border-transparent"
+											}`}
+											onClick={() =>
+												setActiveImage(index)
+											}
+										>
+											<Image
+												src={image}
+												alt={`${perfume.name} thumbnail ${index + 1}`}
+												fill
+												className="object-cover"
+											/>
+										</motion.div>
+									))
+								) : (
+									<div className="text-xs text-muted-foreground py-2">
+										No gallery images available
+									</div>
+								)}
 							</div>
 						</CardContent>
 					</Card>
-
-					{/* <Card className="w-full mt-6 border-border/50 bg-card shadow-sm rounded-lg">
-						<CardHeader className="pb-2">
-							<CardTitle className="text-lg font-medium text-card-foreground">
-								Fragrance Profile
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div className="space-y-4">
-								{sentimentCategories.map((category) => (
-									<div
-										key={category.name}
-										className="space-y-1"
-									>
-										<div className="flex justify-between text-sm">
-											<span className="text-muted-foreground">
-												{category.name}
-											</span>
-											<span className="font-medium text-foreground">
-												{category.score}%
-											</span>
-										</div>
-										<motion.div
-											initial={{ width: 0 }}
-											animate={{
-												width: `${category.score}%`,
-											}}
-											transition={{
-												duration: 1,
-												delay: 0.5,
-												ease: "easeOut",
-											}}
-											className="h-2 bg-primary/80 rounded-full"
-										/>
-									</div>
-								))}
-							</div>
-						</CardContent>
-					</Card> */}
 				</motion.div>
 
 				{/* Right Column - Details */}
@@ -336,12 +299,20 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 									className="relative h-12 w-12 overflow-hidden rounded-full border border-border/50"
 									whileHover={{ scale: 1.05, rotate: 5 }}
 								>
-									<Image
-										src={perfume.logo}
-										alt={perfume.brand || "Brand Logo"}
-										fill
-										className="object-cover"
-									/>
+									{perfume.logo ? (
+										<Image
+											src={perfume.logo}
+											alt={perfume.brand || "Brand Logo"}
+											fill
+											className="object-cover"
+										/>
+									) : (
+										<div className="h-full w-full flex items-center justify-center bg-muted/20">
+											<p className="text-xs text-muted-foreground">
+												No logo
+											</p>
+										</div>
+									)}
 								</motion.div>
 								<div>
 									<CardDescription className="text-lg font-medium text-primary">
@@ -357,19 +328,28 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 								<Button
 									className="flex items-center"
 									variant={"link"}
+									onClick={handleLikes}
 								>
-									<Heart className="h-4 w-4" />
+									<Heart
+										className={`h-4 w-4 ${
+											user &&
+											perfume.likes.includes(user.id)
+												? "fill-primary text-primary"
+												: ""
+										}`}
+									/>
 								</Button>
 								<span className="font-medium text-foreground bg-secondary/30 px-3 py-1 rounded-full">
-									{perfume.likes >= 1000
-										? perfume.likes >= 1000000
-											? (perfume.likes / 1000000).toFixed(
-													1,
-												) + "M"
-											: (perfume.likes / 1000).toFixed(
-													1,
-												) + "K"
-										: perfume.likes}
+									{perfume.likes.length >= 1000
+										? perfume.likes.length >= 1000000
+											? (
+													perfume.likes.length /
+													1000000
+												).toFixed(1) + "M"
+											: (
+													perfume.likes.length / 1000
+												).toFixed(1) + "K"
+										: perfume.likes.length}
 								</span>
 								<Badge className="bg-accent text-accent-foreground rounded-full">
 									{perfume.gender}
@@ -378,7 +358,11 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 									variant="outline"
 									className="border-primary/30 text-primary bg-primary/5"
 								>
-									{new Date().getFullYear()} Edition
+									{perfume.created_at
+										? `${new Date(
+												perfume.created_at,
+											).getFullYear()} Edition`
+										: "Unknown"}{" "}
 								</Badge>
 							</div>
 						</CardHeader>
@@ -462,20 +446,77 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 							</div>
 						</CardContent>
 
-						{/* <CardFooter className="pt-2 pb-4">
+						<CardFooter className="pt-2 pb-4">
 							<div className="flex gap-3 w-full">
-								<Button className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90">
-									<ShoppingBag className="mr-2 h-4 w-4" />
-									Add to Cart
-								</Button>
+								{perfume.is_tradable && (
+									<Button className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90">
+										<ShoppingBag className="mr-2 h-4 w-4" />
+										Add to Cart
+									</Button>
+								)}
+								{user && user.id === perfume.user_id && (
+									<div className="flex flex-1 gap-2">
+										<Button
+											variant="outline"
+											className="flex-1 border-primary text-primary hover:bg-primary/10"
+											onClick={() =>
+												router.push(
+													`/perfumes/edit/${unwrappedParams.perfumeId}`,
+												)
+											}
+										>
+											<Pencil className="mr-2 h-4 w-4" />
+											Edit
+										</Button>
+										<Button
+											variant="outline"
+											className="flex-1 border-destructive text-destructive hover:bg-destructive/10"
+											onClick={() => {
+												if (
+													confirm(
+														"Are you sure you want to delete this perfume? This action cannot be undone.",
+													)
+												) {
+													dispatch(
+														removePerfume({
+															perfumeId:
+																perfume.id,
+															router: router,
+														}),
+													);
+												}
+											}}
+										>
+											<Trash2 className="mr-2 h-4 w-4" />
+											Delete
+										</Button>
+									</div>
+								)}
 								<Button
 									variant="outline"
 									className="border-border hover:bg-accent/10"
+									onClick={() => {
+										navigator.clipboard
+											.writeText(window.location.href)
+											.then(() => {
+												// Optional: You could add toast notification here
+												alert(
+													"Link copied to clipboard!",
+												);
+											})
+											.catch((err) => {
+												console.error(
+													"Failed to copy link: ",
+													err,
+												);
+											});
+									}}
 								>
-									<Share2 className="h-4 w-4" />
+									<Share2 className="h-4 w-4 mr-2" />
+									Share
 								</Button>
 							</div>
-						</CardFooter> */}
+						</CardFooter>
 					</Card>
 
 					<Card className="w-full border-border/50 bg-card shadow-sm rounded-lg">
@@ -634,7 +675,6 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 										</motion.div>
 									</div>
 								</TabsContent>
-
 								<TabsContent
 									value="details"
 									className="p-6 rounded-lg"
@@ -646,63 +686,118 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 													Launch Year
 												</p>
 												<p className="font-medium">
-													2024
+													{perfume.created_at
+														? new Date(
+																perfume.created_at,
+															).getFullYear()
+														: "Unknown"}
 												</p>
 											</div>
-											<div>
-												<p className="text-sm text-muted-foreground mb-1">
-													Concentration
-												</p>
-												<p className="font-medium">
-													Eau de Parfum
-												</p>
-											</div>
-											<div>
-												<p className="text-sm text-muted-foreground mb-1">
-													Size Available
-												</p>
-												<p className="font-medium">
-													50ml, 100ml
-												</p>
-											</div>
-											<div>
-												<p className="text-sm text-muted-foreground mb-1">
-													Family
-												</p>
-												<p className="font-medium">
-													{perfume.accords?.[0] ||
-														"Oriental"}
-												</p>
-											</div>
+											{perfume.concentration && (
+												<div>
+													<p className="text-sm text-muted-foreground mb-1">
+														Concentration
+													</p>
+													<p className="font-medium">
+														{perfume.concentration}
+													</p>
+												</div>
+											)}
+											{perfume.volume && (
+												<div>
+													<p className="text-sm text-muted-foreground mb-1">
+														Size
+													</p>
+													<p className="font-medium">
+														{perfume.volume}ml
+													</p>
+												</div>
+											)}
+											{perfume.scent_type && (
+												<div>
+													<p className="text-sm text-muted-foreground mb-1">
+														Scent Type
+													</p>
+													<p className="font-medium">
+														{perfume.scent_type}
+													</p>
+												</div>
+											)}
+											{perfume.price !== undefined &&
+												perfume.price !== null && (
+													<div>
+														<p className="text-sm text-muted-foreground mb-1">
+															Price
+														</p>
+														<p className="font-medium">
+															${perfume.price}
+														</p>
+													</div>
+												)}
 										</div>
 
-										<Separator className="bg-border/50" />
-
-										<div>
-											<p className="text-sm text-muted-foreground mb-2">
-												Recommended for
-											</p>
-											<div className="flex flex-wrap gap-2">
-												<Badge
-													variant="outline"
-													className="bg-background/50"
-												>
-													Evening
-												</Badge>
-												<Badge
-													variant="outline"
-													className="bg-background/50"
-												>
-													Special Occasions
-												</Badge>
-												<Badge
-													variant="outline"
-													className="bg-background/50"
-												>
-													Fall/Winter
-												</Badge>
-											</div>
-										</div>
+										{(perfume.facebook ||
+											perfume.line ||
+											perfume.phone_number) && (
+											<>
+												<Separator className="bg-border/50" />
+												<div className="space-y-3">
+													<p className="text-sm text-muted-foreground">
+														Contact Information
+													</p>
+													<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+														{perfume.facebook && (
+															<div>
+																<p className="text-sm text-muted-foreground mb-1">
+																	Facebook
+																</p>
+																<a
+																	href={
+																		perfume.facebook.startsWith(
+																			"http",
+																		)
+																			? perfume.facebook
+																			: `https://${perfume.facebook}`
+																	}
+																	target="_blank"
+																	rel="noopener noreferrer"
+																	className="font-medium text-primary hover:underline"
+																>
+																	View Profile
+																</a>
+															</div>
+														)}
+														{perfume.line && (
+															<div>
+																<p className="text-sm text-muted-foreground mb-1">
+																	Line
+																</p>
+																<p className="font-medium">
+																	{
+																		perfume.line
+																	}
+																</p>
+															</div>
+														)}
+														{perfume.phone_number && (
+															<div>
+																<p className="text-sm text-muted-foreground mb-1">
+																	Phone
+																</p>
+																<a
+																	href={`tel:${perfume.phone_number}`}
+																	className="font-medium text-primary hover:underline"
+																>
+																	{
+																		perfume.phone_number
+																	}
+																</a>
+															</div>
+														)}
+													</div>
+												</div>
+											</>
+										)}
 									</div>
 								</TabsContent>
 							</Tabs>

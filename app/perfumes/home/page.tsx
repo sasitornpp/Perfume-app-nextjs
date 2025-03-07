@@ -30,9 +30,9 @@ function PerfumeLandingPage() {
 		(state: RootState) => state.perfumes.perfumes,
 	);
 
-	// console.log(useSelector(
-	// 	(state: RootState) => state.perfumes.perfume_unique_data,
-	// ));
+	console.log(useSelector(
+		(state: RootState) => state.perfumes.perfume_unique_data,
+	));
 
 	const perfumes = React.useMemo(
 		() =>

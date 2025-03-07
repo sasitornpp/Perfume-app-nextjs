@@ -29,7 +29,7 @@ interface BasePerfume {
 	brand?: string;
 	concentration?: string;
 	scent_type?: string;
-	price?: number;
+	price?: number | null;
 	volume?: number;
 	user_id?: string;
 	top_notes?: string[];
@@ -43,7 +43,8 @@ interface BasePerfume {
 	created_at?: string;
 	perfumer?: string;
 	is_tradable: boolean;
-	likes: number;
+	likes: string[];
+    user: User | null;
 }
 
 export interface Perfume extends BasePerfume {
@@ -94,6 +95,11 @@ export interface PerfumeForInsert extends BasePerfume {
 	imagePreviews?: string[];
 }
 
+export interface PerfumeForUpdate extends Perfume {
+	imagesFiles: File[];
+	imagePreviews?: string[];
+}
+
 export const PerfumeInitialState: PerfumeForInsert = {
 	name: "",
 	descriptions: "",
@@ -103,19 +109,20 @@ export const PerfumeInitialState: PerfumeForInsert = {
 	scent_type: "",
 	price: 0,
 	volume: 0,
-	top_notes: [""],
-	middle_notes: [""],
-	base_notes: [""],
 	images: [],
-	imagePreviews: [],
-	imagesFiles: [],
-	accords: [""],
-	perfumer: "",
+	top_notes: [],
+	middle_notes: [],
+	base_notes: [],
 	facebook: "",
 	line: "",
 	phone_number: "",
-	is_tradable: false,
-	likes: 0,
+	imagePreviews: [],
+	imagesFiles: [],
+	accords: [],
+	perfumer: "",
+	is_tradable: true,
+	likes: [],
+	user: null,
 };
 
 export type SituationType = "daily" | "formal" | "date" | "party" | "exercise";
@@ -273,7 +280,7 @@ export const situation: Record<SituationType, string[]> = {
 };
 
 export interface PerfumeUniqueData {
-	brand: {name: string; logo: string}[];
+	brand: { name: string; logo: string }[];
 	top_notes: string[];
 	middle_notes: string[];
 	base_notes: string[];

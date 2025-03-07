@@ -80,7 +80,7 @@ function Header({ pathname }: HeaderProps) {
 	const [showAuthWarning, setShowAuthWarning] = useState(false);
 
 
-    console.log(useSelector((state: RootState) => state.user));
+    // console.log(useSelector((state: RootState) => state.user));
 
 	// Handle scroll effect
 	useEffect(() => {
@@ -245,7 +245,7 @@ function Header({ pathname }: HeaderProps) {
 											onClick={(e) =>
 												handleProtectedAction(
 													e,
-													"/profile?q=wishlist",
+													"/profile?q=albums",
 												)
 											}
 										>

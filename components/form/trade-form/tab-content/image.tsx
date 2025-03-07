@@ -1,12 +1,10 @@
 "use client";
 
-import React, { ChangeEvent, useState } from "react";
+import React, { ChangeEvent, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TabsContent } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { TradablePerfumeForInsert } from "@/types/perfume";
+import { PerfumeForInsert, PerfumeForUpdate } from "@/types/perfume";
 import Image from "next/image";
 import { ImagePlus, Info, X, Maximize2, RotateCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,51 +18,30 @@ function TabImage({
 }: {
 	itemVariants: any;
 	containerVariants: any;
-	formData: TradablePerfumeForInsert;
-	setFormData: React.Dispatch<React.SetStateAction<TradablePerfumeForInsert>>;
+	formData: PerfumeForInsert | PerfumeForUpdate;
+	setFormData: React.Dispatch<
+		React.SetStateAction<PerfumeForInsert | PerfumeForUpdate>
+	>;
 }) {
 	const [isUploading, setIsUploading] = useState(false);
 	const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(
 		null,
 	);
 
-	const removeImage = (index: number) => {
-		const newImages = formData.images.filter((_, i) => i !== index);
-		const newPreviews = (formData.imagePreviews ?? []).filter(
-			(_, i) => i !== index,
-		);
-		const newFiles = formData.imagesFiles.filter((_, i) => i !== index);
-
-		setFormData(
-			(prev) =>
-				({
-					...prev,
-					imagesFiles: newFiles,
-					images: newImages as string[],
-					imagePreviews: newPreviews as string[],
-				}) as TradablePerfumeForInsert,
-		);
-
-		if (formData.imagePreviews?.[index]) {
-			URL.revokeObjectURL(formData.imagePreviews[index]);
-		}
-	};
-
 	const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
 		if (!files) return;
 
+		setIsUploading(true);
 		const fileObjects = Array.from(files);
 		const fileUrls = fileObjects.map((file) => URL.createObjectURL(file));
 
-		setFormData(
-			(prev) =>
-				({
-					...prev,
-					imagePreviews: [...(prev.imagePreviews || []), ...fileUrls],
-					imagesFiles: [...prev.imagesFiles, ...fileObjects],
-				}) as TradablePerfumeForInsert,
-		);
+		setFormData((prev) => ({
+			...prev,
+			imagePreviews: [...(prev.imagePreviews || []), ...fileUrls],
+			imagesFiles: [...(prev.imagesFiles || []), ...fileObjects],
+		}));
+		setIsUploading(false);
 	};
 
 	const handleUploadClick = () => {
@@ -76,6 +53,48 @@ function TabImage({
 			input.click();
 		}
 	};
+
+	const removeImage = (index: number, isPreview: boolean) => {
+		if (isPreview) {
+			const previewIndex = index - (formData.images?.length || 0);
+			const newPreviews = (formData.imagePreviews || []).filter(
+				(_, i) => i !== previewIndex,
+			);
+			const newFiles = (formData.imagesFiles || []).filter(
+				(_, i) => i !== previewIndex,
+			);
+
+			if (formData.imagePreviews?.[previewIndex]) {
+				URL.revokeObjectURL(formData.imagePreviews[previewIndex]);
+			}
+
+			setFormData((prev) => ({
+				...prev,
+				imagePreviews: newPreviews,
+				imagesFiles: newFiles,
+			}));
+		} else {
+			const newImages = (formData.images || []).filter(
+				(_, i) => i !== index,
+			);
+			setFormData((prev) => ({
+				...prev,
+				images: newImages,
+			}));
+		}
+	};
+	const allImages = [
+		...(formData.images || []),
+		...(formData.imagePreviews || []),
+	];
+
+	useEffect(() => {
+		console.log("Current formData:", {
+			images: formData.images || [],
+			imagePreviews: formData.imagePreviews || [],
+			imagesFiles: formData.imagesFiles || [],
+		});
+	}, [formData.images, formData.imagePreviews, formData.imagesFiles]);
 
 	return (
 		<TabsContent value="images" className="m-0 p-0">
@@ -106,7 +125,7 @@ function TabImage({
 									whileTap={{ scale: 0.97 }}
 								>
 									<Button
-										type="button" // Add this to prevent form submission
+										type="button"
 										onClick={handleUploadClick}
 										disabled={isUploading}
 										className={cn(
@@ -126,17 +145,13 @@ function TabImage({
 												? "Uploading..."
 												: "Add Images"}
 										</span>
-										<Input
+										<input
 											id="image-upload"
 											type="file"
 											multiple
 											accept="image/*"
 											className="hidden"
-											onChange={(e) => {
-												setIsUploading(true);
-												handleImageUpload(e);
-												setIsUploading(false);
-											}}
+											onChange={handleImageUpload}
 											disabled={isUploading}
 										/>
 									</Button>
@@ -163,8 +178,7 @@ function TabImage({
 											<div className="relative aspect-square">
 												<Image
 													src={
-														formData
-															.imagePreviews?.[
+														allImages[
 															selectedImageIndex
 														] || ""
 													}
@@ -190,7 +204,7 @@ function TabImage({
 							</AnimatePresence>
 
 							<div className="mt-4 relative">
-								{!formData.imagePreviews?.length ? (
+								{!allImages.length ? (
 									<motion.div
 										variants={itemVariants}
 										className="border-2 border-dashed border-primary/30 rounded-xl p-10 bg-muted/10 cursor-pointer"
@@ -203,7 +217,7 @@ function TabImage({
 											<h4 className="text-lg font-medium mb-2">
 												No images yet
 											</h4>
-											<p className="text-sm text-muted-foreground max-w-md">
+											<p className="text-sm text-muted-foreground flex">
 												High-quality images attract more
 												interested traders. Add images
 												of your perfume bottle,
@@ -214,8 +228,12 @@ function TabImage({
 								) : (
 									<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
 										<AnimatePresence>
-											{formData.imagePreviews?.map(
-												(preview, index) => (
+											{allImages.map((image, index) => {
+												const isPreview =
+													index >=
+													(formData.images?.length ||
+														0);
+												return (
 													<motion.div
 														key={`img-${index}`}
 														initial={{
@@ -245,7 +263,7 @@ function TabImage({
 															className="aspect-square rounded-xl overflow-hidden border border-border shadow-sm bg-card cursor-pointer"
 														>
 															<Image
-																src={preview}
+																src={image}
 																alt={`Perfume image ${index + 1}`}
 																fill
 																className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -275,6 +293,7 @@ function TabImage({
 																		e.stopPropagation();
 																		removeImage(
 																			index,
+																			isPreview,
 																		);
 																	}}
 																>
@@ -283,8 +302,8 @@ function TabImage({
 															</div>
 														</motion.div>
 													</motion.div>
-												),
-											)}
+												);
+											})}
 
 											<motion.div
 												variants={itemVariants}

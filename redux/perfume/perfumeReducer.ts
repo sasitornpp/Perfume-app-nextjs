@@ -622,7 +622,7 @@ export const fetchTop5ViewsByDate = createAsyncThunk(
 	async ({ date }: { date: Date }, { rejectWithValue }) => {
 		try {
 			const dateString = date.toISOString().split("T")[0];
-			console.log("Date string:", dateString);
+			// console.log("Date string:", dateString);
 			const { data, error } = await supabaseClient
 				.rpc("get_top_5_views_by_date", {
 					target_date: dateString,
@@ -661,6 +661,27 @@ export const fetchUniqueData = createAsyncThunk(
 				.select();
 			if (error) throw error;
 			return data as unknown as PerfumeUniqueData;
+		} catch (error: any) {
+			return rejectWithValue(error.message);
+		}
+	},
+);
+
+export const toggleLikePerfume = createAsyncThunk(
+	"perfume/toggleLikePerfume",
+	async (
+		{ perfumeId, userId }: { perfumeId: string; userId: string },
+		{ rejectWithValue },
+	) => {
+		try {
+			console.log("perfumeId", perfumeId);
+			console.log("userId", userId);
+			const { error } = await supabaseClient.rpc("toggle_perfume_like", {
+				p_user_id: perfumeId,
+				p_perfume_id: userId,
+			});
+			if (error) throw error;
+			return { perfumeId, userId };
 		} catch (error: any) {
 			return rejectWithValue(error.message);
 		}
@@ -746,14 +767,16 @@ const perfumeSlice = createSlice({
 			.addCase(fetchPerfumeById.rejected, (state, action) => {
 				state.selectedPerfume.errorMessages = action.payload as string;
 				state.loading = false;
-			}) // Add these to your extraReducers
+			})
+			// In your extraReducers section, replace the current comment/reply handlers with these:
+
+			// Add comment
 			.addCase(addComment.pending, (state) => {
-				state.loading = true;
+				state.loading = true; // Set loading to true
 				state.error = null;
 			})
 			.addCase(addComment.fulfilled, (state, action) => {
-				state.loading = false;
-
+				state.loading = false; // Set loading to false
 				// Add the new comment to the selected perfume if it exists
 				if (state.selectedPerfume.data) {
 					state.selectedPerfume.data.comments = [
@@ -763,16 +786,17 @@ const perfumeSlice = createSlice({
 				}
 			})
 			.addCase(addComment.rejected, (state, action) => {
-				state.loading = false;
+				state.loading = false; // Set loading to false on error
 				state.error = action.payload as string;
 			})
+
+			// Add reply
 			.addCase(addReply.pending, (state) => {
-				state.loading = true;
+				state.loading = true; // Set loading to true
 				state.error = null;
 			})
 			.addCase(addReply.fulfilled, (state, action) => {
-				state.loading = false;
-
+				state.loading = false; // Set loading to false
 				// Add the new reply to the correct comment if the perfume is selected
 				if (state.selectedPerfume.data) {
 					state.selectedPerfume.data.comments =
@@ -791,16 +815,17 @@ const perfumeSlice = createSlice({
 				}
 			})
 			.addCase(addReply.rejected, (state, action) => {
-				state.loading = false;
+				state.loading = false; // Set loading to false on error
 				state.error = action.payload as string;
-			}) // Add to your extraReducers in perfumeSlice
+			})
+
+			// Delete comment
 			.addCase(deleteComment.pending, (state) => {
-				state.loading = true;
+				state.loading = true; // Set loading to true
 				state.error = null;
 			})
 			.addCase(deleteComment.fulfilled, (state, action) => {
-				state.loading = false;
-
+				state.loading = false; // Set loading to false
 				// Remove the comment from the selected perfume if it exists
 				if (state.selectedPerfume.data) {
 					state.selectedPerfume.data.comments =
@@ -811,16 +836,17 @@ const perfumeSlice = createSlice({
 				}
 			})
 			.addCase(deleteComment.rejected, (state, action) => {
-				state.loading = false;
+				state.loading = false; // Set loading to false on error
 				state.error = action.payload as string;
 			})
+
+			// Delete reply
 			.addCase(deleteReply.pending, (state) => {
-				state.loading = true;
+				state.loading = true; // Set loading to true
 				state.error = null;
 			})
 			.addCase(deleteReply.fulfilled, (state, action) => {
-				state.loading = false;
-
+				state.loading = false; // Set loading to false
 				// Remove the reply from the correct comment if the perfume is selected
 				if (state.selectedPerfume.data) {
 					state.selectedPerfume.data.comments =
@@ -839,17 +865,17 @@ const perfumeSlice = createSlice({
 				}
 			})
 			.addCase(deleteReply.rejected, (state, action) => {
-				state.loading = false;
+				state.loading = false; // Set loading to false on error
 				state.error = action.payload as string;
-			}) // Replace the existing toggleLikeComment and toggleLikeReply cases in the extraReducers section
+			})
 
+			// Toggle like comment
 			.addCase(toggleLikeComment.pending, (state) => {
-				state.loading = true;
+				state.loading = true; // Set loading to true
 				state.error = null;
 			})
 			.addCase(toggleLikeComment.fulfilled, (state, action) => {
-				state.loading = false;
-
+				state.loading = false; // Set loading to false
 				// Update the likes array for the specified comment
 				if (state.selectedPerfume.data) {
 					state.selectedPerfume.data.comments =
@@ -865,16 +891,17 @@ const perfumeSlice = createSlice({
 				}
 			})
 			.addCase(toggleLikeComment.rejected, (state, action) => {
-				state.loading = false;
+				state.loading = false; // Set loading to false on error
 				state.error = action.payload as string;
 			})
+
+			// Toggle like reply
 			.addCase(toggleLikeReply.pending, (state) => {
-				state.loading = true;
+				state.loading = true; // Set loading to true
 				state.error = null;
 			})
 			.addCase(toggleLikeReply.fulfilled, (state, action) => {
-				state.loading = false;
-
+				state.loading = false; // Set loading to false
 				// Update the likes array for the specified reply
 				if (state.selectedPerfume.data) {
 					state.selectedPerfume.data.comments =
@@ -900,7 +927,7 @@ const perfumeSlice = createSlice({
 				}
 			})
 			.addCase(toggleLikeReply.rejected, (state, action) => {
-				state.loading = false;
+				state.loading = false; // Set loading to false on error
 				state.error = action.payload as string;
 			})
 			.addCase(fetchUniqueData.pending, (state) => {
@@ -914,6 +941,73 @@ const perfumeSlice = createSlice({
 			.addCase(fetchUniqueData.rejected, (state, action) => {
 				state.error = action.payload as string;
 				state.loading = false;
+			})
+			.addCase(toggleLikePerfume.pending, (state) => {
+				state.error = null;
+			})
+			.addCase(toggleLikePerfume.fulfilled, (state, action) => {
+				if (
+					state.selectedPerfume.data &&
+					state.selectedPerfume.data.id === action.payload.perfumeId
+				) {
+					const likes = [...(state.selectedPerfume.data.likes || [])];
+					const userIndex = likes.indexOf(action.payload.userId);
+
+					if (userIndex !== -1) {
+						// User already liked, so remove the like
+						likes.splice(userIndex, 1);
+					} else {
+						// User hasn't liked, so add like
+						likes.push(action.payload.userId);
+					}
+
+					state.selectedPerfume.data = {
+						...state.selectedPerfume.data,
+						likes,
+					};
+				}
+
+				// Update likes in perfumes_by_page
+				Object.keys(state.perfumes_by_page).forEach((page) => {
+					state.perfumes_by_page[Number(page)] =
+						state.perfumes_by_page[Number(page)].map((perfume) => {
+							if (perfume.id === action.payload.perfumeId) {
+								const likes = [...(perfume.likes || [])];
+								const userIndex = likes.indexOf(
+									action.payload.userId,
+								);
+
+								if (userIndex !== -1) {
+									likes.splice(userIndex, 1);
+								} else {
+									likes.push(action.payload.userId);
+								}
+
+								return { ...perfume, likes };
+							}
+							return perfume;
+						});
+				});
+
+				// Update the main perfumes array for consistency
+				state.perfumes = state.perfumes.map((perfume) => {
+					if (perfume.id === action.payload.perfumeId) {
+						const likes = [...(perfume.likes || [])];
+						const userIndex = likes.indexOf(action.payload.userId);
+
+						if (userIndex !== -1) {
+							likes.splice(userIndex, 1);
+						} else {
+							likes.push(action.payload.userId);
+						}
+
+						return { ...perfume, likes };
+					}
+					return perfume;
+				});
+			})
+			.addCase(toggleLikePerfume.rejected, (state, action) => {
+				state.error = action.payload as string;
 			});
 	},
 });

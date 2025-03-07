@@ -15,16 +15,6 @@ const sidebarItems = [
 		href: "/profile/settings/theme",
 	},
 	{
-		icon: Album,
-		label: "Album",
-		href: "/profile/settings/album",
-	},
-	{
-		icon: History,
-		label: "History",
-		href: "/profile/settings/history",
-	},
-	{
 		icon: User,
 		label: "Profile",
 		href: "/profile/settings/profile",
@@ -35,13 +25,13 @@ export function SettingsSidebar() {
 	const pathname = usePathname();
 
 	return (
-		<div className="rounded-lg border bg-card text-card-foreground shadow-sm h-">
-			<div className="p-6">
-				<h3 className="text-lg font-medium">Settings</h3>
-				<p className="text-sm text-muted-foreground">
-					Manage your account settings and preferences.
-				</p>
-			</div>
+		<div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+            <div className="p-6 flex flex-col gap-2 flex-wrap">
+                <h3 className="text-lg font-medium">Settings</h3>
+                <p className="text-sm text-muted-foreground whitespace-normal break-words">
+                    Manage your account settings and preferences.
+                </p>
+            </div>
 			<div className="px-2 py-2">
 				{sidebarItems.map((item, index) => {
 					const isActive = pathname === item.href;

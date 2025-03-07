@@ -4,7 +4,7 @@ import { TabsContent } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { TradablePerfumeForInsert } from "@/types/perfume";
+import { PerfumeForInsert, PerfumeForUpdate  } from "@/types/perfume";
 import {
 	User,
 	Phone,
@@ -38,7 +38,7 @@ function TabContact({
 }: {
 	containerVariants: any;
 	itemVariants: any;
-	formData: TradablePerfumeForInsert;
+	formData: PerfumeForInsert | PerfumeForUpdate ;
 	handleChange: (
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
 	) => void;
@@ -214,7 +214,7 @@ function TabContact({
 						<Button
 							type="submit"
 							className="w-full max-w-md bg-primary hover:bg-primary/90 text-primary-foreground"
-							disabled={loading || !formData.user_name}
+							disabled={loading || !formData.name}
 						>
 							{loading ? (
 								<>

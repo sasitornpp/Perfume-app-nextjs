@@ -10,6 +10,9 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Heart, RefreshCcw } from "lucide-react";
 import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/redux/Store";
+import { toggleLikePerfume } from "@/redux/perfume/perfumeReducer";
+import { Button } from "@/components/ui/button";
 
 function PerfumeCard({
 	perfume,
@@ -19,14 +22,22 @@ function PerfumeCard({
 	index: number;
 }) {
 	const [isHovered, setIsHovered] = useState(false);
-	const dispatch = useDispatch();
+	const dispatch = useDispatch<AppDispatch>();
 	const user = useSelector((state: RootState) => state.user.user);
 
 	const shuffledAccords = Array.isArray(perfume.accords)
 		? [...perfume.accords].sort(() => 0.5 - Math.random()).slice(0, 3)
 		: [];
 
-	const isTradable = "is_tradable" in perfume ? perfume.is_tradable : false;
+	const handleLikes = () => {
+		if (user) {
+			console.log("perfume", perfume);
+
+			dispatch(
+				toggleLikePerfume({ perfumeId: perfume.id, userId: user.id }),
+			);
+		}
+	};
 
 	return (
 		<motion.div
@@ -40,26 +51,34 @@ function PerfumeCard({
 				className="w-[300px] overflow-hidden border-2 relative rounded-lg"
 				style={{
 					borderColor: isHovered
-						? `${isTradable && "user_id" in perfume && user?.id === perfume.user_id ? "lightgreen" : "hsl(var(--primary))"}`
-						: `${isTradable && "user_id" in perfume && user?.id === perfume.user_id ? "green" : "hsl(var(--border))"}`,
+						? `${user?.id === perfume.user_id ? "lightgreen" : "hsl(var(--primary))"}`
+						: `${user?.id === perfume.user_id ? "green" : "hsl(var(--border))"}`,
 					background: "hsl(var(--card))",
 				}}
 				onMouseEnter={() => setIsHovered(true)}
 				onMouseLeave={() => setIsHovered(false)}
 			>
 				{/* Favorite button moved outside of Link */}
-				<div className="absolute top-4 right-4 z-10 flex space-x-2">
-					<div
-						className="cursor-pointer p-2 rounded-full bg-background/80 backdrop-blur-sm transition-all duration-300"
-						// onClick={handleFavoriteClick}
-					>
-						<Heart
-							size={20}
-							className={`transition-colors fill-destructive text-destructive`}
-						/>
-					</div>
 
-					{isTradable && (
+				<div className="absolute top-4 right-4 z-10 flex space-x-2">
+					{!perfume.match_score && perfume.user_id !== user?.id && (
+						<Button
+							className="flex items-center"
+							variant={"link"}
+							onClick={handleLikes}
+						>
+							<Heart
+								className={`h-4 w-4 ${
+									user &&
+									perfume.likes &&
+									perfume.likes.includes(user.id)
+										? "fill-primary text-primary"
+										: ""
+								}`}
+							/>
+						</Button>
+					)}
+					{perfume.is_tradable && (
 						<div className="cursor-pointer p-2 rounded-full bg-background/80 backdrop-blur-sm transition-all duration-300">
 							<RefreshCcw
 								size={20}
@@ -83,10 +102,7 @@ function PerfumeCard({
 					</div>
 				)}
 
-				<Link
-					href={`${isTradable ? `/perfumes/trade/${perfume.id}` : `/perfumes/${perfume.id}`}`}
-					className="block"
-				>
+				<Link href={`/perfumes/${perfume.id}`} className="block">
 					<CardContent className="flex flex-col h-[420px] p-0 overflow-hidden">
 						<div className="relative overflow-hidden w-full h-[240px] bg-gradient-to-b from-background to-muted flex items-center justify-center">
 							<motion.div

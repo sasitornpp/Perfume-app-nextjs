@@ -16,3 +16,7 @@ export interface fetch_user_result {
 	baskets: any;
 	perfumes: any;
 }
+
+export interface ProfileSettingsProps extends Profile {
+	newImageFile?: File | null;
+}

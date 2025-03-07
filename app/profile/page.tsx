@@ -69,13 +69,12 @@ function ProfilePage() {
 		router.push(`/profile?q=${value}`, { scroll: false });
 	};
 
-
 	const handleRemoveBasket = (id: string) => {
 		const updatedBasket = my_baskets.filter((item) => item !== id);
 		// dispatch(updateBasket({ basket: updatedBasket }));
 	};
 
-    // console.log(profile);
+	// console.log(profile);
 
 	// If profile doesn't exist, show the create profile UI
 	if (!isProfileComplete) {
@@ -286,48 +285,14 @@ function ProfilePage() {
 
 				{/* My Perfumes Tab */}
 				<TabsContent value="my-perfumes">
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+					<div className="flex flex-wrap justify-center gap-4">
 						{my_perfumes.length > 0 ? (
-							my_perfumes.map((perfume) => (
-								<Card
+							my_perfumes.map((perfume, index) => (
+								<PerfumeCard
 									key={perfume.id}
-									className="overflow-hidden group"
-								>
-									<div className="h-40 bg-accent/20 relative">
-										{perfume.images && (
-											<img
-												src={perfume.images[0]}
-												alt={perfume.name}
-												className="w-full h-full object-cover"
-											/>
-										)}
-										<div className="absolute top-2 right-2">
-											<Badge className="bg-primary text-primary-foreground">
-												Tradable
-											</Badge>
-										</div>
-									</div>
-									<CardHeader className="pb-2">
-										<CardTitle className="text-base">
-											{perfume.name}
-										</CardTitle>
-										<CardDescription>
-											{perfume.brand}
-										</CardDescription>
-									</CardHeader>
-									<CardFooter className="pt-0 flex justify-between">
-										<span className="text-sm text-muted-foreground">
-											{perfume.concentration}
-										</span>
-										<Button
-											variant="ghost"
-											size="sm"
-											className="opacity-0 group-hover:opacity-100 transition-opacity"
-										>
-											View Details
-										</Button>
-									</CardFooter>
-								</Card>
+									perfume={perfume}
+									index={index}
+								/>
 							))
 						) : (
 							<div className="col-span-full p-8 text-center">
@@ -341,7 +306,7 @@ function ProfilePage() {
 								</p>
 								<Button
 									onClick={() =>
-										router.push("/perfumes/trade/create")
+										router.push("/perfumes/create")
 									}
 								>
 									Add Your First Perfume

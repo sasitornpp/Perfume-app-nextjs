@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
 	Card,
@@ -10,16 +10,47 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { createSelector } from "@reduxjs/toolkit";
 import {
 	Select,
 	SelectContent,
+	SelectGroup,
 	SelectItem,
+	SelectLabel,
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Info as InfoCircledIcon } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Info as InfoCircledIcon, BadgeCheck, ChevronDown } from "lucide-react";
 import { TabsContent } from "@/components/ui/tabs";
-import { TradablePerfumeForInsert } from "@/types/perfume";
+import { PerfumeForInsert, PerfumeForUpdate } from "@/types/perfume";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/Store";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+	Command,
+	CommandEmpty,
+	CommandGroup,
+	CommandInput,
+	CommandItem,
+	CommandSeparator,
+} from "@/components/ui/command";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const selectBrandNames = createSelector(
+	(state: RootState) => state.perfumes?.perfume_unique_data?.brand,
+	(brands) => {
+		if (!brands || !Array.isArray(brands)) return [];
+		return brands;
+	},
+);
 
 const TabDetails = ({
 	containerVariants,
@@ -30,12 +61,96 @@ const TabDetails = ({
 }: {
 	containerVariants: any;
 	itemVariants: any;
-	formData: TradablePerfumeForInsert;
+	formData: PerfumeForInsert | PerfumeForUpdate;
 	handleChange: (
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
 	) => void;
-	setFormData: React.Dispatch<React.SetStateAction<TradablePerfumeForInsert>>;
+	setFormData: React.Dispatch<
+		React.SetStateAction<PerfumeForInsert | PerfumeForUpdate>
+	>;
 }) => {
+	const perfumeBrands = useSelector(selectBrandNames);
+	const [open, setOpen] = useState(false);
+	const [brandValue, setBrandValue] = useState(formData.brand || "");
+	const [isAddingNewBrand, setIsAddingNewBrand] = useState(false);
+	const [newBrandName, setNewBrandName] = useState("");
+
+	// For performance optimization, memoize the filtered brands
+	const filteredBrands = useMemo(() => {
+		// Simply sort the brands alphabetically by name
+		return [...perfumeBrands].sort((a, b) => a.name.localeCompare(b.name));
+	}, [perfumeBrands]);
+
+	// Handle not for sale checkbox
+	const [isNotForSale, setIsNotForSale] = useState(false);
+
+	// Initialize isNotForSale based on formData
+	useEffect(() => {
+		// Don't set isNotForSale directly from formData to avoid circular updates
+		const shouldBeNotForSale =
+			formData.price === null && !formData.is_tradable;
+		if (isNotForSale !== shouldBeNotForSale) {
+			setIsNotForSale(shouldBeNotForSale);
+		}
+	}, [formData.price, formData.is_tradable]);
+
+	// Only update formData when isNotForSale changes from user interaction
+	const handleNotForSaleChange = (checked: boolean) => {
+		setIsNotForSale(checked);
+		if (checked) {
+			setFormData((prev) => ({
+				...prev,
+				price: null,
+				is_tradable: false,
+			}));
+		}
+	};
+
+	// Handle brand selection
+	const handleBrandChange = (selectedBrand: string) => {
+		setBrandValue(selectedBrand);
+
+		// Find the selected brand object to get its logo
+		const brandObj = perfumeBrands.find(
+			(brand) => brand.name === selectedBrand,
+		);
+
+		setFormData((prev) => ({
+			...prev,
+			brand: selectedBrand,
+			logo: brandObj?.logo || null, // Add the logo to formData
+		}));
+	};
+
+	// Handle adding a new brand
+	const handleAddNewBrand = () => {
+		if (newBrandName.trim()) {
+			// For new brands, we don't have a logo yet
+			setBrandValue(newBrandName.trim());
+			setFormData((prev) => ({
+				...prev,
+				brand: newBrandName.trim(),
+				logo: null, // No logo for custom brands
+			}));
+			setIsAddingNewBrand(false);
+			setNewBrandName("");
+			setOpen(false);
+		}
+	};
+
+	const [visibleBrandsCount, setVisibleBrandsCount] = useState(5);
+
+	const handleShowMoreBrands = () => {
+		setVisibleBrandsCount((prev) =>
+			Math.min(prev + 10, filteredBrands.length),
+		);
+	};
+	useEffect(() => {
+		if (!open) {
+			setVisibleBrandsCount(5);
+		}
+	}, [open]);
+
 	return (
 		<TabsContent value="details" className="m-0 p-0">
 			<div className="p-6 space-y-8">
@@ -131,34 +246,55 @@ const TabDetails = ({
 										</SelectContent>
 									</Select>
 								</div>
+								<div className="space-y-2">
+									<div className="flex items-center space-x-2">
+										<Checkbox
+											id="notForSale"
+											checked={isNotForSale}
+											onCheckedChange={(checked) =>
+												setIsNotForSale(
+													checked === true,
+												)
+											}
+										/>
+										<Label
+											htmlFor="notForSale"
+											className="font-medium text-sm cursor-pointer"
+										>
+											Not for sale (only for display)
+										</Label>
+									</div>
+								</div>
 							</motion.div>
 
 							<motion.div
 								variants={itemVariants}
 								className="grid grid-cols-1 md:grid-cols-2 gap-6"
 							>
-								{/* Price Field */}
-								<div className="space-y-2">
-									<Label
-										htmlFor="price"
-										className="font-medium"
-									>
-										Price (THB){" "}
-										<span className="text-destructive">
-											*
-										</span>
-									</Label>
-									<Input
-										id="price"
-										name="price"
-										type="number"
-										value={formData.price || ""}
-										onChange={handleChange}
-										placeholder="e.g. 2500"
-										className="border-input/60 focus-visible:ring-primary/20"
-										required
-									/>
-								</div>
+								{/* Price Field - Only show if not checked as "Not for sale" */}
+								{!isNotForSale && (
+									<div className="space-y-2">
+										<Label
+											htmlFor="price"
+											className="font-medium"
+										>
+											Price (THB){" "}
+											<span className="text-destructive">
+												*
+											</span>
+										</Label>
+										<Input
+											id="price"
+											name="price"
+											type="number"
+											value={formData.price || ""}
+											onChange={handleChange}
+											placeholder="e.g. 2500"
+											className="border-input/60 focus-visible:ring-primary/20"
+											required={!isNotForSale}
+										/>
+									</div>
+								)}
 
 								{/* Volume Field */}
 								<div className="space-y-2">
@@ -236,22 +372,200 @@ const TabDetails = ({
 								variants={itemVariants}
 								className="grid grid-cols-1 md:grid-cols-2 gap-6"
 							>
-								{/* Brand Field */}
-								<div className="space-y-2">
+								{/* Brand Field - Enhanced UX Combobox with ScrollArea Component */}
+								<div className="space-y-3 flex flex-col mt-2">
 									<Label
 										htmlFor="brand"
 										className="font-medium"
 									>
 										Brand
 									</Label>
-									<Input
-										id="brand"
-										name="brand"
-										value={formData.brand || ""}
-										onChange={handleChange}
-										placeholder="e.g. Dior, Chanel, Tom Ford"
-										className="border-input/60 focus-visible:ring-primary/20"
-									/>
+									<Popover open={open} onOpenChange={setOpen}>
+										<PopoverTrigger asChild>
+											<Button
+												variant="outline"
+												role="combobox"
+												aria-expanded={open}
+												className="w-full justify-between border-input/60 focus-visible:ring-primary/20 text-left font-normal"
+											>
+												{brandValue ? (
+													<span className="flex items-center gap-2">
+														<BadgeCheck className="h-4 w-4 text-primary" />
+														{brandValue}
+													</span>
+												) : (
+													"Select or add brand..."
+												)}
+												<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+											</Button>
+										</PopoverTrigger>
+										<PopoverContent
+											className="w-full p-0"
+											align="start"
+										>
+											<Command>
+												<CommandInput
+													placeholder="Search brands..."
+													autoFocus
+													className="border-none focus:ring-0"
+												/>
+												<CommandEmpty className="py-3 px-4 text-sm flex items-center justify-between">
+													<span className="text-muted-foreground">
+														No brands found
+													</span>
+													<Button
+														variant="secondary"
+														size="sm"
+														onClick={() =>
+															setIsAddingNewBrand(
+																true,
+															)
+														}
+														className="h-8"
+													>
+														<Plus className="h-3.5 w-3.5 mr-1" />
+														Add new
+													</Button>
+												</CommandEmpty>
+
+												{isAddingNewBrand ? (
+													<div className="p-3 border-t">
+														<p className="mb-2 text-sm font-medium">
+															Add new brand
+														</p>
+														<div className="flex gap-2">
+															<Input
+																value={
+																	newBrandName
+																}
+																onChange={(e) =>
+																	setNewBrandName(
+																		e.target
+																			.value,
+																	)
+																}
+																placeholder="Enter brand name"
+																className="h-9"
+																autoFocus
+															/>
+															<div className="flex gap-1">
+																<Button
+																	size="sm"
+																	onClick={
+																		handleAddNewBrand
+																	}
+																	className="h-9"
+																	disabled={
+																		!newBrandName.trim()
+																	}
+																>
+																	Add
+																</Button>
+																<Button
+																	size="sm"
+																	variant="ghost"
+																	onClick={() =>
+																		setIsAddingNewBrand(
+																			false,
+																		)
+																	}
+																	className="h-9"
+																>
+																	Cancel
+																</Button>
+															</div>
+														</div>
+													</div>
+												) : (
+													<>
+														<CommandGroup heading="All brands">
+															<ScrollArea className="h-40 rounded-md">
+																{filteredBrands
+																	.slice(
+																		0,
+																		visibleBrandsCount,
+																	)
+																	.map(
+																		(
+																			brand,
+																		) => (
+																			<CommandItem
+																				key={
+																					brand.name
+																				}
+																				value={
+																					brand.name
+																				}
+																				onSelect={() => {
+																					handleBrandChange(
+																						brand.name,
+																					);
+																					setOpen(
+																						false,
+																					);
+																				}}
+																				className="cursor-pointer"
+																			>
+																				<Check
+																					className={cn(
+																						"mr-2 h-4 w-4",
+																						brandValue ===
+																							brand.name
+																							? "opacity-100"
+																							: "opacity-0",
+																					)}
+																				/>
+																				{
+																					brand.name
+																				}
+																			</CommandItem>
+																		),
+																	)}
+															</ScrollArea>
+
+															{filteredBrands.length >
+																visibleBrandsCount && (
+																<div className="p-2 flex justify-center border-t">
+																	<Button
+																		variant="ghost"
+																		size="sm"
+																		onClick={
+																			handleShowMoreBrands
+																		}
+																		className="w-full text-sm text-primary hover:text-primary/80"
+																	>
+																		Show
+																		more
+																		brands (
+																		{filteredBrands.length -
+																			visibleBrandsCount}{" "}
+																		remaining)
+																		<ChevronDown className="ml-2 h-4 w-4" />
+																	</Button>
+																</div>
+															)}
+														</CommandGroup>
+
+														<CommandSeparator />
+
+														<CommandGroup>
+															<CommandItem
+																onSelect={() =>
+																	setIsAddingNewBrand(
+																		true,
+																	)
+																}
+																className="cursor-pointer text-primary"
+															>
+																<Plus className="mr-2 h-4 w-4" />
+																Add new brand...
+															</CommandItem>
+														</CommandGroup>
+													</>
+												)}
+											</Command>
+										</PopoverContent>
+									</Popover>
 								</div>
 
 								{/* Perfumer Field */}
@@ -338,7 +652,7 @@ const TabDetails = ({
 										onValueChange={(value) =>
 											setFormData((prev) => ({
 												...prev,
-												scentType: value,
+												scent_type: value,
 											}))
 										}
 									>
