@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/Store";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState, AppDispatch } from "@/redux/Store";
 import {
 	Card,
 	CardContent,
@@ -31,16 +31,27 @@ import {
 } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import PerfumeCard from "@/components/perfume_card";
-import { useDispatch } from "react-redux";
-import { Separator } from "@/components/ui/separator";
+// import { Separator } from "@/components/ui/separator";
 import AlbumCard from "@/components/album-card";
 import CreateAlbumButton from "@/components/form/create-album-button";
 import { getPerfumeById } from "@/utils/supabase/api/perfume";
 import { Perfume } from "@/types/perfume";
+import { removePerfumeFromBasket } from "@/redux/user/userReducer";
+import { aw } from "framer-motion/dist/types.d-6pKw1mTI";
+// import { createSelector } from "@reduxjs/toolkit";
+
+const selectMySuggestedPerfumes = (state: RootState) =>
+	state.user.profile?.suggestions_perfumes;
+
+const selectMyAlbums = (state: RootState) => state.user.albums;
+
+const selectMyPerfumes = (state: RootState) => state.user.perfumes;
+
+const selectMyBaskets = (state: RootState) => state.user.basket;
 
 function ProfilePage() {
 	const searchParams = useSearchParams();
-	const dispatch = useDispatch();
+	const dispatch: AppDispatch = useDispatch();
 	const router = useRouter();
 	const queryTab = searchParams.get("q");
 	const validTabs = ["my-perfumes", "albums", "basket", "recommendations"];
@@ -53,20 +64,10 @@ function ProfilePage() {
 
 	// const perfume_ids = profile?.my_perfume || [];
 
-	const my_perfumes = useSelector(
-		(state: RootState) => state.user.perfumes || [],
-	);
-	const my_albums = useSelector(
-		(state: RootState) => state.user?.albums || [],
-	);
-
-	const suggestionsPerfumes = useSelector(
-		(state: RootState) => state.user.profile?.suggestions_perfumes || [],
-	);
-
-	const my_baskets = useSelector(
-		(state: RootState) => state.user?.basket || [],
-	);
+	const my_perfumes = useSelector(selectMyPerfumes);
+	const my_albums = useSelector(selectMyAlbums);
+	const suggestionsPerfumes = useSelector(selectMySuggestedPerfumes);
+	const my_baskets = useSelector(selectMyBaskets);
 
 	// Handle tab change and update URL
 	const handleTabChange = (value: string) => {
@@ -74,9 +75,7 @@ function ProfilePage() {
 	};
 
 	const handleRemoveBasket = (id: string) => {
-		const updatedBasket = my_baskets.filter(
-			(item) => item.perfume_id !== id,
-		);
+		dispatch(removePerfumeFromBasket({ basketId: id }));
 		// dispatch(updateBasket({ basket: updatedBasket }));
 	};
 
@@ -292,9 +291,9 @@ function ProfilePage() {
 				{/* My Perfumes Tab */}
 				<TabsContent value="my-perfumes">
 					<div className="flex flex-wrap justify-center gap-4 p-4">
-						{my_perfumes.length !== 0 && (
+						{my_perfumes?.length !== 0 && (
 							<>
-								{my_perfumes.map((perfume, index) => (
+								{my_perfumes?.map((perfume, index) => (
 									<PerfumeCard
 										key={perfume.id}
 										perfume={perfume}
@@ -322,7 +321,7 @@ function ProfilePage() {
 							</>
 						)}
 						{/* Empty State - Only shown when no perfumes exist and replaces the card above */}
-						{my_perfumes.length === 0 && (
+						{my_perfumes?.length === 0 && (
 							<div className="w-full max-w-md p-8 text-center bg-card rounded-lg border border-border shadow-sm my-8">
 								<div className="flex flex-col items-center">
 									<div className="rounded-full bg-muted p-4 mb-4">
@@ -354,7 +353,8 @@ function ProfilePage() {
 
 				<TabsContent value="recommendations">
 					<div className="flex flex-wrap gap-4 justify-center">
-						{suggestionsPerfumes.length > 0 ? (
+						{suggestionsPerfumes &&
+						suggestionsPerfumes.length > 0 ? (
 							suggestionsPerfumes.map((perfume, index) => (
 								<PerfumeCard
 									key={perfume.id}
@@ -389,7 +389,7 @@ function ProfilePage() {
 						/>
 					</div>
 					<div className="flex flex-wrap gap-4 justify-center">
-						{my_albums.length > 0 ? (
+						{my_albums && my_albums.length > 0 ? (
 							my_albums.map((album) =>
 								album.id ? (
 									<AlbumCard
@@ -416,8 +416,8 @@ function ProfilePage() {
 				{/* Basket Tab */}
 				<TabsContent value="basket">
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-						{my_baskets.length > 0 ? (
-							my_baskets.map((perfumeId) => {
+						{my_baskets && my_baskets.length > 0 ? (
+							my_baskets?.map((basket, index) => {
 								const [perfume, setPerfume] =
 									useState<Perfume | null>(null);
 
@@ -425,15 +425,16 @@ function ProfilePage() {
 									const fetchPerfume = async () => {
 										const perfumeData =
 											await getPerfumeById({
-												id: perfumeId.perfume_id,
+												id: basket.perfume_id,
 											});
 										setPerfume(perfumeData);
 									};
 
 									fetchPerfume();
-								}, [perfumeId.perfume_id]);
+								}, [basket.perfume_id]);
 
-								if (!perfume) return <div>Loading...</div>;
+								if (!perfume)
+									return <div key={index}>Loading...</div>;
 
 								return (
 									<Card
@@ -494,6 +495,9 @@ function ProfilePage() {
 												<span className="text-xs text-muted-foreground ml-1">
 													{perfume.volume}ml
 												</span>
+												<span className="text-xs text-muted-foreground ml-1">
+													Amount: {basket.amount}
+												</span>
 											</div>
 											<Button
 												variant="destructive"
@@ -501,7 +505,7 @@ function ProfilePage() {
 												className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
 												onClick={() =>
 													handleRemoveBasket(
-														perfume.id,
+														basket?.id,
 													)
 												}
 											>
@@ -539,7 +543,7 @@ function ProfilePage() {
 								</p>
 								<Button
 									onClick={() =>
-										router.push("/perfumes/trade")
+										router.push("/perfumes/home/search")
 									}
 								>
 									Explore Perfumes

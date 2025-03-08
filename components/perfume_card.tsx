@@ -17,9 +17,11 @@ import { Button } from "@/components/ui/button";
 function PerfumeCard({
 	perfume,
 	index,
+    toggleLike = true
 }: {
 	perfume: suggestedPerfume;
 	index: number;
+    toggleLike?: boolean;
 }) {
 	const [isHovered, setIsHovered] = useState(false);
 	const dispatch = useDispatch<AppDispatch>();
@@ -61,7 +63,7 @@ function PerfumeCard({
 				{/* Favorite button moved outside of Link */}
 
 				<div className="absolute top-4 right-4 z-10 flex space-x-2">
-					{!perfume.match_score && perfume.user_id !== user?.id && (
+					{!perfume.match_score && perfume.user_id !== user?.id && toggleLike && (
 						<Button
 							className="flex items-center"
 							variant={"link"}

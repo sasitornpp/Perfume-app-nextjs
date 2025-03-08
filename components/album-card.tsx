@@ -1,81 +1,72 @@
-import React from "react";
-import {
-	Card,
-	CardContent,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+"use client";
+
+import React, { useState } from "react";
+import Image from "next/image";
+import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Album, Eye, EyeOff, MoreHorizontal } from "lucide-react";
+import { Album, Eye, EyeOff, Heart, MoreHorizontal } from "lucide-react";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Perfume } from "@/types/perfume";
+import { toggleLikeAlbum } from "@/redux/user/userReducer";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/redux/Store";
 import { useRouter } from "next/navigation";
+import { Album as AlbumType } from "@/types/perfume";
 
-interface AlbumCardProps {
-	album: {
-		id: string;
-		title: string;
-		descriptions: string | null;
-		private: boolean;
-		perfumes: Perfume[];
-		perfumes_id: string[];
-		created_at: string;
-	};
-}
-
-const AlbumCard: React.FC<AlbumCardProps> = ({ album }) => {
+const AlbumCard = ({ album }: { album: AlbumType }) => {
 	const router = useRouter();
-
-	// Get up to 4 perfume images to display
-	const perfumeImages: (string | null)[] = album.perfumes
-		? album.perfumes
-			.filter((perfume) => perfume.images && perfume.images.length > 0)
-			.map((perfume) => perfume.images?.[0])
-			.slice(0, 4)
-		: [];
-
-	// Fill with placeholder if less than 4 images
-	while (perfumeImages.length < 4) {
-		perfumeImages.push(null);
-	}
+	const dispatch = useDispatch<AppDispatch>();
 
 	const totalPerfumes = album.perfumes_id.length;
 	const formattedDate = new Date(album.created_at).toLocaleDateString();
 
+	const userId = useSelector((state: RootState) => state.user.user?.id);
+
+	// This would need to be fetched from API in a real implementation
+	// For now we'll use placeholder logic
+	const perfumeImages =
+		album.perfumes_id.length > 0
+			? Array(4).fill(album.images || "") // Use album cover image or placeholder
+			: Array(4).fill("");
+
 	const handleViewAlbum = () => {
-		router.push(`/albums/${album.id}`);
+		router.push(`profile/album/${album.id}`);
 	};
+
+	const handleLike = () => {
+		if (album.id) {
+			dispatch(toggleLikeAlbum({ albumId: album.id }));
+		}
+	};
+
+	// Check if userId is defined before using includes
+	const isLiked = userId ? album.likes.includes(userId) : false;
 
 	return (
 		<Card className="w-full max-w-xs overflow-hidden transition-all hover:shadow-md">
 			<div className="relative">
 				{/* Image Grid */}
-				<div className="grid grid-cols-2 grid-rows-2 h-48">
-					{perfumeImages.map((image, index) => (
-						<div
-							key={index}
-							className="relative overflow-hidden bg-gradient-to-br from-primary/5 to-primary/20"
-						>
-							{image ? (
-								<img
-									src={image}
-									alt={`Perfume ${index + 1}`}
-									className="w-full h-full object-cover"
-								/>
-							) : (
-								<div className="w-full h-full flex items-center justify-center">
-									<Album className="h-6 w-6 text-primary/40" />
-								</div>
-							)}
+				<div className="flex h-48">
+					{album.images ? (
+						<Image
+							src={album.images}
+							alt="Perfume album cover"
+							layout="fill"
+							objectFit="cover"
+						/>
+					) : (
+						<div className="flex items-center justify-center w-full h-48 bg-muted text-muted-foreground">
+							<Album className="h-10 w-10 opacity-50 mr-2" />
+							<span className="text-sm font-medium">
+								No images
+							</span>
 						</div>
-					))}
+					)}
 				</div>
 
 				{/* Privacy Badge */}
@@ -125,10 +116,12 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ album }) => {
 				<CardTitle className="text-base line-clamp-1">
 					{album.title}
 				</CardTitle>
-				{album.descriptions && (
+				{album.descriptions ? (
 					<p className="text-xs text-muted-foreground line-clamp-2 h-9">
 						{album.descriptions}
 					</p>
+				) : (
+					<p className="text-xs text-muted-foreground line-clamp-2 h-9" />
 				)}
 			</CardHeader>
 
@@ -140,9 +133,28 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ album }) => {
 					<span className="mx-1">•</span>
 					<span>{formattedDate}</span>
 				</div>
-				<Button variant="outline" size="sm" onClick={handleViewAlbum}>
-					View
-				</Button>
+				<div className="flex items-center gap-2">
+					<Button
+						variant="ghost"
+						size="icon"
+						className={`p-0 ${isLiked ? "text-red-500" : "text-muted-foreground"} hover:bg-transparent`}
+						onClick={handleLike}
+					>
+						<Heart
+							className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`}
+						/>
+						<span className="ml-1 text-xs">
+							{album.likes.length}
+						</span>
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={handleViewAlbum}
+					>
+						View
+					</Button>
+				</div>
 			</CardFooter>
 		</Card>
 	);

@@ -33,7 +33,8 @@ import { fetchPerfumeById } from "@/redux/perfume/perfumeReducer";
 import { AppDispatch } from "@/redux/Store";
 import CommentSection from "@/components/comment-section";
 import { toggleLikePerfume } from "@/redux/perfume/perfumeReducer";
-import { removePerfume } from "@/redux/user/userReducer";
+import { removePerfume, addPerfumeToBasket } from "@/redux/user/userReducer";
+import AddPerfumeToAlbumButton from "@/components/album/add-perfume";
 
 function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 	const router = useRouter();
@@ -43,6 +44,10 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 	const perfumeState = useSelector(
 		(state: RootState) => state.perfumes.selectedPerfume,
 	);
+
+	const basketState = useSelector((state: RootState) => state.user.basket);
+
+    // console.log("basketState:", basketState);
 
 	useEffect(() => {
 		if (
@@ -82,6 +87,16 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 
 	const [activeImage, setActiveImage] = useState(0);
 	const [showMore, setShowMore] = useState(false);
+
+	const handleAddPerfumeToBasket = () => {
+		if (user) {
+			dispatch(
+				addPerfumeToBasket({ perfumeId: unwrappedParams.perfumeId }),
+			);
+		} else {
+			router.push("/login");
+		}
+	};
 
 	const handleGoBack = () => {
 		router.back();
@@ -455,11 +470,26 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 						<CardFooter className="pt-2 pb-4">
 							<div className="flex gap-3 w-full">
 								{perfume.is_tradable && (
-									<Button className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90">
+									<Button
+										className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+										onClick={handleAddPerfumeToBasket}
+									>
 										<ShoppingBag className="mr-2 h-4 w-4" />
-										Add to Cart
+										{basketState?.some(
+											(item) => item.perfume_id === perfume.id,
+										) ? (
+											<>
+												<span className="mr-2">✔</span>
+												In Cart
+											</>
+										) : (
+											"Add to Cart"
+										)}
 									</Button>
 								)}
+								<AddPerfumeToAlbumButton
+									perfumeId={perfume.id}
+								/>
 								{user && user.id === perfume.user_id && (
 									<div className="flex flex-1 gap-2">
 										<Button
@@ -498,6 +528,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 										</Button>
 									</div>
 								)}
+
 								<Button
 									variant="outline"
 									className="border-border hover:bg-accent/10"

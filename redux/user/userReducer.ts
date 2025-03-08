@@ -30,7 +30,7 @@ interface UserState {
 	user: User | null;
 	profile: Profile | null;
 	perfumes: Perfume[] | null;
-	albums: Album[] | null;
+	albums: AlbumWithPerfume[] | null;
 	basket: Basket[] | null;
 	loading: boolean;
 	error: string | null;
@@ -48,7 +48,6 @@ const initialState: UserState = {
 	profileNotCreated: false,
 };
 
-// ✅ Action: Sign In
 export const signInUser = createAsyncThunk(
 	"user/signInUser",
 	async (
@@ -74,7 +73,6 @@ export const signInUser = createAsyncThunk(
 	},
 );
 
-// ✅ Action: Sign Up
 export const signUpUser = createAsyncThunk(
 	"user/signUpUser",
 	async (
@@ -104,7 +102,6 @@ export const signUpUser = createAsyncThunk(
 	},
 );
 
-// ✅ Action: Sign Out
 export const logoutUser = createAsyncThunk(
 	"user/logoutUser",
 	async (_, { dispatch }) => {
@@ -113,7 +110,6 @@ export const logoutUser = createAsyncThunk(
 	},
 );
 
-// ✅ Action: Fetch User Data
 export const fetchUserData = createAsyncThunk(
 	"user/fetchUserData",
 	async (_, { rejectWithValue }) => {
@@ -143,7 +139,6 @@ export const fetchUserData = createAsyncThunk(
 	},
 );
 
-// ✅ Action: Create Profile
 export const createProfile = createAsyncThunk(
 	"user/createProfile",
 	async (
@@ -302,6 +297,7 @@ export const updateProfile = createAsyncThunk(
 		}
 	},
 );
+
 export const fetchSuggestedPerfumes = createAsyncThunk(
 	"perfume/fetchSuggestedPerfumes",
 	async (
@@ -616,7 +612,7 @@ export const addNewAlbum = createAsyncThunk(
 		{ album }: { album: AlbumForInsert },
 		{ rejectWithValue, getState },
 	) => {
-        console.log("Adding new album with data state 1 :", album);
+		console.log("Adding new album with data state 1 :", album);
 		try {
 			const state = getState() as { user: UserState };
 			const profile = state.user.profile;
@@ -649,17 +645,17 @@ export const addNewAlbum = createAsyncThunk(
 				imageUrl = publicUrlData?.publicUrl || null;
 			}
 
-            // Prepare album data for insertion by removing file objects
-            const { imageFile, ...cleanedAlbumData } = album;
+			// Prepare album data for insertion by removing file objects
+			const { imageFile, ...cleanedAlbumData } = album;
 
-            // Add the image URL to the album data
-            const albumToInsert = {
-                ...cleanedAlbumData,
-                images: imageUrl,  // Use the uploaded image URL
-                user_id: profile.id,
-            };
+			// Add the image URL to the album data
+			const albumToInsert = {
+				...cleanedAlbumData,
+				images: imageUrl, // Use the uploaded image URL
+				user_id: profile.id,
+			};
 
-            console.log("Adding new album with data state 2:", albumToInsert);
+			console.log("Adding new album with data state 2:", albumToInsert);
 
 			const { data, error } = await supabaseClient
 				.from("albums")
@@ -678,6 +674,391 @@ export const addNewAlbum = createAsyncThunk(
 			return data;
 		} catch (error: any) {
 			return rejectWithValue(error.message);
+		}
+	},
+);
+
+export const updateAlbum = createAsyncThunk(
+	"user/upDateAlbum",
+	async (
+		{ album }: { album: AlbumForInsert },
+		{ rejectWithValue, getState },
+	) => {
+		console.log("Updating album with data state 1:", album);
+		try {
+			const state = getState() as { user: UserState };
+			const profile = state.user.profile;
+
+			if (!profile) throw new Error("User profile is required");
+
+			// Fetch the existing album to get its current image
+			const { data: existingAlbum, error: fetchError } =
+				await supabaseClient
+					.from("albums")
+					.select("images")
+					.eq("id", album.id)
+					.single();
+
+			if (fetchError)
+				throw new Error(
+					`Error fetching existing album: ${fetchError.message}`,
+				);
+			let imageUrl = album.images;
+			if (album.imageFile) {
+				if (existingAlbum?.images) {
+					const oldImagePath =
+						existingAlbum.images.split("/IMAGES/")[1];
+					if (oldImagePath) {
+						const { error: deleteError } =
+							await supabaseClient.storage
+								.from("IMAGES")
+								.remove([oldImagePath]);
+
+						if (deleteError) {
+							console.error(
+								"Error deleting previous album image:",
+								deleteError,
+							);
+						}
+					}
+				}
+
+				const folderName = `albums/${profile.id}`;
+				const fileName = `${album.title}_${Date.now()}`;
+				const filePath = `${folderName}/${fileName}`;
+
+				const { error: uploadError } = await supabaseClient.storage
+					.from("IMAGES")
+					.upload(filePath, album.imageFile);
+
+				if (uploadError) {
+					throw new Error(
+						`Error uploading album image: ${uploadError.message}`,
+					);
+				}
+
+				const { data: publicUrlData } = supabaseClient.storage
+					.from("IMAGES")
+					.getPublicUrl(filePath);
+
+				imageUrl = publicUrlData?.publicUrl || null;
+			} else if (album.images === null && existingAlbum?.images) {
+				const oldImagePath = existingAlbum.images.split("/IMAGES/")[1];
+				if (oldImagePath) {
+					await supabaseClient.storage
+						.from("IMAGES")
+						.remove([oldImagePath]);
+				}
+				imageUrl = null;
+			}
+
+			const { imageFile, ...cleanedAlbumData } = album;
+
+			const albumToUpdate = {
+				...cleanedAlbumData,
+				images: imageUrl,
+				user_id: profile.id,
+			};
+
+			console.log("Updating album with data state 2:", albumToUpdate);
+
+			const { data, error } = await supabaseClient
+				.from("albums")
+				.update(albumToUpdate)
+				.eq("id", album.id)
+				.select();
+
+			if (error) {
+				if (album.imageFile && imageUrl) {
+					const filePath = imageUrl.split("/IMAGES/")[1];
+					await rollbackUploadedFiles([filePath]);
+				}
+				throw error;
+			}
+
+			console.log("Album updated successfully:", data);
+			return data;
+		} catch (error: any) {
+			console.error("Error updating album:", error);
+			return rejectWithValue(error.message);
+		}
+	},
+);
+
+export const removeAlbum = createAsyncThunk(
+	"user/removeAlbum",
+	async ({ albumId }: { albumId: string }, { rejectWithValue, getState }) => {
+		console.log("Removing album with data state 1:", albumId);
+
+		try {
+			const state = getState() as { user: UserState };
+			const profile = state.user.profile;
+
+			if (!profile) throw new Error("User profile is required");
+
+			// 1. Fetch the album to get its image URL for cleanup
+			const { data: albumData, error: fetchError } = await supabaseClient
+				.from("albums")
+				.select("images")
+				.eq("id", albumId)
+				.single();
+
+			if (fetchError) {
+				throw new Error(`Error fetching album: ${fetchError.message}`);
+			}
+
+			console.log("Removing album with data state 2:", albumData);
+
+			// 2. Delete the image from storage if it exists
+			if (albumData.images) {
+				const imagePath = albumData.images.split("/IMAGES/")[1];
+				if (imagePath) {
+					const { error: deleteImageError } =
+						await supabaseClient.storage
+							.from("IMAGES")
+							.remove([imagePath]);
+
+					if (deleteImageError) {
+						console.error(
+							"Error deleting album image:",
+							deleteImageError,
+						);
+					} else {
+						console.log("Successfully deleted album image");
+					}
+				}
+			}
+
+			// 3. Delete the album from the database
+			const { error: deleteError } = await supabaseClient
+				.from("albums")
+				.delete()
+				.eq("id", albumId);
+
+			if (deleteError) {
+				throw new Error(`Error deleting album: ${deleteError.message}`);
+			}
+
+			console.log("Album successfully deleted");
+			return { id: albumId };
+		} catch (error: any) {
+			console.error("Error removing album:", error);
+			return rejectWithValue(error.message || "Failed to remove album");
+		}
+	},
+);
+
+export const togglePerfumeToAlbum = createAsyncThunk(
+	"user/togglePerfumeToAlbum",
+	async (
+		{
+			album,
+			perfumeId,
+		}: { album: { albumId: string; add: boolean }[]; perfumeId: string },
+		{ rejectWithValue, getState },
+	) => {
+		try {
+			const state = getState() as { user: UserState };
+			const profile = state.user.profile;
+
+			if (!profile) throw new Error("User profile is required");
+
+			const updatedAlbums = await Promise.all(
+				album.map(async ({ albumId, add }) => {
+					const { data: albumData, error: fetchError } =
+						await supabaseClient
+							.from("albums")
+							.select("perfumes_id")
+							.eq("id", albumId)
+							.single();
+
+					if (fetchError) {
+						throw new Error(
+							`Error fetching album ${albumId}: ${fetchError.message}`,
+						);
+					}
+
+					let currentPerfumeIds: string[] =
+						albumData.perfumes_id || [];
+					let updatedPerfumeIds: string[];
+
+					if (add) {
+						// Add perfume to album
+						updatedPerfumeIds = [...currentPerfumeIds, perfumeId];
+					} else {
+						// Remove perfume from album
+						updatedPerfumeIds = currentPerfumeIds.filter(
+							(id) => id !== perfumeId,
+						);
+					}
+
+					const { data: updatedAlbum, error: updateError } =
+						await supabaseClient
+							.from("albums")
+							.update({
+								perfumes_id: updatedPerfumeIds,
+							})
+							.eq("id", albumId)
+							.select();
+
+					if (updateError) {
+						throw new Error(
+							`Error updating album ${albumId}: ${updateError.message}`,
+						);
+					}
+
+					return {
+						id: albumId,
+						perfumes_id: updatedPerfumeIds,
+						isAdded: add,
+					};
+				}),
+			);
+
+			return updatedAlbums;
+		} catch (error: any) {
+			console.error("Error toggling perfume in album:", error);
+			return rejectWithValue(
+				error.message || "Failed to toggle perfume in album",
+			);
+		}
+	},
+);
+
+export const toggleLikeAlbum = createAsyncThunk(
+	"user/toggleLikeAlbum",
+	async ({ albumId }: { albumId: string }, { rejectWithValue, getState }) => {
+		console.log(`Toggling like for album ${albumId}`);
+
+		try {
+			const state = getState() as { user: UserState };
+			const profile = state.user.profile;
+
+			if (!profile) throw new Error("User profile is required");
+			const userId = profile.id;
+
+			// 1. Fetch the current album to get its likes array
+			const { data: album, error: fetchError } = await supabaseClient
+				.from("albums")
+				.select("likes")
+				.eq("id", albumId)
+				.single();
+
+			if (fetchError) {
+				throw new Error(`Error fetching album: ${fetchError.message}`);
+			}
+
+			// 2. Toggle the user's like status
+			const currentLikes: string[] = album.likes || [];
+			let updatedLikes: string[];
+			let action: string;
+
+			// Check if user has already liked the album
+			if (currentLikes.includes(userId)) {
+				// User already liked it, so remove the like
+				updatedLikes = currentLikes.filter((id) => id !== userId);
+				action = "unliked";
+			} else {
+				// User hasn't liked it yet, so add the like
+				updatedLikes = [...currentLikes, userId];
+				action = "liked";
+			}
+
+			// 3. Update the album in the database
+			const { data: updatedAlbum, error: updateError } =
+				await supabaseClient
+					.from("albums")
+					.update({
+						likes: updatedLikes,
+					})
+					.eq("id", albumId)
+					.select();
+
+			if (updateError) {
+				throw new Error(`Error updating album: ${updateError.message}`);
+			}
+
+			console.log(
+				`User ${userId} successfully ${action} album ${albumId}`,
+			);
+			return {
+				id: albumId,
+				likes: updatedLikes,
+				isLiked: action === "liked",
+			};
+		} catch (error: any) {
+			console.error("Error toggling album like:", error);
+			return rejectWithValue(
+				error.message || "Failed to toggle album like",
+			);
+		}
+	},
+);
+
+export const addPerfumeToBasket = createAsyncThunk(
+	"user/addPerfumeToBasket",
+	async (
+		{ perfumeId }: { perfumeId: string },
+		{ rejectWithValue, getState },
+	) => {
+		try {
+			const state = getState() as { user: UserState };
+			const profile = state.user.profile;
+
+			if (!profile) throw new Error("User profile is required");
+
+			const { data: basketData, error: fetchError } = await supabaseClient
+				.from("baskets")
+				.insert({
+					amount: 1,
+					user_id: profile.id,
+					perfume_id: perfumeId,
+				})
+				.select()
+				.single();
+
+			if (fetchError) {
+				throw new Error(`Error fetching basket: ${fetchError.message}`);
+			}
+
+			return basketData;
+		} catch (error: any) {
+			console.error("Error adding perfume to basket:", error);
+			return rejectWithValue(
+				error.message || "Failed to add perfume to basket",
+			);
+		}
+	},
+);
+
+export const removePerfumeFromBasket = createAsyncThunk(
+	"user/removePerfumeFromBasket",
+	async (
+		{ basketId }: { basketId: string },
+		{ rejectWithValue, getState },
+	) => {
+		try {
+			const state = getState() as { user: UserState };
+			const profile = state.user.profile;
+
+			if (!profile) throw new Error("User profile is required");
+
+			const { error: fetchError } = await supabaseClient
+				.from("baskets")
+				.delete()
+				.eq("id", basketId)
+				.select();
+
+			if (fetchError) {
+				throw new Error(`Error fetching basket: ${fetchError.message}`);
+			}
+
+			return basketId;
+		} catch (error: any) {
+			console.error("Error removing perfume from basket:", error);
+			return rejectWithValue(
+				error.message || "Failed to remove perfume from basket",
+			);
 		}
 	},
 );
@@ -708,7 +1089,7 @@ const userSlice = createSlice({
 						user: { user: User };
 						profile: Profile | null;
 						albums?: any[] | null;
-						basket?: any[] | null;
+						baskets?: any[] | null;
 						perfumes?: Perfume[] | null;
 						profileNotCreated: boolean;
 					}>,
@@ -717,14 +1098,14 @@ const userSlice = createSlice({
 						user,
 						profile,
 						albums,
-						basket,
+						baskets,
 						perfumes,
 						profileNotCreated,
 					} = action.payload;
 					state.user = user.user;
 					state.profile = profile;
 					state.albums = albums || null;
-					state.basket = basket || null;
+					state.basket = baskets || null;
 					state.perfumes = perfumes || null;
 					state.profileNotCreated = profileNotCreated;
 					state.loading = false;
@@ -808,7 +1189,7 @@ const userSlice = createSlice({
 					state.error = action.payload;
 					state.loading = false;
 				},
-			) // Previous cases remain unchanged
+			)
 			.addCase(addMyPerfume.pending, (state) => {
 				state.loading = true;
 				state.error = null;
@@ -832,7 +1213,6 @@ const userSlice = createSlice({
 						action.payload.message || "Failed to add perfume";
 				},
 			)
-			// New cases for editPerfume
 			.addCase(editPerfume.pending, (state) => {
 				state.loading = true;
 				state.error = null;
@@ -859,7 +1239,6 @@ const userSlice = createSlice({
 						action.payload.message || "Failed to edit perfume";
 				},
 			)
-			// New cases for removePerfume
 			.addCase(removePerfume.pending, (state) => {
 				state.loading = true;
 				state.error = null;
@@ -912,6 +1291,179 @@ const userSlice = createSlice({
 					state.loading = false;
 					state.error =
 						action.payload.message || "Failed to add album";
+				},
+			)
+			.addCase(updateAlbum.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(
+				updateAlbum.fulfilled,
+				(state, action: PayloadAction<Album[]>) => {
+					state.loading = false;
+					if (state.albums && action.payload.length > 0) {
+						const updatedAlbum = action.payload[0];
+						state.albums = state.albums.map((album) =>
+							album.id === updatedAlbum.id ? updatedAlbum : album,
+						);
+					}
+				},
+			)
+			.addCase(
+				updateAlbum.rejected,
+				(state, action: PayloadAction<any>) => {
+					state.loading = false;
+					state.error =
+						action.payload.message || "Failed to update album";
+				},
+			)
+			.addCase(removeAlbum.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(
+				removeAlbum.fulfilled,
+				(state, action: PayloadAction<{ id: string }>) => {
+					state.loading = false;
+					if (state.albums) {
+						state.albums = state.albums.filter(
+							(album) => album.id !== action.payload.id,
+						);
+					}
+				},
+			)
+			.addCase(
+				removeAlbum.rejected,
+				(state, action: PayloadAction<any>) => {
+					state.loading = false;
+					state.error = action.payload || "Failed to remove album";
+				},
+			)
+			.addCase(togglePerfumeToAlbum.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(
+				togglePerfumeToAlbum.fulfilled,
+				(
+					state,
+					action: PayloadAction<
+						Array<{
+							id: string;
+							perfumes_id: string[];
+							isAdded: boolean;
+						}>
+					>,
+				) => {
+					state.loading = false;
+					if (state.albums) {
+						// Handle multiple album updates
+						action.payload.forEach((updatedAlbum) => {
+							state.albums = state.albums!.map((album) => {
+								if (album.id === updatedAlbum.id) {
+									return {
+										...album,
+										perfumes_id: updatedAlbum.perfumes_id,
+									};
+								}
+								return album;
+							});
+						});
+					}
+				},
+			)
+			.addCase(
+				togglePerfumeToAlbum.rejected,
+				(state, action: PayloadAction<any>) => {
+					state.loading = false;
+					state.error =
+						action.payload || "Failed to toggle perfume in album";
+				},
+			)
+			.addCase(toggleLikeAlbum.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(
+				toggleLikeAlbum.fulfilled,
+				(
+					state,
+					action: PayloadAction<{
+						id: string;
+						likes: string[];
+						isLiked: boolean;
+					}>,
+				) => {
+					state.loading = false;
+
+					// If the album exists in state, update its likes array
+					if (state.albums) {
+						state.albums = state.albums.map((album) => {
+							if (album.id === action.payload.id) {
+								return {
+									...album,
+									likes: action.payload.likes,
+								};
+							}
+							return album;
+						});
+					}
+				},
+			)
+			.addCase(
+				toggleLikeAlbum.rejected,
+				(state, action: PayloadAction<any>) => {
+					state.loading = false;
+					state.error =
+						action.payload || "Failed to toggle album like";
+				},
+			)
+			.addCase(addPerfumeToBasket.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(
+				addPerfumeToBasket.fulfilled,
+				(state, action: PayloadAction<Basket>) => {
+					state.loading = false;
+					if (state.basket) {
+						const existingIndex = state.basket.findIndex(
+							(item) => item.id === action.payload.id,
+						);
+						if (existingIndex !== -1) {
+							state.basket[existingIndex] = action.payload;
+						} else {
+							state.basket = [...state.basket, action.payload];
+						}
+					}
+				},
+			)
+			.addCase(addPerfumeToBasket.rejected, (state) => {
+				state.loading = false;
+				state.error = "Failed to toggle album like";
+			})
+			.addCase(removePerfumeFromBasket.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(
+				removePerfumeFromBasket.fulfilled,
+				(state, action: PayloadAction<string>) => {
+					state.loading = false;
+					if (state.basket) {
+						state.basket = state.basket.filter(
+							(item) => item.id !== action.payload,
+						);
+					}
+				},
+			)
+			.addCase(
+				removePerfumeFromBasket.rejected,
+				(state, action: PayloadAction<any>) => {
+					state.loading = false;
+					state.error =
+						action.payload ||
+						"Failed to remove perfume from basket";
 				},
 			);
 	},

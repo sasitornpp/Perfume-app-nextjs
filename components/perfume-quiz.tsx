@@ -28,6 +28,7 @@ import {
 	Activity,
 	Search,
 	Info,
+	Component,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Filters, FiltersPerfumeValues } from "@/types/perfume";
@@ -38,6 +39,17 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Women from "@/components/icon/women";
 import Men from "@/components/icon/male";
+
+// Define birthdate-accord associations
+const birthdateAccords = {
+	monday: ["fresh"],
+	tuesday: ["spicy"],
+	wednesday: ["floral"],
+	thursday: ["oriental"],
+	friday: ["fruity"],
+	saturday: ["woody"],
+	sunday: ["powdery"],
+};
 
 // Define steps for quiz
 const steps = [
@@ -66,6 +78,11 @@ const steps = [
 		component: "notes",
 		title: "Favorite Notes",
 		description: "Choose your favorite top, middle and base notes.",
+	},
+	{
+		component: "birthday",
+		title: "Birthday",
+		description: "Select your birthday to get a fragrance suggestion",
 	},
 	{
 		component: "brand",
@@ -762,6 +779,37 @@ function PerfumeQuiz() {
 								</div>
 							</div>
 						</TooltipProvider>
+					</div>
+				);
+			case "birthday":
+				return (
+					<div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+						{Object.entries(birthdateAccords).map(
+							([day, accords]) => (
+								<Button
+									key={day}
+									variant={
+										JSON.stringify(
+											formData.accords_filter,
+										) === JSON.stringify(accords)
+											? "default"
+											: "outline"
+									}
+									className="h-auto py-4 flex flex-col items-center justify-center transition-all gap-2"
+									onClick={() => {
+										setFormData({
+											...formData,
+											accords_filter: accords,
+										});
+										setSelectedAccords(accords);
+									}}
+								>
+									<span className="font-medium capitalize text-lg">
+										{day}
+									</span>
+								</Button>
+							),
+						)}
 					</div>
 				);
 

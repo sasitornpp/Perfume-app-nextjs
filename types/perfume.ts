@@ -307,7 +307,7 @@ export interface AlbumForInsert extends Omit<Album, 'id' | 'created_at'> {
 }
 
 export interface AlbumWithPerfume extends Album {
-    perfumes: Perfume[];
+    perfumes?: Perfume[];
 }
 
 export const AlbumInitialState: AlbumForInsert = {
@@ -322,7 +322,7 @@ export const AlbumInitialState: AlbumForInsert = {
 
 
 export interface Basket {
-    id?: string;
+    id: string;
     amount: number;
     user_id: string;
     perfume_id: string;
