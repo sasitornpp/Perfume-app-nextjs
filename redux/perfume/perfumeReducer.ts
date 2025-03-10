@@ -700,6 +700,27 @@ export const toggleLikePerfume = createAsyncThunk(
 	},
 );
 
+export const toggleDisLikePerfume = createAsyncThunk(
+    "perfume/toggleDisLikePerfume",
+    async (
+        { perfumeId, userId }: { perfumeId: string; userId: string },
+        { rejectWithValue },
+    ) => {
+        try {
+            console.log("perfumeId", perfumeId);
+            console.log("userId", userId);
+            const { error } = await supabaseClient.rpc("toggle_perfume_dislike", {
+                p_user_id: perfumeId,
+                p_perfume_id: userId,
+            });
+            if (error) throw error;
+            return { perfumeId, userId };
+        } catch (error: any) {
+            return rejectWithValue(error.message);
+        }
+    },
+);
+
 const perfumeSlice = createSlice({
 	name: "perfume",
 	initialState,

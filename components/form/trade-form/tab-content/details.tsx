@@ -196,7 +196,7 @@ const TabDetails = ({
 								)}
 
 								{/* Volume Field */}
-								<div className="space-y-2">
+								{/* <div className="space-y-2">
 									<Label
 										htmlFor="volume"
 										className="font-medium"
@@ -216,7 +216,7 @@ const TabDetails = ({
 										className="border-input/60 focus-visible:ring-primary/20"
 										required
 									/>
-								</div>
+								</div> */}
 							</motion.div>
 
 							{/* Description Field */}
