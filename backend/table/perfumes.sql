@@ -1,0 +1,32 @@
+create table public.perfumes (
+  id uuid not null default gen_random_uuid (),
+  name text not null,
+  descriptions text null,
+  gender text null,
+  brand text null,
+  concentration text null,
+  scent_type text null,
+  price integer null,
+  volume integer null,
+  user_id uuid null default auth.uid (),
+  images text[] not null,
+  top_notes text[] null,
+  middle_notes text[] null,
+  base_notes text[] null,
+  facebook text null,
+  line text null,
+  phone_number text null,
+  accords text[] null,
+  updated_at timestamp with time zone null default now(),
+  created_at timestamp without time zone null default now(),
+  perfumer text null,
+  is_tradable boolean not null default false,
+  logo text null,
+  likes uuid[] not null default '{}'::uuid[],
+  "user" jsonb null,
+  constraint perfume_pkey primary key (id),
+  constraint perfumes_id_key unique (id),
+  constraint tradable_perfumes_userId_fkey foreign KEY (user_id) references auth.users (id) on update CASCADE on delete CASCADE
+) TABLESPACE pg_default;
+
+create index IF not exists idx_tradable_perfumes_name on public.perfumes using btree (name) TABLESPACE pg_default;
