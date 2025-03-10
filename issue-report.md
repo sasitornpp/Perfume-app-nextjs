@@ -41,7 +41,7 @@ const basketItems = useSelector((state: RootState) =>
 
 ใช้ reselect เพื่อ memoize selector และป้องกันการสร้าง reference ใหม่:
 
-**กรณี: perfume_ids และ profile อยู่นอก Redux State**
+#### กรณี: perfume_ids และ profile อยู่นอก Redux State
 
 ```javascript
 import { createSelector } from 'reselect';
