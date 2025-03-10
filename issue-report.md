@@ -41,7 +41,7 @@ const basketItems = useSelector((state: RootState) =>
 
 ใช้ reselect เพื่อ memoize selector และป้องกันการสร้าง reference ใหม่:
 
-#### กรณี: perfume_ids และ profile อยู่นอก Redux State
+#### กรณี: perfume_ids และ profile อยู่นอก Redux State**
 
 ```javascript
 import { createSelector } from 'reselect';
@@ -79,7 +79,7 @@ const Header = ({ perfume_ids, profile }) => {
 };
 ```
 
-**กรณี: perfume_ids และ profile อยู่ใน Redux State**
+#### กรณี: perfume_ids และ profile อยู่ใน Redux State*
 
 ```javascript
 import { createSelector } from 'reselect';
@@ -246,7 +246,7 @@ export async function firstRender() {
 - **ใช้ `firstRender()` ใน `_app.tsx`** หรือใน component หลัก ที่สามารถเข้าถึง Redux store ได้
 - **ตรวจสอบให้แน่ใจว่า store ถูก inject** ใน `_app.tsx` ก่อนการเรียกใช้งาน Middleware และ `firstRender()`
   
-# ปัญหา Redux State
+## ปัญหา Redux State
 
 ### 1. Error ที่เกิดขึ้น
 
