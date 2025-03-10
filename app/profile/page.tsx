@@ -372,7 +372,6 @@ function ProfilePage() {
 									Add more perfumes to your collection to get
 									personalized recommendations
 								</p>
-								<Button>Explore Perfumes</Button>
 							</div>
 						)}
 					</div>

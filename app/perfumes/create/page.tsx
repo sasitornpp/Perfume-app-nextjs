@@ -146,16 +146,14 @@ function Trade() {
 
 	const nextTab = (e: React.MouseEvent) => {
 		e.preventDefault();
-		if (activeTab === "details") setActiveTab("notes");
-		else if (activeTab === "notes") setActiveTab("images");
+		if (activeTab === "details") setActiveTab("images");
 		else if (activeTab === "images") setActiveTab("contact");
 	};
 
 	const previousTab = (e: React.MouseEvent) => {
 		e.preventDefault();
 		if (activeTab === "contact") setActiveTab("images");
-		else if (activeTab === "images") setActiveTab("notes");
-		else if (activeTab === "notes") setActiveTab("details");
+		else if (activeTab === "images") setActiveTab("details");
 	};
 
 	return (
@@ -185,8 +183,8 @@ function Trade() {
 								<CardDescription>
 									{activeTab === "details" &&
 										"Start with the basic details of your perfume"}
-									{activeTab === "notes" &&
-										"Describe the fragrance profile"}
+									{/* {activeTab === "notes" &&
+										"Describe the fragrance profile"} */}
 									{activeTab === "images" &&
 										"Add appealing images of your perfume"}
 									{activeTab === "contact" &&
@@ -204,10 +202,10 @@ function Trade() {
 								onValueChange={setActiveTab}
 								className="w-full"
 							>
-								<TabsList className="w-full grid grid-cols-4 rounded-none bg-muted/30">
+								<TabsList className="w-full grid grid-cols-3 rounded-none bg-muted/30">
 									{[
 										"details",
-										"notes",
+										// "notes",
 										"images",
 										"contact",
 									].map((tab) => (
@@ -225,7 +223,7 @@ function Trade() {
 								{/* Map components to their respective tabs */}
 								{[
 									{ tab: "details", Component: TabDetails },
-									{ tab: "notes", Component: TabNotes },
+									// { tab: "notes", Component: TabNotes },
 									{ tab: "images", Component: TabImage },
 									{ tab: "contact", Component: TabContact },
 								].map(

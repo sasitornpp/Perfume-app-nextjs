@@ -25,8 +25,6 @@ import { PerfumeForInsert, PerfumeForUpdate } from "@/types/perfume";
 import { Checkbox } from "@/components/ui/checkbox";
 import BrandsInput from "@/components/form/trade-form/brands-input";
 
-
-
 const TabDetails = ({
 	containerVariants,
 	itemVariants,
@@ -44,8 +42,6 @@ const TabDetails = ({
 		React.SetStateAction<PerfumeForInsert | PerfumeForUpdate>
 	>;
 }) => {
-
-
 	const [isNotForSale, setIsNotForSale] = useState(false);
 	useEffect(() => {
 		const shouldBeNotForSale =
@@ -55,7 +51,7 @@ const TabDetails = ({
 		}
 	}, [formData.price, formData.is_tradable]);
 
-    // console.log("formData:", formData);
+	// console.log("formData:", formData);
 
 	return (
 		<TabsContent value="details" className="m-0 p-0">
@@ -146,14 +142,11 @@ const TabDetails = ({
 											<SelectItem value="female">
 												Female
 											</SelectItem>
-											<SelectItem value="unisex">
-												Unisex
-											</SelectItem>
 										</SelectContent>
 									</Select>
 								</div>
 								<div className="space-y-2">
-									<div className="flex items-center space-x-2">
+									{/* <div className="flex items-center space-x-2">
 										<Checkbox
 											id="notForSale"
 											checked={isNotForSale}
@@ -169,7 +162,7 @@ const TabDetails = ({
 										>
 											Not for sale (only for display)
 										</Label>
-									</div>
+									</div> */}
 								</div>
 							</motion.div>
 
@@ -256,7 +249,7 @@ const TabDetails = ({
 					</Card>
 
 					{/* Additional Information Card */}
-					<Card className="border border-border/60 shadow-sm overflow-hidden">
+					{/* <Card className="border border-border/60 shadow-sm overflow-hidden">
 						<CardHeader className="bg-muted/20 pb-3">
 							<div className="flex items-start justify-between">
 								<div>
@@ -283,7 +276,7 @@ const TabDetails = ({
 									setFormData={setFormData}
 								/>
 
-								{/* Perfumer Field */}
+		
 								<div className="space-y-2">
 									<Label
 										htmlFor="perfumer"
@@ -306,7 +299,7 @@ const TabDetails = ({
 								variants={itemVariants}
 								className="grid grid-cols-1 md:grid-cols-2 gap-6"
 							>
-								{/* Concentration Field */}
+					
 								<div className="space-y-2">
 									<Label
 										htmlFor="concentration"
@@ -353,7 +346,7 @@ const TabDetails = ({
 									</Select>
 								</div>
 
-								{/* Scent Type Field */}
+				
 								<div className="space-y-2">
 									<Label
 										htmlFor="scentType"
@@ -427,7 +420,7 @@ const TabDetails = ({
 								</p>
 							</div>
 						</CardContent>
-					</Card>
+					</Card> */}
 				</motion.div>
 			</div>
 		</TabsContent>

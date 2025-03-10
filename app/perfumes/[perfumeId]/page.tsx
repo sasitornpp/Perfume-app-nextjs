@@ -47,7 +47,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 
 	const basketState = useSelector((state: RootState) => state.user.basket);
 
-    // console.log("basketState:", basketState);
+	// console.log("basketState:", basketState);
 
 	useEffect(() => {
 		if (
@@ -256,16 +256,6 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 										</p>
 									</div>
 								)}
-								<motion.button
-									className="absolute top-4 right-4 p-2 bg-background/80 backdrop-blur-sm rounded-full shadow-md z-10"
-									whileHover={{ scale: 1.1 }}
-									whileTap={{ scale: 0.95 }}
-									// onClick={handleFavoriteClick}
-								>
-									{/* <Heart
-            className={`h-5 w-5 ${isInWishlist ? "fill-destructive text-destructive" : "text-foreground"}`}
-        /> */}
-								</motion.button>
 							</motion.div>
 
 							<div className="flex mt-4 gap-3 overflow-x-auto pb-2 scrollbar-hide rounded-lg">
@@ -476,7 +466,8 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 									>
 										<ShoppingBag className="mr-2 h-4 w-4" />
 										{basketState?.some(
-											(item) => item.perfume_id === perfume.id,
+											(item) =>
+												item.perfume_id === perfume.id,
 										) ? (
 											<>
 												<span className="mr-2">✔</span>
@@ -718,7 +709,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 								>
 									<div className="space-y-4">
 										<div className="grid grid-cols-2 gap-4">
-											<div>
+											{/* <div>
 												<p className="text-sm text-muted-foreground mb-1">
 													Launch Year
 												</p>
@@ -729,7 +720,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 															).getFullYear()
 														: "Unknown"}
 												</p>
-											</div>
+											</div> */}
 											{perfume.concentration && (
 												<div>
 													<p className="text-sm text-muted-foreground mb-1">
