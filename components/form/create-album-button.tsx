@@ -90,6 +90,7 @@ const CreateAlbumButton = ({ onCreateAlbum }: CreateAlbumButtonProps) => {
 					likes: [],
 					images: null,
 					imageFile: imageFile,
+                    perfumes: [],
 				},
 			}),
 		);

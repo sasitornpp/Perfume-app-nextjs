@@ -623,7 +623,7 @@ export const addNewAlbum = createAsyncThunk(
 			let imageUrl: string | null = null;
 			if (album.imageFile) {
 				const folderName = `albums/${profile.id}`;
-				const fileName = `${album.title}_${Date.now()}`;
+				const fileName = `${album.id}_${Date.now()}`;
 				const filePath = `${folderName}/${fileName}`;
 
 				// Upload image to storage
@@ -646,7 +646,7 @@ export const addNewAlbum = createAsyncThunk(
 			}
 
 			// Prepare album data for insertion by removing file objects
-			const { imageFile, ...cleanedAlbumData } = album;
+			const { imageFile, perfumes, ...cleanedAlbumData } = album;
 
 			// Add the image URL to the album data
 			const albumToInsert = {
@@ -679,110 +679,113 @@ export const addNewAlbum = createAsyncThunk(
 );
 
 export const updateAlbum = createAsyncThunk(
-	"user/upDateAlbum",
-	async (
-		{ album }: { album: AlbumForInsert },
-		{ rejectWithValue, getState },
-	) => {
-		console.log("Updating album with data state 1:", album);
-		try {
-			const state = getState() as { user: UserState };
-			const profile = state.user.profile;
+    "user/updateAlbum",
+    async (
+        { album }: { album: AlbumForInsert },
+        { rejectWithValue, getState },
+    ) => {
+        console.log("Updating album with data state 1:", album);
+        try {
+            const state = getState() as { user: UserState };
+            const profile = state.user.profile;
 
-			if (!profile) throw new Error("User profile is required");
+            if (!profile) throw new Error("User profile is required");
 
-			// Fetch the existing album to get its current image
-			const { data: existingAlbum, error: fetchError } =
-				await supabaseClient
-					.from("albums")
-					.select("images")
-					.eq("id", album.id)
-					.single();
+            // Fetch the existing album to get its current image and perfumes_id
+            const { data: existingAlbum, error: fetchError } =
+                await supabaseClient
+                    .from("albums")
+                    .select("images, perfumes_id")
+                    .eq("id", album.id)
+                    .single();
 
-			if (fetchError)
-				throw new Error(
-					`Error fetching existing album: ${fetchError.message}`,
-				);
-			let imageUrl = album.images;
-			if (album.imageFile) {
-				if (existingAlbum?.images) {
-					const oldImagePath =
-						existingAlbum.images.split("/IMAGES/")[1];
-					if (oldImagePath) {
-						const { error: deleteError } =
-							await supabaseClient.storage
-								.from("IMAGES")
-								.remove([oldImagePath]);
+            if (fetchError)
+                throw new Error(
+                    `Error fetching existing album: ${fetchError.message}`,
+                );
+            
+            let imageUrl = album.images;
+            if (album.imageFile) {
+                if (existingAlbum?.images) {
+                    const oldImagePath =
+                        existingAlbum.images.split("/IMAGES/")[1];
+                    if (oldImagePath) {
+                        const { error: deleteError } =
+                            await supabaseClient.storage
+                                .from("IMAGES")
+                                .remove([oldImagePath]);
 
-						if (deleteError) {
-							console.error(
-								"Error deleting previous album image:",
-								deleteError,
-							);
-						}
-					}
-				}
+                        if (deleteError) {
+                            console.error(
+                                "Error deleting previous album image:",
+                                deleteError,
+                            );
+                        }
+                    }
+                }
 
-				const folderName = `albums/${profile.id}`;
-				const fileName = `${album.title}_${Date.now()}`;
-				const filePath = `${folderName}/${fileName}`;
+                const folderName = `albums/${profile.id}`;
+                const fileName = `${album.id}_${Date.now()}`;
+                const filePath = `${folderName}/${fileName}`;
 
-				const { error: uploadError } = await supabaseClient.storage
-					.from("IMAGES")
-					.upload(filePath, album.imageFile);
+                const { error: uploadError } = await supabaseClient.storage
+                    .from("IMAGES")
+                    .upload(filePath, album.imageFile);
 
-				if (uploadError) {
-					throw new Error(
-						`Error uploading album image: ${uploadError.message}`,
-					);
-				}
+                if (uploadError) {
+                    throw new Error(
+                        `Error uploading album image: ${uploadError.message}`,
+                    );
+                }
 
-				const { data: publicUrlData } = supabaseClient.storage
-					.from("IMAGES")
-					.getPublicUrl(filePath);
+                const { data: publicUrlData } = supabaseClient.storage
+                    .from("IMAGES")
+                    .getPublicUrl(filePath);
 
-				imageUrl = publicUrlData?.publicUrl || null;
-			} else if (album.images === null && existingAlbum?.images) {
-				const oldImagePath = existingAlbum.images.split("/IMAGES/")[1];
-				if (oldImagePath) {
-					await supabaseClient.storage
-						.from("IMAGES")
-						.remove([oldImagePath]);
-				}
-				imageUrl = null;
-			}
+                imageUrl = publicUrlData?.publicUrl || null;
+            } else if (album.images === null && existingAlbum?.images) {
+                const oldImagePath = existingAlbum.images.split("/IMAGES/")[1];
+                if (oldImagePath) {
+                    await supabaseClient.storage
+                        .from("IMAGES")
+                        .remove([oldImagePath]);
+                }
+                imageUrl = null;
+            }
 
-			const { imageFile, ...cleanedAlbumData } = album;
+            const { imageFile, perfumes, ...cleanedAlbumData } = album;
 
-			const albumToUpdate = {
-				...cleanedAlbumData,
-				images: imageUrl,
-				user_id: profile.id,
-			};
+            const albumToUpdate = {
+                ...cleanedAlbumData,
+                images: imageUrl,
+                user_id: profile.id,
+                // Keep existing perfumes_id if not provided in update
+                perfumes_id: album.perfumes_id || existingAlbum.perfumes_id || [],
+            };
 
-			console.log("Updating album with data state 2:", albumToUpdate);
+            console.log("Updating album with data state 2:", albumToUpdate);
 
-			const { data, error } = await supabaseClient
-				.from("albums")
-				.update(albumToUpdate)
-				.eq("id", album.id)
-				.select();
+            const { data, error } = await supabaseClient
+                .from("albums")
+                .update(albumToUpdate)
+                .eq("id", album.id)
+                .select();
 
-			if (error) {
-				if (album.imageFile && imageUrl) {
-					const filePath = imageUrl.split("/IMAGES/")[1];
-					await rollbackUploadedFiles([filePath]);
-				}
-				throw error;
-			}
+            if (error) {
+                if (album.imageFile && imageUrl) {
+                    const filePath = imageUrl.split("/IMAGES/")[1];
+                    await rollbackUploadedFiles([filePath]);
+                }
+                throw error;
+            }
 
-			console.log("Album updated successfully:", data);
-			return data;
-		} catch (error: any) {
-			console.error("Error updating album:", error);
-			return rejectWithValue(error.message);
-		}
-	},
+            console.log("Album updated successfully:", data);
+            return data;
+        } catch (error: any) {
+            console.error("Error updating album:", error);
+            return rejectWithValue(error.message);
+        }
+    },
 );
 
 export const removeAlbum = createAsyncThunk(

@@ -118,6 +118,7 @@ const AlbumEditModal: React.FC<AlbumEditModalProps> = ({
 				...formData,
 				imageFile: imageFile, // Include the image file for upload
 				images: imagePreview, // Current image preview URL or null if removed
+				perfumes: [], // Initialize with empty array as required by AlbumForInsert
 			};
 
 			// Dispatch the updateAlbum action

@@ -304,6 +304,7 @@ export interface Album {
 export interface AlbumForInsert extends Omit<Album, 'id' | 'created_at'> {
     id?: string;
     imageFile: File | null;
+    perfumes: string[];
 }
 
 export interface AlbumWithPerfume extends Album {
@@ -317,7 +318,8 @@ export const AlbumInitialState: AlbumForInsert = {
     likes: [],
     images: null,
     imageFile: null,
-    perfumes_id: []
+    perfumes_id: [],
+    perfumes: []
 };
 
 

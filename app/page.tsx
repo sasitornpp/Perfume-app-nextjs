@@ -314,7 +314,7 @@ function Home() {
 
 				{trendingPerfumes.length > 0 ? (
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-						{trendingPerfumes.map((perfume, index) => (
+						{trendingPerfumes.map((perfume) => (
 							<Link
 								href={`/perfumes/${perfume.id}`}
 								key={perfume.id}
@@ -322,14 +322,7 @@ function Home() {
 								<Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02]">
 									<CardContent className="p-0 flex flex-col h-full">
 										<div className="flex p-4 items-center gap-3">
-											<div className="relative w-12 h-12 rounded-lg overflow-hidden">
-												<Image
-													src={perfume.images[0]}
-													alt={perfume.name}
-													fill
-													className="object-cover"
-												/>
-											</div>
+											<div className="relative w-12 h-12 rounded-lg overflow-hidden"></div>
 											<div>
 												<h3 className="font-medium">
 													{perfume.name}
@@ -337,14 +330,6 @@ function Home() {
 												<p className="text-sm text-muted-foreground">
 													{perfume.brand}
 												</p>
-											</div>
-											<div className="ml-auto flex items-center bg-primary/10 px-2 py-1 rounded-full">
-												<span className="text-sm font-medium text-primary">
-													★{" "}
-													{perfume.likes?.length?.toFixed(
-														1,
-													) ?? "N/A"}
-												</span>
 											</div>
 										</div>
 										<Separator />
