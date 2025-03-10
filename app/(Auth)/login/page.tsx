@@ -40,7 +40,7 @@ export default function SignInForm() {
 				await signInAction({ email, password, router });
 				await dispatch(fetchUserData());
 			} catch (signInError) {
-                console.log(signInError);
+				console.log(signInError);
 				setErrors({
 					error:
 						typeof signInError === "string"
@@ -226,12 +226,6 @@ export default function SignInForm() {
 									>
 										Password
 									</Label>
-									<Link
-										className="text-xs text-primary hover:text-primary/80 hover:underline transition-colors"
-										href="/forgot-password"
-									>
-										Forgot Password?
-									</Link>
 								</div>
 								<Input
 									type="password"

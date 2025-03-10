@@ -20,9 +20,6 @@ function LoadingPage({ children }: { readonly children: React.ReactNode }) {
 	const pagination = useSelector((state: RootState) => state.pagination);
 
 	const userLoading = useSelector((state: RootState) => state.user.loading);
-	const perfumesLoading = useSelector(
-		(state: RootState) => state.perfumes.loading,
-	);
 
 	useEffect(() => {
 		// Use this effect to fetch initial data only once
