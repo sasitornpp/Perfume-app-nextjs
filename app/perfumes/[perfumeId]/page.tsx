@@ -431,7 +431,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 
 						<Separator className="bg-border/50" />
 
-						<CardContent className="pt-4">
+						{/* <CardContent className="pt-4">
 							<p className="text-sm font-medium text-muted-foreground mb-3">
 								Main accords
 							</p>
@@ -455,7 +455,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 									</motion.div>
 								))}
 							</div>
-						</CardContent>
+						</CardContent> */}
 
 						<CardFooter className="pt-2 pb-4">
 							<div className="flex gap-3 w-full">
