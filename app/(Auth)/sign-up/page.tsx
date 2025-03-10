@@ -31,46 +31,53 @@ function SignUpForm() {
 	const [errors, setErrors] = useState<{ [key: string]: string }>({});
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-	const handleSubmit = async (e: FormEvent) => {
-		e.preventDefault();
-		setIsSubmitting(true);
-		setErrors({});
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setErrors({});
 
-		try {
-			const result = signUpSchema.parse({
-				email,
-				password,
-				retypePassword,
-			});
-
-			const error = await signUpAction({
-				email: result.email,
-				password: result.password,
-				router: router,
-			});
-
-			if (error) {
-				setErrors({
-					error: typeof error === "string" ? error : error.error,
-				});
-			}
-		} catch (error) {
-			if (error instanceof z.ZodError) {
-				const formattedErrors = error.errors.reduce(
-					(acc, curr) => {
-						acc[curr.path[0]] = curr.message;
-						return acc;
-					},
-					{} as { [key: string]: string },
-				);
-				setErrors(formattedErrors);
-			} else {
-				setErrors({ error: "An unexpected error occurred" });
-			}
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
+        try {
+            const result = signUpSchema.parse({
+                email,
+                password,
+                retypePassword,
+            });
+            
+            try {
+                await signUpAction({
+                    email: result.email,
+                    password: result.password,
+                    router: router,
+                });
+                // Additional actions after successful signup could go here
+            } catch (signUpError) {
+                console.log(signUpError);
+                setErrors({
+                    error:
+                        typeof signUpError === "string"
+                            ? signUpError
+                            : (signUpError as any)?.message || 
+                              (signUpError as any)?.error ||
+                              "Registration failed",
+                });
+            }
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                const formattedErrors = error.errors.reduce(
+                    (acc, curr) => {
+                        acc[curr.path[0]] = curr.message;
+                        return acc;
+                    },
+                    {} as { [key: string]: string },
+                );
+                setErrors(formattedErrors);
+            } else {
+                setErrors({ error: "An unexpected error occurred" });
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
 	// Animation variants
 	const containerVariants = {

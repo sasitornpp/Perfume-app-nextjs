@@ -2,6 +2,7 @@
 
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { supabaseClient } from "@/utils/supabase/client";
+import { PostgrestError, AuthError } from "@supabase/supabase-js";
 import { User } from "@supabase/supabase-js";
 import { type useRouter } from "next/navigation";
 import {
@@ -34,6 +35,7 @@ interface UserState {
 	basket: Basket[] | null;
 	loading: boolean;
 	error: string | null;
+	authError: string | null;
 	profileNotCreated: boolean;
 }
 
@@ -45,6 +47,7 @@ const initialState: UserState = {
 	basket: [],
 	loading: false,
 	error: null,
+	authError: null,
 	profileNotCreated: false,
 };
 
@@ -62,14 +65,25 @@ export const signInUser = createAsyncThunk(
 		},
 		{ rejectWithValue, dispatch },
 	) => {
-		const { error } = await supabaseClient.auth.signInWithPassword({
-			email,
-			password,
-		});
-		if (error) throw new Error(error.message);
-		await dispatch(fetchUserData());
-		router.push("/perfumes/home");
-		return true;
+		try {
+			const { error } = await supabaseClient.auth.signInWithPassword({
+				email,
+				password,
+			});
+
+			await dispatch(fetchUserData());
+			router.push("/perfumes/home");
+			if (error) {
+				return {
+					error: error.message,
+				};
+			}
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				return rejectWithValue(error.message);
+			}
+			return rejectWithValue('An unknown error occurred');
+		}
 	},
 );
 
@@ -679,113 +693,114 @@ export const addNewAlbum = createAsyncThunk(
 );
 
 export const updateAlbum = createAsyncThunk(
-    "user/updateAlbum",
-    async (
-        { album }: { album: AlbumForInsert },
-        { rejectWithValue, getState },
-    ) => {
-        console.log("Updating album with data state 1:", album);
-        try {
-            const state = getState() as { user: UserState };
-            const profile = state.user.profile;
+	"user/updateAlbum",
+	async (
+		{ album }: { album: AlbumForInsert },
+		{ rejectWithValue, getState },
+	) => {
+		console.log("Updating album with data state 1:", album);
+		try {
+			const state = getState() as { user: UserState };
+			const profile = state.user.profile;
 
-            if (!profile) throw new Error("User profile is required");
+			if (!profile) throw new Error("User profile is required");
 
-            // Fetch the existing album to get its current image and perfumes_id
-            const { data: existingAlbum, error: fetchError } =
-                await supabaseClient
-                    .from("albums")
-                    .select("images, perfumes_id")
-                    .eq("id", album.id)
-                    .single();
+			// Fetch the existing album to get its current image and perfumes_id
+			const { data: existingAlbum, error: fetchError } =
+				await supabaseClient
+					.from("albums")
+					.select("images, perfumes_id")
+					.eq("id", album.id)
+					.single();
 
-            if (fetchError)
-                throw new Error(
-                    `Error fetching existing album: ${fetchError.message}`,
-                );
-            
-            let imageUrl = album.images;
-            if (album.imageFile) {
-                if (existingAlbum?.images) {
-                    const oldImagePath =
-                        existingAlbum.images.split("/IMAGES/")[1];
-                    if (oldImagePath) {
-                        const { error: deleteError } =
-                            await supabaseClient.storage
-                                .from("IMAGES")
-                                .remove([oldImagePath]);
+			if (fetchError)
+				throw new Error(
+					`Error fetching existing album: ${fetchError.message}`,
+				);
 
-                        if (deleteError) {
-                            console.error(
-                                "Error deleting previous album image:",
-                                deleteError,
-                            );
-                        }
-                    }
-                }
+			let imageUrl = album.images;
+			if (album.imageFile) {
+				if (existingAlbum?.images) {
+					const oldImagePath =
+						existingAlbum.images.split("/IMAGES/")[1];
+					if (oldImagePath) {
+						const { error: deleteError } =
+							await supabaseClient.storage
+								.from("IMAGES")
+								.remove([oldImagePath]);
 
-                const folderName = `albums/${profile.id}`;
-                const fileName = `${album.id}_${Date.now()}`;
-                const filePath = `${folderName}/${fileName}`;
+						if (deleteError) {
+							console.error(
+								"Error deleting previous album image:",
+								deleteError,
+							);
+						}
+					}
+				}
 
-                const { error: uploadError } = await supabaseClient.storage
-                    .from("IMAGES")
-                    .upload(filePath, album.imageFile);
+				const folderName = `albums/${profile.id}`;
+				const fileName = `${album.id}_${Date.now()}`;
+				const filePath = `${folderName}/${fileName}`;
 
-                if (uploadError) {
-                    throw new Error(
-                        `Error uploading album image: ${uploadError.message}`,
-                    );
-                }
+				const { error: uploadError } = await supabaseClient.storage
+					.from("IMAGES")
+					.upload(filePath, album.imageFile);
 
-                const { data: publicUrlData } = supabaseClient.storage
-                    .from("IMAGES")
-                    .getPublicUrl(filePath);
+				if (uploadError) {
+					throw new Error(
+						`Error uploading album image: ${uploadError.message}`,
+					);
+				}
 
-                imageUrl = publicUrlData?.publicUrl || null;
-            } else if (album.images === null && existingAlbum?.images) {
-                const oldImagePath = existingAlbum.images.split("/IMAGES/")[1];
-                if (oldImagePath) {
-                    await supabaseClient.storage
-                        .from("IMAGES")
-                        .remove([oldImagePath]);
-                }
-                imageUrl = null;
-            }
+				const { data: publicUrlData } = supabaseClient.storage
+					.from("IMAGES")
+					.getPublicUrl(filePath);
 
-            const { imageFile, perfumes, ...cleanedAlbumData } = album;
+				imageUrl = publicUrlData?.publicUrl || null;
+			} else if (album.images === null && existingAlbum?.images) {
+				const oldImagePath = existingAlbum.images.split("/IMAGES/")[1];
+				if (oldImagePath) {
+					await supabaseClient.storage
+						.from("IMAGES")
+						.remove([oldImagePath]);
+				}
+				imageUrl = null;
+			}
 
-            const albumToUpdate = {
-                ...cleanedAlbumData,
-                images: imageUrl,
-                user_id: profile.id,
-                // Keep existing perfumes_id if not provided in update
-                perfumes_id: album.perfumes_id || existingAlbum.perfumes_id || [],
-            };
+			const { imageFile, perfumes, ...cleanedAlbumData } = album;
 
-            console.log("Updating album with data state 2:", albumToUpdate);
+			const albumToUpdate = {
+				...cleanedAlbumData,
+				images: imageUrl,
+				user_id: profile.id,
+				// Keep existing perfumes_id if not provided in update
+				perfumes_id:
+					album.perfumes_id || existingAlbum.perfumes_id || [],
+			};
 
-            const { data, error } = await supabaseClient
-                .from("albums")
-                .update(albumToUpdate)
-                .eq("id", album.id)
-                .select();
+			console.log("Updating album with data state 2:", albumToUpdate);
 
-            if (error) {
-                if (album.imageFile && imageUrl) {
-                    const filePath = imageUrl.split("/IMAGES/")[1];
-                    await rollbackUploadedFiles([filePath]);
-                }
-                throw error;
-            }
+			const { data, error } = await supabaseClient
+				.from("albums")
+				.update(albumToUpdate)
+				.eq("id", album.id)
+				.select();
 
-            console.log("Album updated successfully:", data);
-            return data;
-        } catch (error: any) {
-            console.error("Error updating album:", error);
-            return rejectWithValue(error.message);
-        }
-    },
+			if (error) {
+				if (album.imageFile && imageUrl) {
+					const filePath = imageUrl.split("/IMAGES/")[1];
+					await rollbackUploadedFiles([filePath]);
+				}
+				throw error;
+			}
+
+			console.log("Album updated successfully:", data);
+			return data;
+		} catch (error: any) {
+			console.error("Error updating album:", error);
+			return rejectWithValue(error.message);
+		}
+	},
 );
 
 export const removeAlbum = createAsyncThunk(
@@ -1080,6 +1095,12 @@ const userSlice = createSlice({
 	},
 	extraReducers: (builder) => {
 		builder
+			.addCase(signInUser.pending, (state) => {
+				state.error = null;
+			})
+			.addCase(signInUser.rejected, (state, action) => {
+				state.error = action.payload as string;
+			})
 			.addCase(fetchUserData.pending, (state) => {
 				state.loading = true;
 				state.error = null;
@@ -1441,9 +1462,11 @@ const userSlice = createSlice({
 					}
 				},
 			)
-			.addCase(addPerfumeToBasket.rejected, (state) => {
+			.addCase(addPerfumeToBasket.rejected, (state, action) => {
 				state.loading = false;
-				state.error = "Failed to toggle album like";
+				state.error =
+					(action.payload as string) ||
+					"Failed to add perfume to basket";
 			})
 			.addCase(removePerfumeFromBasket.pending, (state) => {
 				state.loading = true;

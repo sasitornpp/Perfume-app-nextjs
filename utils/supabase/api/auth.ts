@@ -17,7 +17,7 @@ export async function signInAction({
 		password,
 	});
 	if (error) {
-		return { error: error.message };
+		throw new Error(error.message);
 	}
 	router.push("/survey-form");
 }
@@ -33,7 +33,7 @@ export async function signUpAction({
 }) {
 	const { error } = await supabaseClient.auth.signUp({ email, password });
 	if (error) {
-		return { error: error.message };
+		throw new Error(error.message);
 	}
 	router.push("/survey-form");
 }

@@ -13,6 +13,8 @@ import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/Store";
+import { signInAction } from "@/utils/supabase/api/auth";
+import { fetchUserData } from "@/redux/user/userReducer";
 
 const signInSchema = zod.object({
 	email: zod.string().email("Invalid email address"),
@@ -35,14 +37,10 @@ export default function SignInForm() {
 		try {
 			const result = signInSchema.parse({ email, password });
 			try {
-				await dispatch(
-					signInUser({
-						email: result.email,
-						password: result.password,
-						router,
-					}),
-				);
+				await signInAction({ email, password, router });
+				await dispatch(fetchUserData());
 			} catch (signInError) {
+                console.log(signInError);
 				setErrors({
 					error:
 						typeof signInError === "string"
