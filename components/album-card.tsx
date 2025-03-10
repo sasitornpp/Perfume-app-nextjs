@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/Store";
 import { useRouter } from "next/navigation";
 import { Album as AlbumType } from "@/types/perfume";
+import { removeAlbum } from "@/redux/user/userReducer";
 
 const AlbumCard = ({ album }: { album: AlbumType }) => {
 	const router = useRouter();
@@ -27,20 +28,40 @@ const AlbumCard = ({ album }: { album: AlbumType }) => {
 
 	const userId = useSelector((state: RootState) => state.user.user?.id);
 
-	// This would need to be fetched from API in a real implementation
-	// For now we'll use placeholder logic
-	const perfumeImages =
-		album.perfumes_id.length > 0
-			? Array(4).fill(album.images || "") // Use album cover image or placeholder
-			: Array(4).fill("");
-
 	const handleViewAlbum = () => {
 		router.push(`profile/album/${album.id}`);
+	};
+
+	const handleShareAlbum = () => {
+		// Create the full URL including origin
+		const shareUrl = `${window.location.origin}/profile/album/${album.id}`;
+
+		// Copy to clipboard
+		navigator.clipboard
+			.writeText(shareUrl)
+			.then(() => {
+				// You could add a toast notification here
+				console.log("Link copied to clipboard!");
+			})
+			.catch((err) => {
+				console.error("Failed to copy link: ", err);
+			});
 	};
 
 	const handleLike = () => {
 		if (album.id) {
 			dispatch(toggleLikeAlbum({ albumId: album.id }));
+		}
+	};
+
+	const handleDeleteAlbum = async () => {
+		if (!album.id || !userId) return;
+
+		try {
+			await dispatch(removeAlbum({ albumId: album.id }));
+			router.push("/profile?q=albums");
+		} catch (error) {
+			console.error("Error deleting album:", error);
 		}
 	};
 
@@ -102,9 +123,13 @@ const AlbumCard = ({ album }: { album: AlbumType }) => {
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
-							<DropdownMenuItem>Edit Album</DropdownMenuItem>
-							<DropdownMenuItem>Share Album</DropdownMenuItem>
-							<DropdownMenuItem className="text-destructive">
+							<DropdownMenuItem onClick={handleShareAlbum}>
+								Share Album
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								className="text-destructive"
+								onClick={handleDeleteAlbum}
+							>
 								Delete Album
 							</DropdownMenuItem>
 						</DropdownMenuContent>
