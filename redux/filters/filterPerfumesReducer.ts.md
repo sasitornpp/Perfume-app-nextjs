@@ -10,22 +10,22 @@
 
 ```typescript
 interface PerfumeState {
-	perfumes_filters_by_page: {
-		[page: number]: Perfume[];
-	};
-	perfumes_by_page: {
-		[page: number]: Perfume[];
-	};
-	selectedPerfume: { data: Perfume | null; errorMessages: string | null };
-	most_views_by_date: PerfumeMostViews[];
-	most_views_all_time: PerfumeMostViews[];
-	loading: boolean;
-	error: string | null;
-	fetchedPerfumePages: number[];
-	fetchedFilteredPages: number[];
-	perfume_unique_data: PerfumeUniqueData;
-	currentFilters: Filters | null;
-	totalFilteredCount: number;
+ perfumes_filters_by_page: {
+  [page: number]: Perfume[];
+ };
+ perfumes_by_page: {
+  [page: number]: Perfume[];
+ };
+ selectedPerfume: { data: Perfume | null; errorMessages: string | null };
+ most_views_by_date: PerfumeMostViews[];
+ most_views_all_time: PerfumeMostViews[];
+ loading: boolean;
+ error: string | null;
+ fetchedPerfumePages: number[];
+ fetchedFilteredPages: number[];
+ perfume_unique_data: PerfumeUniqueData;
+ currentFilters: Filters | null;
+ totalFilteredCount: number;
 }
 ```
 
@@ -59,16 +59,16 @@ interface PerfumeState {
 
 ### 3.2 การดึงข้อมูล (Data Fetching)
 
--  **`fetchPerfumes`**: ดึงข้อมูลน้ำหอมแบบแบ่งหน้า (paginated)
--  **`fetchPerfumeById`**: ดึงข้อมูลน้ำหอมด้วย ID
--  **`fetchTop5ViewsByDate`**: ดึงข้อมูลน้ำหอมที่มีจำนวนการเข้าชมสูงสุดในวันที่กำหนด
--  **`fetchTop3ViewsAllTime`**: ดึงข้อมูลน้ำหอมที่มีจำนวนการเข้าชมสูงสุดตลอดกาล
--  **`fetchUniqueData`**: ดึงข้อมูลเฉพาะของน้ำหอม (แบรนด์, นักปรุงน้ำหอม, ส่วนประกอบ)
+- **`fetchPerfumes`**: ดึงข้อมูลน้ำหอมแบบแบ่งหน้า (paginated)
+- **`fetchPerfumeById`**: ดึงข้อมูลน้ำหอมด้วย ID
+- **`fetchTop5ViewsByDate`**: ดึงข้อมูลน้ำหอมที่มีจำนวนการเข้าชมสูงสุดในวันที่กำหนด
+- **`fetchTop3ViewsAllTime`**: ดึงข้อมูลน้ำหอมที่มีจำนวนการเข้าชมสูงสุดตลอดกาล
+- **`fetchUniqueData`**: ดึงข้อมูลเฉพาะของน้ำหอม (แบรนด์, นักปรุงน้ำหอม, ส่วนประกอบ)
 
 ### 3.3 การอัปเดตข้อมูล (Data Updating)
 
--  **`addPerfume`**: เพิ่มข้อมูลน้ำหอมใหม่
--  **`toggleLikePerfume`**: กดไลค์/ยกเลิกไลค์น้ำหอม
+- **`addPerfume`**: เพิ่มข้อมูลน้ำหอมใหม่
+- **`toggleLikePerfume`**: กดไลค์/ยกเลิกไลค์น้ำหอม
 
 ## 4. อธิบายการทำงานของแต่ละฟังก์ชัน
 

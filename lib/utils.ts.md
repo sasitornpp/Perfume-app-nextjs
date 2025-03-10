@@ -12,16 +12,16 @@
 
 ฟังก์ชันหลักในระบบคือ:
 
--   **`cn`**: รวม class names สำหรับ Tailwind CSS
+- **`cn`**: รวม class names สำหรับ Tailwind CSS
 
 ## 4. อธิบายการทำงานของแต่ละฟังก์ชัน
 
 ### 4.1 `cn`
 
-1.  รับ `...inputs` เป็น array ของ class names ที่ต้องการรวม. `inputs` สามารถเป็น string, array ของ strings, หรือ object ที่มี class names เป็น keys และ boolean เป็น values (ใช้ `clsx` library).
-2.  ใช้ `clsx(inputs)` เพื่อรวม class names เหล่านั้น. `clsx` จะจัดการกับ conditional class names (เช่น `{'class-name': condition}`) และ array ของ class names.
-3.  ใช้ `twMerge()` เพื่อ resolve class name conflicts ที่เกิดจาก Tailwind CSS. `twMerge` จะตรวจสอบว่า class names ที่รวมกันมี conflicts กันหรือไม่ และจะเลือก class name ที่ถูกต้องตามลำดับความสำคัญของ Tailwind CSS.
-4.  คืนค่า string ที่เป็นผลลัพธ์ของการรวม class names และการ resolve conflicts.
+1. รับ `...inputs` เป็น array ของ class names ที่ต้องการรวม. `inputs` สามารถเป็น string, array ของ strings, หรือ object ที่มี class names เป็น keys และ boolean เป็น values (ใช้ `clsx` library).
+2. ใช้ `clsx(inputs)` เพื่อรวม class names เหล่านั้น. `clsx` จะจัดการกับ conditional class names (เช่น `{'class-name': condition}`) และ array ของ class names.
+3. ใช้ `twMerge()` เพื่อ resolve class name conflicts ที่เกิดจาก Tailwind CSS. `twMerge` จะตรวจสอบว่า class names ที่รวมกันมี conflicts กันหรือไม่ และจะเลือก class name ที่ถูกต้องตามลำดับความสำคัญของ Tailwind CSS.
+4. คืนค่า string ที่เป็นผลลัพธ์ของการรวม class names และการ resolve conflicts.
 
 **ตัวอย่าง:**
 

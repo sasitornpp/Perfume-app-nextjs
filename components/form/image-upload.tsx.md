@@ -12,18 +12,18 @@ Component นี้ไม่ได้จัดการ state ภายในต
 
 ฟังก์ชันหลักในระบบคือ:
 
-*   **แสดง UI สำหรับ upload รูปภาพ:** แสดง label ที่ทำหน้าที่เป็น button สำหรับ upload รูปภาพ
-*   **จัดการการ upload รูปภาพ:** เรียกใช้ฟังก์ชัน `onImageUpload` ที่ถูกส่งมาจาก parent component เมื่อมีการเลือกรูปภาพ
+* **แสดง UI สำหรับ upload รูปภาพ:** แสดง label ที่ทำหน้าที่เป็น button สำหรับ upload รูปภาพ
+* **จัดการการ upload รูปภาพ:** เรียกใช้ฟังก์ชัน `onImageUpload` ที่ถูกส่งมาจาก parent component เมื่อมีการเลือกรูปภาพ
 
 ## 4. อธิบายการทำงานของแต่ละฟังก์ชัน
 
-1.  **รับ props:** Component รับ prop `onImageUpload` จาก parent component
-2.  **แสดง UI:** Component แสดง UI สำหรับ upload รูปภาพ โดยใช้ component ต่างๆ จาก "@/components/ui/\*"` เช่น `Label`, `Input`
-    *   แสดง label ที่มี icon และ text ที่บ่งบอกวิธีการ upload รูปภาพ
-    *   ซ่อน input field ที่ใช้สำหรับ upload รูปภาพ (ใช้ label เป็น button แทน)
-3.  **จัดการการ upload รูปภาพ:**
-    *   เมื่อผู้ใช้เลือกรูปภาพ, event `onChange` ของ input field จะถูกเรียกใช้
-    *   ฟังก์ชัน `onImageUpload` ที่ถูกส่งมาจาก parent component จะถูกเรียกใช้
+1. **รับ props:** Component รับ prop `onImageUpload` จาก parent component
+2. **แสดง UI:** Component แสดง UI สำหรับ upload รูปภาพ โดยใช้ component ต่างๆ จาก "@/components/ui/\*"` เช่น `Label`,`Input`
+    * แสดง label ที่มี icon และ text ที่บ่งบอกวิธีการ upload รูปภาพ
+    * ซ่อน input field ที่ใช้สำหรับ upload รูปภาพ (ใช้ label เป็น button แทน)
+3. **จัดการการ upload รูปภาพ:**
+    * เมื่อผู้ใช้เลือกรูปภาพ, event `onChange` ของ input field จะถูกเรียกใช้
+    * ฟังก์ชัน `onImageUpload` ที่ถูกส่งมาจาก parent component จะถูกเรียกใช้
 
 ## 5. การจัดการสถานะ (State Management)
 
