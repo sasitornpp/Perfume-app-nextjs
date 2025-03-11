@@ -15,55 +15,82 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/Store";
 import { signInAction } from "@/utils/supabase/api/auth";
 import { fetchUserData } from "@/redux/user/userReducer";
+import { supabaseClient } from "@/utils/supabase/client";
 
 const signInSchema = zod.object({
-	email: zod.string().email("Invalid email address"),
-	password: zod.string().min(6, "Password must be at least 6 characters"),
+    email: zod.string().email("Invalid email address"),
+    password: zod.string().min(6, "Password must be at least 6 characters"),
 });
 
 export default function SignInForm() {
-	const [email, setEmail] = useState<string>("");
-	const [password, setPassword] = useState<string>("");
-	const [errors, setErrors] = useState<{ [key: string]: string }>({});
-	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-	const router = useRouter();
-	const dispatch = useDispatch<AppDispatch>();
+    const [email, setEmail] = useState<string>("");
+    const [password, setPassword] = useState<string>("");
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+    const router = useRouter();
+    const dispatch = useDispatch<AppDispatch>();
 
-	const handleSubmit = async (e: FormEvent) => {
-		e.preventDefault();
-		setIsSubmitting(true);
-		setErrors({});
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setErrors({});
 
-		try {
-			const result = signInSchema.parse({ email, password });
-			try {
-				await signInAction({ email, password, router });
-				await dispatch(fetchUserData());
-			} catch (signInError) {
-				console.log(signInError);
-				setErrors({
-					error:
-						typeof signInError === "string"
-							? signInError
-							: (signInError as any)?.error ||
-								"Authentication failed",
-				});
-			}
+        try {
+            const result = signInSchema.parse({ email, password });
+            try {
+                await signInAction({ email, password, router });
+                await dispatch(fetchUserData());
+            } catch (signInError) {
+                console.log(signInError);
+                setErrors({
+                    error:
+                        typeof signInError === "string"
+                            ? signInError
+                            : (signInError as any)?.error ||
+                                "Authentication failed",
+                });
+            }
+        } catch (error) {
+            if (error instanceof zod.ZodError) {
+                const formattedErrors = error.errors.reduce(
+                    (acc, curr) => {
+                        acc[curr.path[0]] = curr.message;
+                        return acc;
+                    },
+                    {} as { [key: string]: string },
+                );
+                setErrors(formattedErrors);
+            } else {
+                setErrors({ error: "An unexpected error occurred" });
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // Function for Forgot Password
+    const handleForgotPassword = async () => {
+        if (!email) {
+            setErrors({ email: "Please enter your email first" });
+            return;
+        }
+        try {
+            const { error } = await supabaseClient.auth.resetPasswordForEmail(
+				email,
+				{
+					redirectTo: `${window.location.origin}/profile/settings/profile`,
+				},
+			);
+			if (error) throw error;
+			setErrors({
+				success: "ส่งลิงก์รีเซ็ตรหัสผ่านไปที่อีเมลของคุณแล้ว",
+			});
 		} catch (error) {
-			if (error instanceof zod.ZodError) {
-				const formattedErrors = error.errors.reduce(
-					(acc, curr) => {
-						acc[curr.path[0]] = curr.message;
-						return acc;
-					},
-					{} as { [key: string]: string },
-				);
-				setErrors(formattedErrors);
-			} else {
-				setErrors({ error: "An unexpected error occurred" });
-			}
-		} finally {
-			setIsSubmitting(false);
+			setErrors({
+				error:
+					(error as any).message ||
+					"เกิดข้อผิดพลาดในการส่งลิงก์รีเซ็ต",
+			});
 		}
 	};
 
@@ -111,7 +138,6 @@ export default function SignInForm() {
 					animate={{ borderRadius: "24px" }}
 					transition={{ duration: 1.2, ease: "easeOut" }}
 				>
-					{/* Perfume bottle decorative element */}
 					<motion.div
 						className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/10 blur-3xl"
 						animate={{
@@ -124,7 +150,6 @@ export default function SignInForm() {
 							ease: "easeInOut",
 						}}
 					/>
-
 					<motion.div
 						className="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-secondary/20 blur-3xl"
 						animate={{
@@ -138,7 +163,6 @@ export default function SignInForm() {
 							delay: 1,
 						}}
 					/>
-
 					<motion.form
 						className={cn("relative z-10 flex flex-col gap-6")}
 						onSubmit={handleSubmit}
@@ -161,14 +185,12 @@ export default function SignInForm() {
 									Essence
 								</h1>
 							</motion.div>
-
 							<motion.h2
 								className="text-2xl font-semibold text-card-foreground"
 								variants={itemVariants}
 							>
 								Welcome Back
 							</motion.h2>
-
 							<motion.p
 								className="text-balance text-sm text-muted-foreground"
 								variants={itemVariants}
@@ -251,6 +273,19 @@ export default function SignInForm() {
 										{errors.password}
 									</motion.span>
 								)}
+								<motion.div
+									className="text-right"
+									variants={itemVariants}
+								>
+									<Button
+										variant="link"
+										className="p-0 h-auto text-sm text-primary hover:underline"
+										onClick={handleForgotPassword}
+										type="button" // เพื่อไม่ให้ submit ฟอร์ม
+									>
+										Forgot Password?
+									</Button>
+								</motion.div>
 								{errors.error && (
 									<motion.div
 										className="p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-sm"
@@ -259,6 +294,16 @@ export default function SignInForm() {
 										transition={{ type: "spring" }}
 									>
 										{errors.error}
+									</motion.div>
+								)}
+								{errors.success && (
+									<motion.div
+										className="p-3 rounded-md bg-green-100/10 border border-green-200/20 text-green-600 text-sm"
+										initial={{ opacity: 0, y: -10 }}
+										animate={{ opacity: 1, y: 0 }}
+										transition={{ type: "spring" }}
+									>
+										{errors.success}
 									</motion.div>
 								)}
 							</motion.div>
@@ -293,7 +338,7 @@ export default function SignInForm() {
 							className="text-center text-sm text-card-foreground"
 							variants={itemVariants}
 						>
-							Don&apos;t have an account?{" "}
+							Don't have an account?{" "}
 							<Link
 								className="text-primary font-medium hover:underline transition-all"
 								href="/sign-up"

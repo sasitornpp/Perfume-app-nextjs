@@ -8,7 +8,7 @@ import { store } from "@/redux/Store";
 import { Provider } from "react-redux";
 import Container from "@/components/container-setup";
 import { Toaster } from "@/components/ui/sonner";
-import LoadingPage from "@/app/loading";
+import LoadingPage from "@/app/(Main)/loading";
 
 export default function RootLayout({
 	children,

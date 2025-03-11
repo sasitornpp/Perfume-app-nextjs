@@ -7,7 +7,9 @@ export interface Profile {
 	gender: string;
 	images: string | null;
 	suggestions_perfumes: suggestedPerfume[] | null;
+    likes: string[];
 	created_at: Date;
+    updated_at: Date;
 }
 
 export interface fetch_user_result {

@@ -21,7 +21,16 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, LogOut, Save, Loader2, X } from "lucide-react";
+import {
+	Camera,
+	LogOut,
+	Save,
+	Loader2,
+	X,
+	KeyRound,
+	Eye,
+	EyeOff,
+} from "lucide-react";
 import { Profile, ProfileSettingsProps } from "@/types/profile";
 import { logoutUser } from "@/redux/user/userReducer";
 import { useDispatch } from "react-redux";
@@ -29,10 +38,35 @@ import { AppDispatch } from "@/redux/Store";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updateProfile } from "@/redux/user/userReducer"; // Assuming you have this API function
+import { z } from "zod";
+import { supabaseClient } from "@/utils/supabase/client";
+
+// Password validation schema
+const passwordSchema = z
+	.object({
+		newPassword: z
+			.string()
+			.min(8, { message: "Password must be at least 8 characters" })
+			.regex(/[A-Z]/, {
+				message: "Password must contain at least one uppercase letter",
+			})
+			.regex(/[a-z]/, {
+				message: "Password must contain at least one lowercase letter",
+			})
+			.regex(/[0-9]/, {
+				message: "Password must contain at least one number",
+			}),
+		confirmPassword: z.string(),
+	})
+	.refine((data) => data.newPassword === data.confirmPassword, {
+		message: "Passwords do not match",
+		path: ["confirmPassword"],
+	});
 
 export function ProfileSettings({ profile }: { profile: Profile }) {
 	const dispatch = useDispatch<AppDispatch>();
 	const router = useRouter();
+
 	const [settingProfile, setSettingProfile] = useState<ProfileSettingsProps>({
 		...profile,
 	});
@@ -45,6 +79,20 @@ export function ProfileSettings({ profile }: { profile: Profile }) {
 	);
 	const [showImagePreviewModal, setShowImagePreviewModal] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	// Password change state
+	const [showPasswordSection, setShowPasswordSection] = useState(false);
+	const [isChangingPassword, setIsChangingPassword] = useState(false);
+	const [passwordData, setPasswordData] = useState({
+		newPassword: "",
+		confirmPassword: "",
+	});
+	const [passwordErrors, setPasswordErrors] = useState<{
+		newPassword?: string;
+		confirmPassword?: string;
+	}>({});
+	const [showNewPassword, setShowNewPassword] = useState(false);
+	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 	const handleLogout = () => {
 		dispatch(logoutUser());
@@ -94,6 +142,13 @@ export function ProfileSettings({ profile }: { profile: Profile }) {
 		// Reset to original values
 		setSettingProfile({ ...originalProfile });
 		setImagePreview(originalProfile.images || null);
+		// Reset password fields
+		setPasswordData({
+			newPassword: "",
+			confirmPassword: "",
+		});
+		setPasswordErrors({});
+		setShowPasswordSection(false);
 	};
 
 	const handleRemoveImage = () => {
@@ -108,7 +163,54 @@ export function ProfileSettings({ profile }: { profile: Profile }) {
 		}
 	};
 
-	// console.log("settingProfile", settingProfile);
+	const validatePassword = () => {
+		try {
+			passwordSchema.parse(passwordData);
+			setPasswordErrors({});
+			return true;
+		} catch (error) {
+			if (error instanceof z.ZodError) {
+				const formattedErrors: {
+					newPassword?: string;
+					confirmPassword?: string;
+				} = {};
+
+				error.errors.forEach((err) => {
+					const path = err.path[0] as string;
+					formattedErrors[path as keyof typeof formattedErrors] =
+						err.message;
+				});
+
+				setPasswordErrors(formattedErrors);
+			}
+			return false;
+		}
+	};
+
+	const handlePasswordChange = async () => {
+		if (!validatePassword()) return;
+
+		setIsChangingPassword(true);
+		try {
+			const { error } = await supabaseClient.auth.updateUser({
+				password: passwordData.newPassword,
+			});
+
+			if (error) throw error;
+
+			toast.success("Password updated successfully");
+			setShowPasswordSection(false);
+			setPasswordData({
+				newPassword: "",
+				confirmPassword: "",
+			});
+		} catch (error: any) {
+			console.error("Failed to update password:", error);
+			toast.error(error.message || "Failed to update password");
+		} finally {
+			setIsChangingPassword(false);
+		}
+	};
 
 	return (
 		<>
@@ -266,6 +368,181 @@ export function ProfileSettings({ profile }: { profile: Profile }) {
 									className="resize-none focus-visible:ring-primary"
 									rows={3}
 								/>
+							</div>
+
+							{/* Password Change Section */}
+							<div className="mt-4">
+								{!showPasswordSection ? (
+									<Button
+										variant="outline"
+										type="button"
+										className="gap-2"
+										onClick={() =>
+											setShowPasswordSection(true)
+										}
+									>
+										<KeyRound className="h-4 w-4" />
+										Change Password
+									</Button>
+								) : (
+									<div className="border rounded-md p-4 space-y-4 bg-muted/10">
+										<div className="flex items-center justify-between">
+											<h3 className="text-sm font-medium">
+												Change Password
+											</h3>
+											<Button
+												variant="ghost"
+												size="sm"
+												onClick={() =>
+													setShowPasswordSection(
+														false,
+													)
+												}
+											>
+												<X className="h-4 w-4" />
+											</Button>
+										</div>
+
+										<div className="space-y-3">
+											<div className="space-y-2">
+												<Label
+													htmlFor="newPassword"
+													className="text-sm"
+												>
+													New Password
+												</Label>
+												<div className="relative">
+													<Input
+														id="newPassword"
+														type={
+															showNewPassword
+																? "text"
+																: "password"
+														}
+														value={
+															passwordData.newPassword
+														}
+														onChange={(e) =>
+															setPasswordData({
+																...passwordData,
+																newPassword:
+																	e.target
+																		.value,
+															})
+														}
+														className="pr-10 focus-visible:ring-primary"
+													/>
+													<button
+														type="button"
+														className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+														onClick={() =>
+															setShowNewPassword(
+																!showNewPassword,
+															)
+														}
+													>
+														{showNewPassword ? (
+															<EyeOff className="h-4 w-4" />
+														) : (
+															<Eye className="h-4 w-4" />
+														)}
+													</button>
+												</div>
+												{passwordErrors.newPassword && (
+													<p className="text-xs text-destructive mt-1">
+														{
+															passwordErrors.newPassword
+														}
+													</p>
+												)}
+												<p className="text-xs text-muted-foreground mt-1">
+													Password must be at least 8
+													characters and include
+													uppercase, lowercase, and
+													numbers.
+												</p>
+											</div>
+
+											<div className="space-y-2">
+												<Label
+													htmlFor="confirmPassword"
+													className="text-sm"
+												>
+													Confirm Password
+												</Label>
+												<div className="relative">
+													<Input
+														id="confirmPassword"
+														type={
+															showConfirmPassword
+																? "text"
+																: "password"
+														}
+														value={
+															passwordData.confirmPassword
+														}
+														onChange={(e) =>
+															setPasswordData({
+																...passwordData,
+																confirmPassword:
+																	e.target
+																		.value,
+															})
+														}
+														className="pr-10 focus-visible:ring-primary"
+													/>
+													<button
+														type="button"
+														className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+														onClick={() =>
+															setShowConfirmPassword(
+																!showConfirmPassword,
+															)
+														}
+													>
+														{showConfirmPassword ? (
+															<EyeOff className="h-4 w-4" />
+														) : (
+															<Eye className="h-4 w-4" />
+														)}
+													</button>
+												</div>
+												{passwordErrors.confirmPassword && (
+													<p className="text-xs text-destructive mt-1">
+														{
+															passwordErrors.confirmPassword
+														}
+													</p>
+												)}
+											</div>
+
+											<div className="pt-2">
+												<Button
+													type="button"
+													onClick={
+														handlePasswordChange
+													}
+													disabled={
+														isChangingPassword
+													}
+													className="w-full gap-2"
+												>
+													{isChangingPassword ? (
+														<>
+															<Loader2 className="h-4 w-4 animate-spin" />
+															Updating...
+														</>
+													) : (
+														<>
+															<KeyRound className="h-4 w-4" />
+															Update Password
+														</>
+													)}
+												</Button>
+											</div>
+										</div>
+									</div>
+								)}
 							</div>
 						</div>
 					</div>

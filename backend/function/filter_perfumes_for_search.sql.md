@@ -1,4 +1,4 @@
-### คำอธิบายฟังก์ชัน `filter_perfumes_for_search`
+# คำอธิบายฟังก์ชัน `filter_perfumes_for_search`
 
 ฟังก์ชัน `filter_perfumes_for_search` มีหน้าที่กรองน้ำหอมจากตาราง `perfumes` โดยใช้เงื่อนไขการค้นหาที่ซับซ้อนกว่าฟังก์ชัน `filter_perfumes` ฟังก์ชันนี้มีการให้คะแนนความเกี่ยวข้อง (match score) ที่แตกต่างกันสำหรับแต่ละเงื่อนไข เช่น search query, brand, gender, accords, top notes, middle notes และ base notes นอกจากนี้ ฟังก์ชันนี้ยังมีการคำนวณจำนวนหน้ารวม (total pages) สำหรับการแบ่งหน้า (pagination) และคืนค่าผลลัพธ์เป็น JSON object ที่มีข้อมูลน้ำหอมและจำนวนหน้ารวม
 

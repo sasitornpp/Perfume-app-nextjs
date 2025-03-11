@@ -16,6 +16,7 @@ import {
 	addNewTotalPage,
 	clearPerfumesPage,
 } from "@/redux/pagination/paginationReducer";
+import { UserState } from "@/redux/user/userReducer";
 
 // Update the PerfumeState interface to include currentFilters
 interface PerfumeState {
@@ -680,46 +681,69 @@ export const fetchUniqueData = createAsyncThunk(
 );
 
 export const toggleLikePerfume = createAsyncThunk(
-	"perfume/toggleLikePerfume",
-	async (
-		{ perfumeId, userId }: { perfumeId: string; userId: string },
-		{ rejectWithValue },
-	) => {
-		try {
-			console.log("perfumeId", perfumeId);
-			console.log("userId", userId);
-			const { error } = await supabaseClient.rpc("toggle_perfume_like", {
-				p_user_id: perfumeId,
-				p_perfume_id: userId,
-			});
-			if (error) throw error;
-			return { perfumeId, userId };
-		} catch (error: any) {
-			return rejectWithValue(error.message);
-		}
-	},
-);
-
-export const toggleDisLikePerfume = createAsyncThunk(
-    "perfume/toggleDisLikePerfume",
+    "perfume/toggleLikePerfume",
     async (
         { perfumeId, userId }: { perfumeId: string; userId: string },
-        { rejectWithValue },
+        { rejectWithValue, getState, dispatch }
     ) => {
         try {
             console.log("perfumeId", perfumeId);
             console.log("userId", userId);
-            const { error } = await supabaseClient.rpc("toggle_perfume_dislike", {
-                p_user_id: perfumeId,
-                p_perfume_id: userId,
-            });
+            
+            // The RPC parameters are swapped in your original code
+            const { data, error } = await supabaseClient.rpc(
+                "toggle_perfume_like",
+                {
+                    p_perfume_id: perfumeId,
+                    p_user_id: userId,
+                }
+            );
+            
             if (error) throw error;
-            return { perfumeId, userId };
+            
+            // Get the updated likes array from the response
+            const updatedLikes = data as string[];
+            
+            // Get current user state
+            const state = getState() as { user: UserState };
+            
+            // Update the user profile in the redux state with the new likes array
+            if (state.user.profile) {
+                // We'll need to update the profile with the new likes array
+                // This would typically be handled in userReducer
+                dispatch({
+                    type: "user/updateProfileLikes",
+                    payload: updatedLikes
+                });
+            }
+            
+            return { perfumeId, userId, updatedLikes };
         } catch (error: any) {
             return rejectWithValue(error.message);
         }
-    },
+    }
 );
+
+// export const toggleDisLikePerfume = createAsyncThunk(
+//     "perfume/toggleDisLikePerfume",
+//     async (
+//         { perfumeId, userId }: { perfumeId: string; userId: string },
+//         { rejectWithValue },
+//     ) => {
+//         try {
+//             console.log("perfumeId", perfumeId);
+//             console.log("userId", userId);
+//             const { error } = await supabaseClient.rpc("toggle_perfume_dislike", {
+//                 p_user_id: perfumeId,
+//                 p_perfume_id: userId,
+//             });
+//             if (error) throw error;
+//             return { perfumeId, userId };
+//         } catch (error: any) {
+//             return rejectWithValue(error.message);
+//         }
+//     },
+// );
 
 const perfumeSlice = createSlice({
 	name: "perfume",

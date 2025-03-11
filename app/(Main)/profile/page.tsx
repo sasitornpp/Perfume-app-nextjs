@@ -37,7 +37,7 @@ import CreateAlbumButton from "@/components/form/create-album-button";
 import { getPerfumeById } from "@/utils/supabase/api/perfume";
 import { Perfume } from "@/types/perfume";
 import { removePerfumeFromBasket } from "@/redux/user/userReducer";
-import { aw } from "framer-motion/dist/types.d-6pKw1mTI";
+import PerfumeIdCard from "@/components/perfume-id-card";
 import Link from "next/link";
 // import { createSelector } from "@reduxjs/toolkit";
 
@@ -50,12 +50,20 @@ const selectMyPerfumes = (state: RootState) => state.user.perfumes;
 
 const selectMyBaskets = (state: RootState) => state.user.basket;
 
+const selectMyLikes = (state: RootState) => state.user.profile?.likes;
+
 function ProfilePage() {
 	const searchParams = useSearchParams();
 	const dispatch: AppDispatch = useDispatch();
 	const router = useRouter();
 	const queryTab = searchParams.get("q");
-	const validTabs = ["my-perfumes", "albums", "basket", "recommendations"];
+	const validTabs = [
+		"my-perfumes",
+		"albums",
+		"basket",
+		"recommendations",
+		"likes",
+	];
 	const activeTab = validTabs.includes(queryTab ?? "")
 		? (queryTab ?? "my-perfumes")
 		: "my-perfumes";
@@ -69,7 +77,7 @@ function ProfilePage() {
 	const my_albums = useSelector(selectMyAlbums);
 	const suggestionsPerfumes = useSelector(selectMySuggestedPerfumes);
 	const my_baskets = useSelector(selectMyBaskets);
-
+	const my_likes = useSelector(selectMyLikes);
 	// Handle tab change and update URL
 	const handleTabChange = (value: string) => {
 		router.push(`/profile?q=${value}`, { scroll: false });
@@ -80,7 +88,7 @@ function ProfilePage() {
 		// dispatch(updateBasket({ basket: updatedBasket }));
 	};
 
-	// console.log(profile);
+	// console.log(my_likes);
 
 	// If profile doesn't exist, show the create profile UI
 	if (!isProfileComplete) {
@@ -258,7 +266,7 @@ function ProfilePage() {
 				className="w-full"
 				onValueChange={handleTabChange}
 			>
-				<TabsList className="w-full grid grid-cols-4 mb-6">
+				<TabsList className="w-full grid grid-cols-5 mb-6">
 					<TabsTrigger
 						value="my-perfumes"
 						className="flex items-center gap-2"
@@ -277,8 +285,15 @@ function ProfilePage() {
 						value="albums"
 						className="flex items-center gap-2"
 					>
-						<Heart className="h-4 w-4" />
+						<Album className="h-4 w-4" />
 						<span>My Albums</span>
+					</TabsTrigger>
+					<TabsTrigger
+						value="likes"
+						className="flex items-center gap-2"
+					>
+						<Heart className="h-4 w-4" />
+						<span>My Likes</span>
 					</TabsTrigger>
 					<TabsTrigger
 						value="basket"
@@ -408,6 +423,39 @@ function ProfilePage() {
 									Add more perfumes to your collection to get
 									personalized recommendations
 								</p>
+							</div>
+						)}
+					</div>
+				</TabsContent>
+
+				<TabsContent value="likes">
+					<div className="flex flex-wrap justify-center gap-4 p-4">
+						{my_likes && my_likes.length > 0 ? (
+							<PerfumeIdCard perfumeId={my_likes} />
+						) : (
+							<div className="w-full max-w-md p-8 text-center bg-card rounded-lg border border-border shadow-sm my-8">
+								<div className="flex flex-col items-center">
+									<div className="rounded-full bg-muted p-4 mb-4">
+										<Heart className="h-8 w-8 text-muted-foreground" />
+									</div>
+									<h3 className="text-xl font-medium mb-2">
+										No Liked Perfumes Yet
+									</h3>
+									<p className="text-muted-foreground mb-6 max-w-xs">
+										Explore perfumes and like your favorites
+										to see them here
+									</p>
+									<Button
+										size="lg"
+										onClick={() =>
+											router.push("/perfumes/home/search")
+										}
+										className="gap-2"
+									>
+										<Heart className="h-4 w-4" />
+										Discover Perfumes
+									</Button>
+								</div>
 							</div>
 						)}
 					</div>

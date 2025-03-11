@@ -1,4 +1,4 @@
-### คำอธิบายฟังก์ชัน `get_perfumes_count`
+# คำอธิบายฟังก์ชัน `get_perfumes_count`
 
 ฟังก์ชัน `get_perfumes_count` มีหน้าที่นับจำนวนน้ำหอมทั้งหมดในตาราง `perfumes` และคืนค่าเป็น BIGINT
 

@@ -10,7 +10,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   const urlPath = new URL(request.url).pathname;
-  const publicPaths = ["/", "/login", "/sign-up"];
+  const publicPaths = ["/", "/login", "/sign-up", "/reset-password"];
   const supabaseResponse = NextResponse.next();
 
 
@@ -35,9 +35,9 @@ export async function updateSession(request: NextRequest) {
 
     const hasSession = Boolean(sessionData.session);
 
-    if (!hasSession && !publicPaths.includes(urlPath)) {
-      return NextResponse.redirect(new URL("/login", request.url));
-    }
+    // if (!hasSession && !publicPaths.includes(urlPath)) {
+    //   return NextResponse.redirect(new URL("/login", request.url));
+    // }
 
     return supabaseResponse;
   } catch (err) {

@@ -72,6 +72,8 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 
 	const loading = useSelector((state: RootState) => state.perfumes.loading);
 
+    console.log(useSelector((state: RootState) => state.user.profile?.likes));
+
 	const handleLikes = () => {
 		if (user) {
 			dispatch(

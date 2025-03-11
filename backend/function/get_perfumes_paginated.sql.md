@@ -1,4 +1,4 @@
-### คำอธิบายฟังก์ชัน `get_perfumes_paginated`
+# คำอธิบายฟังก์ชัน `get_perfumes_paginated`
 
 ฟังก์ชัน `get_perfumes_paginated` มีหน้าที่ดึงข้อมูลน้ำหอมจากตาราง `perfumes` โดยมีการแบ่งหน้า (pagination) เพื่อให้สามารถแสดงผลลัพธ์ทีละหน้าได้ ฟังก์ชันนี้รับหมายเลขหน้า (page number) และจำนวนรายการต่อหน้า (items per page) เป็น input และคืนค่าเป็น table ที่มีข้อมูลน้ำหอม
 

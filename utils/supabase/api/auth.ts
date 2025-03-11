@@ -19,7 +19,7 @@ export async function signInAction({
 	if (error) {
 		throw new Error(error.message);
 	}
-	router.push("/survey-form");
+	// router.push("/survey-form");
 }
 
 export async function signUpAction({
@@ -35,7 +35,7 @@ export async function signUpAction({
 	if (error) {
 		throw new Error(error.message);
 	}
-	router.push("/survey-form");
+	// router.push("/survey-form");
 }
 
 export async function signOutAction({

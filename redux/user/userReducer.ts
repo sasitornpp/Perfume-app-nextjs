@@ -1,8 +1,12 @@
 "use client";
 
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import {
+	createSlice,
+	createAsyncThunk,
+	PayloadAction,
+	createReducer,
+} from "@reduxjs/toolkit";
 import { supabaseClient } from "@/utils/supabase/client";
-import { PostgrestError, AuthError } from "@supabase/supabase-js";
 import { User } from "@supabase/supabase-js";
 import { type useRouter } from "next/navigation";
 import {
@@ -14,7 +18,6 @@ import {
 	AlbumWithPerfume,
 	AlbumForInsert,
 	Album,
-	BasketWithPerfume,
 	Basket,
 } from "@/types/perfume";
 import {
@@ -26,8 +29,9 @@ import {
 	rollbackUploadedFiles,
 	uploadImagesToSupabase,
 } from "@/utils/functions/image_process";
+import { toggleLikePerfume } from "@/redux/perfume/perfumeReducer";
 
-interface UserState {
+export interface UserState {
 	user: User | null;
 	profile: Profile | null;
 	perfumes: Perfume[] | null;
@@ -82,7 +86,7 @@ export const signInUser = createAsyncThunk(
 			if (error instanceof Error) {
 				return rejectWithValue(error.message);
 			}
-			return rejectWithValue('An unknown error occurred');
+			return rejectWithValue("An unknown error occurred");
 		}
 	},
 );
@@ -1092,6 +1096,11 @@ const userSlice = createSlice({
 			state.error = null;
 			state.profileNotCreated = false;
 		},
+		updateProfileLikes(state, action) {
+			if (state.profile) {
+				state.profile.likes = action.payload;
+			}
+		},
 	},
 	extraReducers: (builder) => {
 		builder
@@ -1491,7 +1500,13 @@ const userSlice = createSlice({
 						action.payload ||
 						"Failed to remove perfume from basket";
 				},
-			);
+			)
+			.addCase(toggleLikePerfume.fulfilled, (state, action) => {
+				// Set ค่าใหม่ทับค่าเก่าไปเลย
+				if (state.profile) {
+					state.profile.likes = action.payload.updatedLikes;
+				}
+			});
 	},
 });
 
