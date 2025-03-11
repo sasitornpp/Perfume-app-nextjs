@@ -759,9 +759,9 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 														<p className="text-sm text-muted-foreground mb-1">
 															Price
 														</p>
-														<p className="font-medium">
-															${perfume.price}
-														</p>
+                                                        <p className="font-medium">
+                                                            ฿{perfume.price}
+                                                        </p>
 													</div>
 												)}
 										</div>
