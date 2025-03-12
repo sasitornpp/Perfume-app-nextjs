@@ -28,7 +28,10 @@ import {
 } from "@/components/ui/pagination";
 import PerfumeCard from "@/components/perfume_card";
 import { useDispatch } from "react-redux";
-import { setPerfumesPage, fetchTotalCount } from "@/redux/pagination/paginationReducer";
+import {
+	setPerfumesPage,
+	fetchTotalCount,
+} from "@/redux/pagination/paginationReducer";
 import LoadingComponents from "@/components/loading";
 import {
 	initialValues,
@@ -152,7 +155,7 @@ function Search() {
 		setSearchQuery(false);
 		setFormFilters(null);
 		dispatch(clear_Filters());
-        dispatch(fetchTotalCount());
+		dispatch(fetchTotalCount());
 		dispatch(setPerfumesPage(1));
 	};
 
