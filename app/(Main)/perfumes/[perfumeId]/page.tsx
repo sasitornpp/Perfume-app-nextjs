@@ -72,7 +72,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 
 	const loading = useSelector((state: RootState) => state.perfumes.loading);
 
-    console.log(useSelector((state: RootState) => state.user.profile?.likes));
+	console.log(useSelector((state: RootState) => state.user.profile?.likes));
 
 	const handleLikes = () => {
 		if (user) {
@@ -711,18 +711,6 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 								>
 									<div className="space-y-4">
 										<div className="grid grid-cols-2 gap-4">
-											{/* <div>
-												<p className="text-sm text-muted-foreground mb-1">
-													Launch Year
-												</p>
-												<p className="font-medium">
-													{perfume.created_at
-														? new Date(
-																perfume.created_at,
-															).getFullYear()
-														: "Unknown"}
-												</p>
-											</div> */}
 											{perfume.concentration && (
 												<div>
 													<p className="text-sm text-muted-foreground mb-1">
@@ -733,16 +721,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 													</p>
 												</div>
 											)}
-											{perfume.volume && (
-												<div>
-													<p className="text-sm text-muted-foreground mb-1">
-														Size
-													</p>
-													<p className="font-medium">
-														{perfume.volume}ml
-													</p>
-												</div>
-											)}
+											
 											{perfume.scent_type && (
 												<div>
 													<p className="text-sm text-muted-foreground mb-1">
@@ -759,9 +738,9 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 														<p className="text-sm text-muted-foreground mb-1">
 															Price
 														</p>
-                                                        <p className="font-medium">
-                                                            ฿{perfume.price}
-                                                        </p>
+														<p className="font-medium">
+															฿{perfume.price}
+														</p>
 													</div>
 												)}
 										</div>
