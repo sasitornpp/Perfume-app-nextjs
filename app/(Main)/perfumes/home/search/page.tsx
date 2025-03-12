@@ -496,24 +496,6 @@ function Search() {
 						))}
 					</div>
 				)}
-
-				{/* Results count */}
-				{searchQuery && (
-					<div className="flex justify-between items-center mt-2">
-						<Badge
-							variant="outline"
-							className="text-muted-foreground"
-						>
-							{loading
-								? "Loading..."
-								: `${resultCount} perfumes found`}
-						</Badge>
-						<div className="text-sm text-muted-foreground">
-							{!loading &&
-								`Page ${pagination.perfumesPage} of ${totalPages}`}
-						</div>
-					</div>
-				)}
 			</div>
 
 			{/* Results grid with animations */}

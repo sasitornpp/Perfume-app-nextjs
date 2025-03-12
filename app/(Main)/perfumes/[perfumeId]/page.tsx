@@ -33,7 +33,7 @@ import { fetchPerfumeById } from "@/redux/perfume/perfumeReducer";
 import { AppDispatch } from "@/redux/Store";
 import CommentSection from "@/components/comment-section";
 import { toggleLikePerfume } from "@/redux/perfume/perfumeReducer";
-import { removePerfume, addPerfumeToBasket } from "@/redux/user/userReducer";
+import { removePerfume, togglePerfumeToBasket } from "@/redux/user/userReducer";
 import AddPerfumeToAlbumButton from "@/components/album/add-perfume";
 
 function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
@@ -93,7 +93,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 	const handleAddPerfumeToBasket = () => {
 		if (user) {
 			dispatch(
-				addPerfumeToBasket({ perfumeId: unwrappedParams.perfumeId }),
+				togglePerfumeToBasket({ perfumeId: unwrappedParams.perfumeId }),
 			);
 		} else {
 			router.push("/login");

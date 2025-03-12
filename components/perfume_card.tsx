@@ -17,11 +17,11 @@ import { Button } from "@/components/ui/button";
 function PerfumeCard({
 	perfume,
 	index,
-    toggleLike = true
+	toggleLike = true,
 }: {
 	perfume: suggestedPerfume;
 	index: number;
-    toggleLike?: boolean;
+	toggleLike?: boolean;
 }) {
 	const [isHovered, setIsHovered] = useState(false);
 	const dispatch = useDispatch<AppDispatch>();
@@ -63,23 +63,25 @@ function PerfumeCard({
 				{/* Favorite button moved outside of Link */}
 
 				<div className="absolute top-4 right-4 z-10 flex space-x-2">
-					{!perfume.match_score && perfume.user_id !== user?.id && toggleLike && (
-						<Button
-							className="flex items-center"
-							variant={"link"}
-							onClick={handleLikes}
-						>
-							<Heart
-								className={`h-4 w-4 ${
-									user &&
-									perfume.likes &&
-									perfume.likes.includes(user.id)
-										? "fill-primary text-primary"
-										: ""
-								}`}
-							/>
-						</Button>
-					)}
+					{!perfume.match_score &&
+						perfume.user_id !== user?.id &&
+						toggleLike && (
+							<Button
+								className="flex items-center"
+								variant={"link"}
+								onClick={handleLikes}
+							>
+								<Heart
+									className={`h-4 w-4 ${
+										user &&
+										perfume.likes &&
+										perfume.likes.includes(user.id)
+											? "fill-primary text-primary"
+											: ""
+									}`}
+								/>
+							</Button>
+						)}
 					{perfume.is_tradable && (
 						<div className="cursor-pointer p-2 rounded-full bg-background/80 backdrop-blur-sm transition-all duration-300">
 							<RefreshCcw
@@ -91,7 +93,7 @@ function PerfumeCard({
 				</div>
 
 				{/* Match score positioned at top-left */}
-				{"match_score" in perfume && (
+				{/* {"match_score" in perfume && (
 					<div className="absolute top-4 left-4 z-10">
 						<div className="flex flex-col items-center justify-center rounded-full bg-background/80 backdrop-blur-sm text-primary w-16 h-16 text-center">
 							<span className="text-xs font-medium">
@@ -102,7 +104,7 @@ function PerfumeCard({
 							</span>
 						</div>
 					</div>
-				)}
+				)} */}
 
 				<Link href={`/perfumes/${perfume.id}`} className="block">
 					<CardContent className="flex flex-col h-[420px] p-0 overflow-hidden">

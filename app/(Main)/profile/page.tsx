@@ -41,8 +41,6 @@ import PerfumeIdCard from "@/components/perfume-id-card";
 import Link from "next/link";
 // import { createSelector } from "@reduxjs/toolkit";
 
-
-
 const selectMyAlbums = (state: RootState) => state.user.albums;
 
 const selectMyPerfumes = (state: RootState) => state.user.perfumes;
@@ -71,9 +69,9 @@ function ProfilePage() {
 	const isProfileComplete = !!profile && Object.keys(profile).length > 0;
 
 	// const perfume_ids = profile?.my_perfume || [];
-    const selectMySuggestedPerfumes = (state: RootState) =>
-        state.user.profile?.suggestions_perfumes;
-    
+	const selectMySuggestedPerfumes = (state: RootState) =>
+		state.user.profile?.suggestions_perfumes;
+
 	const my_perfumes = useSelector(selectMyPerfumes);
 	const my_albums = useSelector(selectMyAlbums);
 	const suggestionsPerfumes = useSelector(selectMySuggestedPerfumes);
@@ -442,8 +440,8 @@ function ProfilePage() {
 									<h3 className="text-xl font-medium mb-2">
 										No Liked Perfumes Yet
 									</h3>
-									<p className="text-muted-foreground mb-6 max-w-xs">
-										Explore perfumes and like your favorites
+									<p className="text-muted-foreground mb-6 max-w-xs justify-center flex items-center">
+										Explore perfumes and like your favorites<br/>
 										to see them here
 									</p>
 									<Button
@@ -476,7 +474,9 @@ function ProfilePage() {
 											await getPerfumeById({
 												id: basket.perfume_id,
 											});
-										setPerfume(perfumeData);
+										if (perfumeData) {
+											setPerfume(perfumeData);
+										}
 									};
 
 									fetchPerfume();
@@ -486,103 +486,95 @@ function ProfilePage() {
 									return <div key={index}>Loading...</div>;
 
 								return (
-									<Link
-										href={`/perfumes/${perfume.id}`}
-										key={perfume.id}
-									>
-										<Card
-											key={perfume.id}
-											className="overflow-hidden group transition-all duration-300 hover:shadow-lg"
-										>
-											<div className="h-48 bg-accent/20 relative">
-												{perfume.images &&
-												perfume.images.length > 0 ? (
-													<img
-														src={perfume.images[0]}
-														alt={perfume.name}
-														className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-													/>
-												) : (
-													<div className="w-full h-full flex items-center justify-center bg-accent/10">
-														<span className="text-muted-foreground">
-															No image
-														</span>
-													</div>
-												)}
-												{perfume.gender && (
-													<div className="absolute top-2 right-2 bg-background text-foreground text-xs px-2 py-1 rounded-full">
-														{perfume.gender}
-													</div>
-												)}
-											</div>
-											<CardHeader className="pb-1">
-												<div className="flex justify-between items-start">
-													<div>
-														<CardTitle className="text-base font-medium">
-															{perfume.name}
-														</CardTitle>
-														<CardDescription className="text-sm text-primary/80">
-															{perfume.brand}
-														</CardDescription>
-													</div>
-													<Badge
-														variant="outline"
-														className="ml-2 text-xs"
-													>
-														{perfume.concentration ||
-															"EDP"}
-													</Badge>
-												</div>
-												{perfume.scent_type && (
-													<p className="text-xs text-muted-foreground mt-1">
-														{perfume.scent_type}
-													</p>
-												)}
-											</CardHeader>
-											<CardFooter className="pt-0 flex justify-between items-center">
-												<div>
-													<span className="font-semibold text-primary">
-														฿
-														{perfume.price?.toLocaleString()}
-													</span>
-													<span className="text-xs text-muted-foreground ml-1">
-														{perfume.volume}ml
-													</span>
-													<span className="text-xs text-muted-foreground ml-1">
-														Amount: {basket.amount}
-													</span>
-												</div>
-												<Button
-													variant="destructive"
-													size="sm"
-													className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-													onClick={() =>
-														handleRemoveBasket(
-															basket?.id,
-														)
-													}
-												>
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														width="16"
-														height="16"
-														viewBox="0 0 24 24"
-														fill="none"
-														stroke="currentColor"
-														strokeWidth="2"
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														className="mr-1"
-													>
-														<path d="M3 6h18"></path>
-														<path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-														<path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-													</svg>
-													Remove
-												</Button>
-											</CardFooter>
-										</Card>
-									</Link>
+                                    <div key={perfume.id} className="group relative">
+                                        <Link href={`/perfumes/${perfume.id}`}>
+                                            <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg">
+                                                <div className="h-48 bg-accent/20 relative">
+                                                    {perfume.images && perfume.images.length > 0 ? (
+                                                        <img
+                                                            src={perfume.images[0]}
+                                                            alt={perfume.name}
+                                                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center bg-accent/10">
+                                                            <span className="text-muted-foreground">
+                                                                No image
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    {perfume.gender && (
+                                                        <div className="absolute top-2 right-2 bg-background text-foreground text-xs px-2 py-1 rounded-full">
+                                                            {perfume.gender}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <CardHeader className="pb-1">
+                                                    <div className="flex justify-between items-start">
+                                                        <div>
+                                                            <CardTitle className="text-base font-medium">
+                                                                {perfume.name}
+                                                            </CardTitle>
+                                                            <CardDescription className="text-sm text-primary/80">
+                                                                {perfume.brand}
+                                                            </CardDescription>
+                                                        </div>
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="ml-2 text-xs"
+                                                        >
+                                                            {perfume.concentration || "EDP"}
+                                                        </Badge>
+                                                    </div>
+                                                    {perfume.scent_type && (
+                                                        <p className="text-xs text-muted-foreground mt-1">
+                                                            {perfume.scent_type}
+                                                        </p>
+                                                    )}
+                                                </CardHeader>
+                                                <CardFooter className="pt-0 flex justify-between items-center">
+                                                    <div>
+                                                        <span className="font-semibold text-primary">
+                                                            ฿{perfume.price?.toLocaleString()}
+                                                        </span>
+                                                        <span className="text-xs text-muted-foreground ml-1">
+                                                            {perfume.volume}ml
+                                                        </span>
+                                                        <span className="text-xs text-muted-foreground ml-1">
+                                                            Amount: {basket.amount}
+                                                        </span>
+                                                    </div>
+                                                </CardFooter>
+                                            </Card>
+                                        </Link>
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRemoveBasket(basket?.id);
+                                            }}
+                                        >
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                width="16"
+                                                height="16"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                className="mr-1"
+                                            >
+                                                <path d="M3 6h18"></path>
+                                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                            </svg>
+                                            Remove
+                                        </Button>
+                                    </div>
 								);
 							})
 						) : (
