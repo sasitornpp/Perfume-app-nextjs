@@ -113,38 +113,51 @@ function SearchSidebar({
 		(state: RootState) => state.perfumes.perfume_unique_data?.accords,
 	);
 
-
-    // console.log("perfumeAccords:", perfumeAccords);
+	// console.log("perfumeAccords:", perfumeAccords);
 	const perfumeBrands = useSelector(selectBrandNames);
 	const filteredBrands = useMemo(() => {
 		return [...perfumeBrands].sort((a, b) => a.name.localeCompare(b.name));
 	}, [perfumeBrands]);
 
 	const [visibleBrandsCount, setVisibleBrandsCount] = useState(5);
-	const handleChange = (key: keyof Filters, value: string | null | boolean) => {
-			setFormFilters((prev) => {
-				if (!prev)
-					return {
-						search_query: null,
-						brand_filter: [],
-						gender_filter: null,
-						accords_filter: [],
-						top_notes_filter: [],
-						middle_notes_filter: [],
-						base_notes_filter: [],
-						is_tradable_filter: false,
-						[key]: value,
-					} as Filters;
+	const handleChange = (
+		key: keyof Filters,
+		value: string | null | boolean,
+	) => {
+		setFormFilters((prev) => {
+			if (!prev)
 				return {
-					...prev,
+					search_query: null,
+					brand_filter: [],
+					gender_filter: null,
+					accords_filter: [],
+					top_notes_filter: [],
+					middle_notes_filter: [],
+					base_notes_filter: [],
+					is_tradable_filter: false,
 					[key]: value,
-				};
-			});
-		};
-
-	const handleAddNewBrand = () => {
-		setIsAddingNewBrand(true);
+				} as Filters;
+			return {
+				...prev,
+				[key]: value,
+			};
+		});
 	};
+
+	// Replace the existing handleAddNewBrand function
+	const handleAddNewBrand = () => {
+		if (!newBrandName?.trim()) return;
+
+		// Add the new brand to the selected brands
+		handleBrandChange(newBrandName.trim());
+
+		// Reset the state and close the add brand UI
+		setNewBrandName("");
+		setIsAddingNewBrand(false);
+		setOpen(false); // Optional: close the popover after adding
+	};
+
+	// Keep your existing handleBrandChange function as is
 
 	const handleArrayFilter = (
 		key: keyof Pick<
@@ -709,118 +722,118 @@ function SearchSidebar({
 								</Label>
 							</div>
 
-                            {/* Update Accords Section to use the same autocomplete approach */}
-                            <AnimatePresence>
-                                {formFilters?.accords_filter?.map(
-                                    (accord, index) => (
-                                        <motion.div
-                                            key={`accord-${index}`}
-                                            initial={{
-                                                opacity: 0,
-                                                y: -10,
-                                            }}
-                                            animate={{
-                                                opacity: 1,
-                                                y: 0,
-                                            }}
-                                            exit={{
-                                                opacity: 0,
-                                                height: 0,
-                                            }}
-                                            transition={{
-                                                duration: 0.2,
-                                            }}
-                                            className="flex items-center space-x-2 mb-2"
-                                        >
-                                            <Popover>
-                                                <div className="relative flex-1">
-                                                    <PopoverTrigger asChild>
-                                                        <div className="relative w-full">
-                                                            <Input
-                                                                value={accord}
-                                                                onChange={(e) =>
-                                                                    handleArrayChange(
-                                                                        "accords_filter",
-                                                                        index,
-                                                                        e.target
-                                                                            .value,
-                                                                    )
-                                                                }
-                                                                placeholder="e.g., Woody, Citrus, Powdery"
-                                                                className="border-input bg-background pr-8"
-                                                            />
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="absolute right-1 top-1 h-6 w-6 p-0 text-muted-foreground"
-                                                            >
-                                                                <Search className="h-4 w-4" />
-                                                            </Button>
-                                                        </div>
-                                                    </PopoverTrigger>
-                                                    <PopoverContent
-                                                        className="w-full p-0"
-                                                        align="start"
-                                                    >
-                                                        <Command>
-                                                            <CommandInput
-                                                                placeholder="Search accords..."
-                                                                className="h-9"
-                                                            />
-                                                            <CommandList>
-                                                                <ScrollArea className="h-[200px] rounded-md">
-                                                                    {perfumeAccords.map(
-                                                                        (
-                                                                            accord,
-                                                                        ) => (
-                                                                            <CommandItem
-                                                                                key={
-                                                                                    accord
-                                                                                }
-                                                                                onSelect={() =>
-                                                                                    handleArrayChange(
-                                                                                        "accords_filter",
-                                                                                        index,
-                                                                                        accord,
-                                                                                    )
-                                                                                }
-                                                                                className="cursor-pointer"
-                                                                            >
-                                                                                {
-                                                                                    accord
-                                                                                }
-                                                                            </CommandItem>
-                                                                        ),
-                                                                    )}
-                                                                </ScrollArea>
-                                                            </CommandList>
-                                                        </Command>
-                                                    </PopoverContent>
-                                                </div>
-                                            </Popover>
+							{/* Update Accords Section to use the same autocomplete approach */}
+							<AnimatePresence>
+								{formFilters?.accords_filter?.map(
+									(accord, index) => (
+										<motion.div
+											key={`accord-${index}`}
+											initial={{
+												opacity: 0,
+												y: -10,
+											}}
+											animate={{
+												opacity: 1,
+												y: 0,
+											}}
+											exit={{
+												opacity: 0,
+												height: 0,
+											}}
+											transition={{
+												duration: 0.2,
+											}}
+											className="flex items-center space-x-2 mb-2"
+										>
+											<Popover>
+												<div className="relative flex-1">
+													<PopoverTrigger asChild>
+														<div className="relative w-full">
+															<Input
+																value={accord}
+																onChange={(e) =>
+																	handleArrayChange(
+																		"accords_filter",
+																		index,
+																		e.target
+																			.value,
+																	)
+																}
+																placeholder="e.g., Woody, Citrus, Powdery"
+																className="border-input bg-background pr-8"
+															/>
+															<Button
+																type="button"
+																variant="ghost"
+																size="icon"
+																className="absolute right-1 top-1 h-6 w-6 p-0 text-muted-foreground"
+															>
+																<Search className="h-4 w-4" />
+															</Button>
+														</div>
+													</PopoverTrigger>
+													<PopoverContent
+														className="w-full p-0"
+														align="start"
+													>
+														<Command>
+															<CommandInput
+																placeholder="Search accords..."
+																className="h-9"
+															/>
+															<CommandList>
+																<ScrollArea className="h-[200px] rounded-md">
+																	{perfumeAccords.map(
+																		(
+																			accord,
+																		) => (
+																			<CommandItem
+																				key={
+																					accord
+																				}
+																				onSelect={() =>
+																					handleArrayChange(
+																						"accords_filter",
+																						index,
+																						accord,
+																					)
+																				}
+																				className="cursor-pointer"
+																			>
+																				{
+																					accord
+																				}
+																			</CommandItem>
+																		),
+																	)}
+																</ScrollArea>
+															</CommandList>
+														</Command>
+													</PopoverContent>
+												</div>
+											</Popover>
 
-                                            {(formFilters.accords_filter || [])
-                                                .length > 1 && (
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() =>
-                                                        removeArrayItem(
-                                                            "accords_filter",
-                                                            index,
-                                                        )
-                                                    }
-                                                    className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                                                >
-                                                    <X className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                        </motion.div>
-                                    ),
-                                )}
-                            </AnimatePresence>
+											{(formFilters.accords_filter || [])
+												.length > 1 && (
+												<Button
+													type="button"
+													variant="ghost"
+													size="icon"
+													onClick={() =>
+														removeArrayItem(
+															"accords_filter",
+															index,
+														)
+													}
+													className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+												>
+													<X className="h-4 w-4" />
+												</Button>
+											)}
+										</motion.div>
+									),
+								)}
+							</AnimatePresence>
 							<Button
 								type="button"
 								variant="ghost"
