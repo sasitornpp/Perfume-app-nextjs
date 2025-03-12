@@ -345,7 +345,7 @@ function Search() {
 
 				{/* Active filters display */}
 				{(formFilters?.search_query ||
-					formFilters?.brand_filter ||
+					(formFilters?.brand_filter?.length ?? 0) > 0 ||
 					formFilters?.gender_filter ||
 					(formFilters?.accords_filter?.length ?? 0) > 0 ||
 					(formFilters?.top_notes_filter?.length ?? 0) > 0 ||
