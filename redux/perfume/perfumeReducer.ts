@@ -391,145 +391,148 @@ export const addReply = createAsyncThunk(
 );
 
 export const fetchPerfumeById = createAsyncThunk(
-	"perfume/fetchPerfumeById",
-	async (
-		{ perfumeId }: { perfumeId: string },
-		{ rejectWithValue, getState },
-	) => {
-		console.log("Starting fetchPerfumeById with ID:", perfumeId);
+    "perfume/fetchPerfumeById",
+    async (
+        { perfumeId }: { perfumeId: string },
+        { rejectWithValue, getState },
+    ) => {
+        console.log("Starting fetchPerfumeById with ID:", perfumeId);
 
-		try {
-			const { perfumes: perfumeState } = getState() as {
-				perfumes: PerfumeState;
-			};
-			console.log("Current perfume state:", perfumeState);
+        try {
+            const { perfumes: perfumeState } = getState() as {
+                perfumes: PerfumeState;
+            };
+            console.log("Current perfume state:", perfumeState);
 
-			// Check cache
-			console.log("Checking cache for perfume ID:", perfumeId);
-			const cachedPerfume = Object.values(perfumeState.perfumes_by_page)
-				.flat()
-				.find((p) => p.id === perfumeId);
-			console.log("Cached perfume found:", cachedPerfume);
+            // Check cache
+            console.log("Checking cache for perfume ID:", perfumeId);
+            const cachedPerfume = Object.values(perfumeState.perfumes_by_page)
+                .flat()
+                .find((p) => p.id === perfumeId);
+            console.log("Cached perfume found:", cachedPerfume);
 
-			let perfumeData: Perfume | null = cachedPerfume || null;
+            let perfumeData: Perfume | null = cachedPerfume || null;
 
-			// Fetch perfume data if not in cache
-			if (!perfumeData) {
-				console.log("Perfume not in cache, fetching from Supabase...");
-				const { data, error } = await supabaseClient
-					.from("perfumes")
-					.select("*")
-					.eq("id", perfumeId)
-					.single();
+            // Fetch perfume data if not in cache
+            if (!perfumeData) {
+                console.log("Perfume not in cache, fetching from Supabase...");
+                const { data, error } = await supabaseClient
+                    .from("perfumes")
+                    .select("*")
+                    .eq("id", perfumeId)
+                    .single();
 
-				console.log("Supabase response - Data:", data);
-				console.log("Supabase response - Error:", error);
+                console.log("Supabase response - Data:", data);
+                console.log("Supabase response - Error:", error);
 
-				if (error) {
-					if (error.code === "PGRST116") {
-						console.log(
-							"Perfume not found in database (PGRST116 error)",
-						);
-						return {
-							data: null,
-							errorMessages: "Perfume not found",
-						};
-					}
-					console.error("Database error:", error);
-					throw new Error(
-						`Failed to fetch perfume: ${error.message}`,
-					);
-				}
-				perfumeData = data as Perfume;
-				console.log("Perfume data fetched from DB:", perfumeData);
-			} else {
-				console.log("Using cached perfume data:", perfumeData);
-			}
+                if (error) {
+                    if (error.code === "PGRST116") {
+                        console.log("Perfume not found in database (PGRST116 error)");
+                        return {
+                            data: null,
+                            errorMessages: "Perfume not found",
+                        };
+                    }
+                    console.error("Database error:", error);
+                    throw new Error(`Failed to fetch perfume: ${error.message}`);
+                }
+                perfumeData = data as Perfume;
+                console.log("Perfume data fetched from DB:", perfumeData);
+            } else {
+                console.log("Using cached perfume data:", perfumeData);
+            }
 
-			// Fetch comments
-			let comments: any[] = [];
-			console.log("Fetching comments for perfume ID:", perfumeId);
-			try {
-				const { data: commentsData, error: commentsError } =
-					await supabaseClient.rpc("get_comments_by_perfume_id", {
-						p_perfume_id: perfumeId,
-					});
+            // Fetch comments
+            let comments: any[] = [];
+            console.log("Fetching comments for perfume ID:", perfumeId);
+            try {
+                const { data: commentsData, error: commentsError } = await supabaseClient.rpc(
+                    "get_comments_by_perfume_id",
+                    { p_perfume_id: perfumeId }
+                );
 
-				console.log("Comments RPC response - Data:", commentsData);
-				console.log("Comments RPC response - Error:", commentsError);
+                console.log("Comments RPC response - Data:", commentsData);
+                console.log("Comments RPC response - Error:", commentsError);
 
-				if (commentsError) {
-					console.error("Error fetching comments:", commentsError);
-				} else {
-					comments = commentsData || [];
-					console.log("Comments fetched successfully:", comments);
-				}
-			} catch (err) {
-				console.error("Comments fetch failed:", err);
-			}
+                if (commentsError) {
+                    console.error("Error fetching comments:", commentsError);
+                } else {
+                    comments = commentsData || [];
+                    console.log("Comments fetched successfully:", comments);
+                }
+            } catch (err) {
+                console.error("Comments fetch failed:", err);
+            }
 
-			// Update perfumeData with comments
-			if (perfumeData) {
-				perfumeData = { ...perfumeData, comments };
-				console.log("Perfume data with comments:", perfumeData);
+            // Update perfumeData with comments
+            if (perfumeData) {
+                perfumeData = { ...perfumeData, comments };
+                console.log("Perfume data with comments:", perfumeData);
 
-				// Update view count
-				const today = new Date().toISOString().split("T")[0];
-				console.log("Updating view count for date:", today);
+                // Update view count
+                const today = new Date().toISOString().split("T")[0];
+                console.log("Updating view count for date:", today);
 
-				const { data: existingView, error: viewError } =
-					await supabaseClient
-						.from("perfume_views")
-						.select("views_count")
-						.match({
-							perfume_id: perfumeId,
-							view_date: today,
-						})
-						.single();
+                // Fetch existing view count (ไม่ใช้ .single())
+                const { data: viewData, error: viewError } = await supabaseClient
+                    .from("perfume_views")
+                    .select("views_count")
+                    .match({
+                        perfume_id: perfumeId,
+                        view_date: today,
+                    });
 
-				console.log("Existing view data:", existingView);
-				console.log("View fetch error:", viewError);
+                console.log("View fetch - Data:", viewData);
+                console.log("View fetch - Error:", viewError);
 
-				if (viewError && viewError.code !== "PGRST116") {
-					console.error("Error fetching view count:", viewError);
-				}
+                if (viewError) {
+                    console.error("Error fetching view count:", viewError);
+                    throw new Error(`Failed to fetch view count: ${viewError.message}`);
+                }
 
-				if (existingView) {
-					console.log("Updating existing view count...");
-					await supabaseClient
-						.from("perfume_views")
-						.update({ views_count: existingView.views_count + 1 })
-						.match({
-							perfume_id: perfumeId,
-							view_date: today,
-						});
-					console.log(
-						"View count updated to:",
-						existingView.views_count + 1,
-					);
-				} else {
-					console.log("Inserting new view count...");
-					const { error } = await supabaseClient
-						.from("perfume_views")
-						.insert({
-							perfume_id: perfumeId,
-							view_date: today,
-							views_count: 1,
-						});
-					console.log("View insert error:", error);
-					console.log("New view count inserted");
-				}
-			}
+                if (viewData && viewData.length > 0) {
+                    // Update existing view count
+                    console.log("Updating existing view count...");
+                    const currentCount = viewData[0].views_count;
+                    const { error: updateError } = await supabaseClient
+                        .from("perfume_views")
+                        .update({ views_count: currentCount + 1 })
+                        .match({
+                            perfume_id: perfumeId,
+                            view_date: today,
+                        });
 
-			console.log("Final perfume data to return:", perfumeData);
-			return { data: perfumeData, errorMessages: null };
-		} catch (error: any) {
-			console.error("Error in fetchPerfumeById:", error);
-			return rejectWithValue(
-				error.message || "Failed to fetch perfume data",
-			);
-		}
-	},
+                    if (updateError) {
+                        console.error("Error updating view count:", updateError);
+                        throw new Error(`Failed to update view count: ${updateError.message}`);
+                    }
+                    console.log("View count updated to:", currentCount + 1);
+                } else {
+                    // Insert new view count
+                    console.log("Inserting new view count...");
+                    const { error: insertError } = await supabaseClient
+                        .from("perfume_views")
+                        .insert({
+                            perfume_id: perfumeId,
+                            view_date: today,
+                            views_count: 1,
+                        });
+
+                    if (insertError) {
+                        console.error("Error inserting view count:", insertError);
+                        throw new Error(`Failed to insert view count: ${insertError.message}`);
+                    }
+                    console.log("New view count inserted");
+                }
+            }
+
+            console.log("Final perfume data to return:", perfumeData);
+            return { data: perfumeData, errorMessages: null };
+        } catch (error: any) {
+            console.error("Error in fetchPerfumeById:", error);
+            return rejectWithValue(error.message || "Failed to fetch perfume data");
+        }
+    },
 );
 
 export const fetchPerfumes = createAsyncThunk(

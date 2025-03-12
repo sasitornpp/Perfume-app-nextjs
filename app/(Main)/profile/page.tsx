@@ -41,8 +41,7 @@ import PerfumeIdCard from "@/components/perfume-id-card";
 import Link from "next/link";
 // import { createSelector } from "@reduxjs/toolkit";
 
-const selectMySuggestedPerfumes = (state: RootState) =>
-	state.user.profile?.suggestions_perfumes;
+
 
 const selectMyAlbums = (state: RootState) => state.user.albums;
 
@@ -72,7 +71,9 @@ function ProfilePage() {
 	const isProfileComplete = !!profile && Object.keys(profile).length > 0;
 
 	// const perfume_ids = profile?.my_perfume || [];
-
+    const selectMySuggestedPerfumes = (state: RootState) =>
+        state.user.profile?.suggestions_perfumes;
+    
 	const my_perfumes = useSelector(selectMyPerfumes);
 	const my_albums = useSelector(selectMyAlbums);
 	const suggestionsPerfumes = useSelector(selectMySuggestedPerfumes);

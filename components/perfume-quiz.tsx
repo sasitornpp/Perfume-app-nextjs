@@ -282,7 +282,7 @@ function PerfumeQuiz() {
 							Perfume Recommendation Quiz
 						</h2>
 
-						<p className="text-muted-foreground max-w-md mx-auto">
+						<p className="text-muted-foreground max-w-md mx-auto flex justify-center">
 							In just a few simple steps, we'll help you discover
 							fragrances perfectly matched to your preferences and
 							lifestyle.
@@ -421,11 +421,12 @@ function PerfumeQuiz() {
 
 						<div className="bg-muted/40 p-4 rounded-lg mt-4">
 							<div className="flex items-start gap-3">
-								<Info className="h-5 w-5 text-muted-foreground mt-0.5" />
-								<p className="text-sm text-muted-foreground">
+								<Info className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+								<p className="text-sm text-muted-foreground flex-warp flex items-start justify-start">
 									Selecting an occasion will automatically
 									suggest appropriate fragrance accords. You
-									can refine these in the next step.
+									can <br />
+									refine these in the next step.
 								</p>
 							</div>
 						</div>

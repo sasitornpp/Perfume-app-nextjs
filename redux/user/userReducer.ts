@@ -217,103 +217,136 @@ export const createProfile = createAsyncThunk(
 );
 
 export const updateProfile = createAsyncThunk(
-	"user/updateProfile",
-	async (
-		{ formData }: { formData: ProfileSettingsProps },
-		{ rejectWithValue, dispatch, getState },
-	) => {
-		try {
-			// Get current user from state
-			const state = getState() as { user: UserState };
-			const userId = state.user.user?.id;
+    "user/updateProfile",
+    async (
+        { formData }: { formData: ProfileSettingsProps },
+        { rejectWithValue, dispatch, getState },
+    ) => {
+        try {
+            console.log("⭐️ updateProfile - Starting profile update with data:", formData);
+            const state = getState() as { user: UserState };
+            const userId = state.user.user?.id;
+            console.log("⭐️ updateProfile - Current user state:", state.user);
+            console.log("⭐️ updateProfile - User ID:", userId);
 
-			if (!userId) {
-				throw new Error("User not authenticated");
-			}
+            if (!userId) {
+                console.error("⭐️ updateProfile - Error: User not authenticated");
+                throw new Error("User not authenticated");
+            }
 
-			// Prepare update data
-			const updateData: Record<string, any> = {
-				name: formData.name,
-				bio: formData.bio,
-				gender: formData.gender,
-			};
+            // Prepare update data
+            const updateData: Record<string, any> = {
+                name: formData.name,
+                bio: formData.bio,
+                gender: formData.gender,
+                suggestions_perfumes: formData.suggestions_perfumes,
+            };
+            console.log("⭐️ updateProfile - Initial update data:", updateData);
 
-			// Handle image changes if there's a new image
-			if (formData.newImageFile) {
-				// If there was a previous image, delete it first
-				if (state.user.profile?.images) {
-					const previousImagePath =
-						state.user.profile.images.split("/IMAGES/")[1];
-					if (previousImagePath) {
-						const { error: deleteError } =
-							await supabaseClient.storage
-								.from("IMAGES")
-								.remove([previousImagePath]);
+            // Handle image changes if there's a new image
+            if (formData.newImageFile) {
+                console.log("⭐️ updateProfile - New image file detected:", formData.newImageFile.name);
+                
+                // If there was a previous image, delete it first
+                if (state.user.profile?.images) {
+                    console.log("⭐️ updateProfile - Existing profile image found:", state.user.profile.images);
+                    const previousImagePath = state.user.profile.images.split("/IMAGES/")[1];
+                    console.log("⭐️ updateProfile - Previous image path:", previousImagePath);
+                    
+                    if (previousImagePath) {
+                        console.log("⭐️ updateProfile - Attempting to delete previous image");
+                        const { error: deleteError } = await supabaseClient.storage
+                            .from("IMAGES")
+                            .remove([previousImagePath]);
 
-						if (deleteError) {
-							console.error(
-								"Error deleting previous image:",
-								deleteError,
-							);
-						}
-					}
-				}
+                        if (deleteError) {
+                            console.error("⭐️ updateProfile - Error deleting previous image:", deleteError);
+                        } else {
+                            console.log("⭐️ updateProfile - Previous image deleted successfully");
+                        }
+                    }
+                } else {
+                    console.log("⭐️ updateProfile - No previous image to delete");
+                }
 
-				// Add timestamp to avoid caching issues
-				const timestamp = Date.now();
-				const fileName = `${userId}_${timestamp}`;
+                // Add timestamp to avoid caching issues
+                const timestamp = Date.now();
+                const fileName = `${userId}_${timestamp}`;
+                console.log("⭐️ updateProfile - New file name:", fileName);
 
-				// Upload the new image with the timestamp in the name
-				const { error: uploadError } = await supabaseClient.storage
-					.from("IMAGES")
-					.upload(`Avatars/${fileName}`, formData.newImageFile);
+                // Upload the new image with the timestamp in the name
+                console.log("⭐️ updateProfile - Uploading new image to Avatars/" + fileName);
+                const { error: uploadError } = await supabaseClient.storage
+                    .from("IMAGES")
+                    .upload(`Avatars/${fileName}`, formData.newImageFile);
 
-				if (uploadError) {
-					throw new Error(
-						`Error uploading file: ${uploadError.message}`,
-					);
-				}
+                if (uploadError) {
+                    console.error("⭐️ updateProfile - Error uploading file:", uploadError);
+                    throw new Error(`Error uploading file: ${uploadError.message}`);
+                }
+                console.log("⭐️ updateProfile - Image uploaded successfully");
 
-				// Get the public URL
-				const { data: publicUrlData } = supabaseClient.storage
-					.from("IMAGES")
-					.getPublicUrl(`Avatars/${fileName}`);
+                // Get the public URL
+                console.log("⭐️ updateProfile - Getting public URL for uploaded image");
+                const { data: publicUrlData } = supabaseClient.storage
+                    .from("IMAGES")
+                    .getPublicUrl(`Avatars/${fileName}`);
 
-				updateData.images = publicUrlData?.publicUrl || null;
-			} else if (formData.images === null && state.user.profile?.images) {
-				// If the image was removed (set to null)
-				const previousImagePath =
-					state.user.profile.images.split("/IMAGES/")[1];
-				if (previousImagePath) {
-					await supabaseClient.storage
-						.from("IMAGES")
-						.remove([previousImagePath]);
-				}
-				updateData.images = null;
-			}
+                updateData.images = publicUrlData?.publicUrl || null;
+                console.log("⭐️ updateProfile - Public URL set to:", updateData.images);
+            } else if (formData.images === null && state.user.profile?.images) {
+                // If the image was removed (set to null)
+                console.log("⭐️ updateProfile - Image removal requested");
+                const previousImagePath = state.user.profile.images.split("/IMAGES/")[1];
+                console.log("⭐️ updateProfile - Image to remove:", previousImagePath);
+                
+                if (previousImagePath) {
+                    console.log("⭐️ updateProfile - Attempting to delete image during removal");
+                    const { error, data } = await supabaseClient.storage
+                        .from("IMAGES")
+                        .remove([previousImagePath]);
 
-			// Update the profile in the database
-			const { data: profileData, error: profileError } =
-				await supabaseClient
-					.from("profiles")
-					.update(updateData)
-					.eq("id", userId)
-					.select()
-					.single();
+                    if (error) {
+                        console.error("⭐️ updateProfile - Error deleting image during removal:", error);
+                    } else {
+                        console.log("⭐️ updateProfile - Image deleted successfully during removal", data);
+                    }
+                }
+                updateData.images = null;
+                console.log("⭐️ updateProfile - Image set to null in update data");
+            } else {
+                console.log("⭐️ updateProfile - No image changes");
+            }
 
-			if (profileError) {
-				throw new Error(
-					`Error updating profile: ${profileError.message}`,
-				);
-			}
+            // Update the profile in the database
+            console.log("⭐️ updateProfile - Final update data to be sent:", updateData);
+            console.log("⭐️ updateProfile - Updating profile in database for user ID:", userId);
+            
+            const { data: profileData, error: profileError } = await supabaseClient
+                .from("profiles")
+                .update(updateData)
+                .eq("id", userId)
+                .select()
+                .single();
 
-			// Refresh user data
-			await dispatch(fetchUserData());
-			return profileData;
-		} catch (error: any) {
-			return rejectWithValue(error.message);
-		}
-	},
+            if (profileError) {
+                console.error("⭐️ updateProfile - Error updating profile:", profileError);
+                throw new Error(`Error updating profile: ${profileError.message}`);
+            }
+
+            console.log("⭐️ updateProfile - Profile updated successfully:", profileData);
+            
+            // Refresh user data
+            console.log("⭐️ updateProfile - Refreshing user data");
+            await dispatch(fetchUserData());
+            console.log("⭐️ updateProfile - User data refreshed");
+            
+            return profileData;
+        } catch (error: any) {
+            console.error("⭐️ updateProfile - Caught exception:", error);
+            return rejectWithValue(error.message);
+        }
+    },
 );
 
 export const fetchSuggestedPerfumes = createAsyncThunk(
@@ -338,7 +371,7 @@ export const fetchSuggestedPerfumes = createAsyncThunk(
 					} as ProfileSettingsProps,
 				}),
 			);
-
+            console.log("Suggested perfumes fetched:", perfumes);
 			return perfumes;
 		} catch (error: any) {
 			return rejectWithValue(error.message);
