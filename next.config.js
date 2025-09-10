@@ -5,7 +5,7 @@ export default {
         remotePatterns: [
             {
                 protocol: "https",
-                hostname: "lalzmarjvjsqavjsuiux.supabase.co",
+                hostname: "rvawaclaegzvpaqjexsb.supabase.co",
                 pathname: "/storage/v1/object/public/IMAGES/**",
             },
             {
