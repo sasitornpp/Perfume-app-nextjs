@@ -64,6 +64,13 @@ export default function PerfumeSearchInput({ formFilters, handleChange, handleSe
         setSelectedIndex(-1);
     };
 
+    const uniqueSuggestions = Array.from(
+        new Map(
+            suggestions.map((item) => [item.name.trim().toLowerCase(), item])
+        ).values()
+    );
+
+
     return (
         <div className="relative flex flex-col w-full">
             <div className="flex">
@@ -89,9 +96,9 @@ export default function PerfumeSearchInput({ formFilters, handleChange, handleSe
                     {loading ? <Loader2 className="animate-spin" size={25} /> : <SearchIcon size={25} />}
                 </Button>
             </div>
-            {showSuggestions && suggestions.length > 0 && (
+            {showSuggestions && uniqueSuggestions.length > 0 && (
                 <ul className="absolute top-full left-0 right-0 bg-white border rounded shadow mt-1 z-50 max-h-60 overflow-y-auto">
-                    {suggestions.map((item, index) => (
+                    {uniqueSuggestions.map((item, index) => (
                         <li
                             key={index}
                             className={`px-4 py-2 cursor-pointer ${index === selectedIndex ? "bg-gray-200" : "hover:bg-gray-100"
@@ -99,7 +106,7 @@ export default function PerfumeSearchInput({ formFilters, handleChange, handleSe
                             onMouseDown={() => handleSelectSuggestion(item.name)}
                             onMouseEnter={() => setSelectedIndex(index)}
                         >
-                            {item.name}
+                            {item.name.trim()}
                         </li>
                     ))}
                 </ul>
