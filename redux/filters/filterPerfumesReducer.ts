@@ -21,7 +21,7 @@ export interface Filters {
 	top_notes_filter: string[];
 	middle_notes_filter: string[];
 	base_notes_filter: string[];
-    is_tradable_filter: boolean;
+	is_tradable_filter: boolean;
 }
 
 export const initialValues: Filters = {
@@ -32,12 +32,13 @@ export const initialValues: Filters = {
 	top_notes_filter: [],
 	middle_notes_filter: [],
 	base_notes_filter: [],
-    is_tradable_filter: false,
+	is_tradable_filter: false,
 };
 
 interface FilterPerfumesState {
 	perfumes: { [key: string]: Perfume[] };
 	Filters: Filters | null;
+	suggestions: {name:string}[];
 	error: string | null;
 	loading: boolean;
 }
@@ -45,6 +46,7 @@ interface FilterPerfumesState {
 const initialState: FilterPerfumesState = {
 	perfumes: {},
 	Filters: null,
+	suggestions: [],
 	error: null,
 	loading: false,
 };
@@ -59,13 +61,13 @@ export const areFiltersEqual = (
 		f1.brand_filter === f2.brand_filter &&
 		f1.gender_filter === f2.gender_filter &&
 		JSON.stringify(f1.accords_filter.sort()) ===
-			JSON.stringify(f2.accords_filter.sort()) &&
+		JSON.stringify(f2.accords_filter.sort()) &&
 		JSON.stringify(f1.top_notes_filter.sort()) ===
-			JSON.stringify(f2.top_notes_filter.sort()) &&
+		JSON.stringify(f2.top_notes_filter.sort()) &&
 		JSON.stringify(f1.middle_notes_filter.sort()) ===
-			JSON.stringify(f2.middle_notes_filter.sort()) &&
+		JSON.stringify(f2.middle_notes_filter.sort()) &&
 		JSON.stringify(f1.base_notes_filter.sort()) ===
-			JSON.stringify(f2.base_notes_filter.sort())
+		JSON.stringify(f2.base_notes_filter.sort())
 	);
 };
 
@@ -188,9 +190,41 @@ const filterPerfumesSlice = createSlice({
 			.addCase(fetchPerfumesByFilters.rejected, (state, action) => {
 				state.loading = false;
 				state.error = action.payload as string;
+			})
+			// Suggestions
+			.addCase(fetchPerfumeSuggestions.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(fetchPerfumeSuggestions.fulfilled, (state, action) => {
+				state.loading = false;
+				state.suggestions = action.payload;
+			})
+			.addCase(fetchPerfumeSuggestions.rejected, (state, action) => {
+				state.loading = false;
+				state.error = action.payload as string;
 			});
+
+
 	},
 });
+
+
+export const fetchPerfumeSuggestions = createAsyncThunk(
+	"filterPerfumes/fetchPerfumeSuggestions",
+	async (query: string, { rejectWithValue }) => {
+		try {
+			const { data, error } = await supabaseClient.rpc("perfume_suggestions", {
+				query,
+			});
+			if (error) throw error;
+			return data as { name: string }[];
+		} catch (err: any) {
+			return rejectWithValue(err.message);
+		}
+	}
+);
+
 
 export const { setFilters, clearFilters, clearError } =
 	filterPerfumesSlice.actions;

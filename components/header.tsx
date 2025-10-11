@@ -144,7 +144,7 @@ function Header({ pathname }: HeaderProps) {
 									className="flex items-center"
 								>
 									<Image
-										src="https://lalzmarjvjsqavjsuiux.supabase.co/storage/v1/object/public/IMAGES/Logo/a.png"
+										src="https://rvawaclaegzvpaqjexsb.supabase.co/storage/v1/object/public/IMAGES/Logo/a.png"
 										alt="Perfume Boutique"
 										width={120}
 										height={60}

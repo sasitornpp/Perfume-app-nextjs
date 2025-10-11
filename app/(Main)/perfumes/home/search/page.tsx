@@ -39,9 +39,12 @@ import {
 	setFilters,
 	clearFilters as clear_Filters,
 	setFiltersAndFetch,
+	fetchPerfumeSuggestions,
+	fetchPerfumesByFilters,
 } from "@/redux/filters/filterPerfumesReducer";
 import SearchSidebar from "@/components/sidebar/search-sidebar";
 import { AppDispatch } from "@/redux/Store";
+import PerfumeSearchInput from "@/components/perfume-search/perfume-search-input";
 
 function Search() {
 	const dispatch = useDispatch<AppDispatch>();
@@ -70,6 +73,10 @@ function Search() {
 	const [showFilters, setShowFilters] = useState(false);
 	const [searchFocused, setSearchFocused] = useState(false);
 	const [resultCount, setResultCount] = useState(0);
+
+	const suggestions = useSelector((state: RootState) => state.filters.suggestions);
+
+
 
 	// Update result count
 	useEffect(() => {
@@ -101,6 +108,9 @@ function Search() {
 		dispatch(setPerfumesPage(1));
 	};
 
+
+
+
 	// Handle array-type filters (like notes and accords)
 	const handleArrayFilter = (key: keyof Filters, value: string) => {
 		setSearchQuery(true);
@@ -126,6 +136,15 @@ function Search() {
 			dispatch(setFiltersAndFetch(formFilters));
 		}
 	};
+
+	// Handle search input change for suggestions
+	const handleSearchInputChange = (value: string) => {
+		handleChange("search_query", value);
+		if (value.length > 0) {
+			dispatch(fetchPerfumeSuggestions(value));
+		}
+	};
+
 
 	// Clear search input
 	const clearSearchInput = () => {
@@ -298,38 +317,14 @@ function Search() {
 					}}
 					transition={{ duration: 0.3 }}
 				>
-					<div className="flex">
-						<Input
-							className={`pl-10 pr-4 py-6 rounded-l-full border-2 transition-all ${
-								searchFocused
-									? "border-primary shadow-lg"
-									: "border-border shadow-sm"
-							}`}
-							placeholder="Search perfumes by name..."
-							value={formFilters?.search_query ?? ""}
-							onChange={(e) =>
-								handleChange("search_query", e.target.value)
-							}
-							onKeyDown={(e) =>
-								e.key === "Enter" && handleSearch()
-							}
-							onFocus={() => setSearchFocused(true)}
-							onBlur={() => setSearchFocused(false)}
-							disabled={loading}
-						/>
-						<Button
-							onClick={handleSearch}
-							className="rounded-r-full px-6 shadow-md h-13"
-							variant="default"
-							disabled={loading}
-						>
-							{loading ? (
-								<Loader2 className="animate-spin" size={25} />
-							) : (
-								<SearchIcon size={25} />
-							)}
-						</Button>
-					</div>
+					<PerfumeSearchInput
+						formFilters={formFilters}
+						handleChange={handleChange}
+						handleSearch={handleSearch}
+						searchFocused={searchFocused}
+						setSearchFocused={setSearchFocused}
+						loading={loading}
+					/>
 					<SearchIcon
 						className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
 						size={20}
@@ -354,148 +349,148 @@ function Search() {
 					(formFilters?.top_notes_filter?.length ?? 0) > 0 ||
 					(formFilters?.middle_notes_filter.length ?? 0) > 0 ||
 					(formFilters?.base_notes_filter.length ?? 0) > 0) && (
-					<div className="flex flex-wrap gap-2 mt-2">
-						{formFilters?.search_query && (
-							<Badge variant="secondary" className="px-3 py-1">
-								Search: {formFilters?.search_query}
-								<Button
-									variant="ghost"
-									size="icon"
-									className="ml-1 h-4 w-4 p-0"
-									onClick={() =>
-										handleChange("search_query", "")
-									}
-								>
-									<X size={12} />
-								</Button>
-							</Badge>
-						)}
+						<div className="flex flex-wrap gap-2 mt-2">
+							{formFilters?.search_query && (
+								<Badge variant="secondary" className="px-3 py-1">
+									Search: {formFilters?.search_query}
+									<Button
+										variant="ghost"
+										size="icon"
+										className="ml-1 h-4 w-4 p-0"
+										onClick={() =>
+											handleChange("search_query", "")
+										}
+									>
+										<X size={12} />
+									</Button>
+								</Badge>
+							)}
 
-						{formFilters?.brand_filter && (
-							<Badge variant="secondary" className="px-3 py-1">
-								Brand: {formFilters?.brand_filter}
-								<Button
-									variant="ghost"
-									size="icon"
-									className="ml-1 h-4 w-4 p-0"
-									onClick={() =>
-										handleChange("brand_filter", null)
-									}
-								>
-									<X size={12} />
-								</Button>
-							</Badge>
-						)}
+							{formFilters?.brand_filter && (
+								<Badge variant="secondary" className="px-3 py-1">
+									Brand: {formFilters?.brand_filter}
+									<Button
+										variant="ghost"
+										size="icon"
+										className="ml-1 h-4 w-4 p-0"
+										onClick={() =>
+											handleChange("brand_filter", null)
+										}
+									>
+										<X size={12} />
+									</Button>
+								</Badge>
+							)}
 
-						{formFilters?.gender_filter && (
-							<Badge variant="secondary" className="px-3 py-1">
-								Gender: {formFilters?.gender_filter}
-								<Button
-									variant="ghost"
-									size="icon"
-									className="ml-1 h-4 w-4 p-0"
-									onClick={() =>
-										handleChange("gender_filter", null)
-									}
-								>
-									<X size={12} />
-								</Button>
-							</Badge>
-						)}
+							{formFilters?.gender_filter && (
+								<Badge variant="secondary" className="px-3 py-1">
+									Gender: {formFilters?.gender_filter}
+									<Button
+										variant="ghost"
+										size="icon"
+										className="ml-1 h-4 w-4 p-0"
+										onClick={() =>
+											handleChange("gender_filter", null)
+										}
+									>
+										<X size={12} />
+									</Button>
+								</Badge>
+							)}
 
-						{formFilters?.accords_filter.map((accord) => (
-							<Badge
-								key={accord}
-								variant="secondary"
-								className="px-3 py-1"
-							>
-								Accord: {accord}
-								<Button
-									variant="ghost"
-									size="icon"
-									className="ml-1 h-4 w-4 p-0"
-									onClick={() =>
-										handleArrayFilter(
-											"accords_filter",
-											accord,
-										)
-									}
+							{formFilters?.accords_filter.map((accord) => (
+								<Badge
+									key={accord}
+									variant="secondary"
+									className="px-3 py-1"
 								>
-									<X size={12} />
-								</Button>
-							</Badge>
-						))}
+									Accord: {accord}
+									<Button
+										variant="ghost"
+										size="icon"
+										className="ml-1 h-4 w-4 p-0"
+										onClick={() =>
+											handleArrayFilter(
+												"accords_filter",
+												accord,
+											)
+										}
+									>
+										<X size={12} />
+									</Button>
+								</Badge>
+							))}
 
-						{formFilters?.top_notes_filter.map((note) => (
-							<Badge
-								key={`top-${note}`}
-								variant="secondary"
-								className="px-3 py-1"
-							>
-								Top: {note}
-								<Button
-									variant="ghost"
-									size="icon"
-									className="ml-1 h-4 w-4 p-0"
-									onClick={() =>
-										handleArrayFilter(
-											"top_notes_filter",
-											note,
-										)
-									}
+							{formFilters?.top_notes_filter.map((note) => (
+								<Badge
+									key={`top-${note}`}
+									variant="secondary"
+									className="px-3 py-1"
 								>
-									<X size={12} />
-								</Button>
-							</Badge>
-						))}
+									Top: {note}
+									<Button
+										variant="ghost"
+										size="icon"
+										className="ml-1 h-4 w-4 p-0"
+										onClick={() =>
+											handleArrayFilter(
+												"top_notes_filter",
+												note,
+											)
+										}
+									>
+										<X size={12} />
+									</Button>
+								</Badge>
+							))}
 
-						{formFilters?.middle_notes_filter.map((note) => (
-							<Badge
-								key={`mid-${note}`}
-								variant="secondary"
-								className="px-3 py-1"
-							>
-								Mid: {note}
-								<Button
-									variant="ghost"
-									size="icon"
-									className="ml-1 h-4 w-4 p-0"
-									onClick={() =>
-										handleArrayFilter(
-											"middle_notes_filter",
-											note,
-										)
-									}
+							{formFilters?.middle_notes_filter.map((note) => (
+								<Badge
+									key={`mid-${note}`}
+									variant="secondary"
+									className="px-3 py-1"
 								>
-									<X size={12} />
-								</Button>
-							</Badge>
-						))}
+									Mid: {note}
+									<Button
+										variant="ghost"
+										size="icon"
+										className="ml-1 h-4 w-4 p-0"
+										onClick={() =>
+											handleArrayFilter(
+												"middle_notes_filter",
+												note,
+											)
+										}
+									>
+										<X size={12} />
+									</Button>
+								</Badge>
+							))}
 
-						{formFilters?.base_notes_filter.map((note) => (
-							<Badge
-								key={`base-${note}`}
-								variant="secondary"
-								className="px-3 py-1"
-							>
-								Base: {note}
-								<Button
-									variant="ghost"
-									size="icon"
-									className="ml-1 h-4 w-4 p-0"
-									onClick={() =>
-										handleArrayFilter(
-											"base_notes_filter",
-											note,
-										)
-									}
+							{formFilters?.base_notes_filter.map((note) => (
+								<Badge
+									key={`base-${note}`}
+									variant="secondary"
+									className="px-3 py-1"
 								>
-									<X size={12} />
-								</Button>
-							</Badge>
-						))}
-					</div>
-				)}
+									Base: {note}
+									<Button
+										variant="ghost"
+										size="icon"
+										className="ml-1 h-4 w-4 p-0"
+										onClick={() =>
+											handleArrayFilter(
+												"base_notes_filter",
+												note,
+											)
+										}
+									>
+										<X size={12} />
+									</Button>
+								</Badge>
+							))}
+						</div>
+					)}
 			</div>
 
 			{/* Results grid with animations */}
@@ -583,11 +578,10 @@ function Search() {
 									aria-disabled={
 										pagination.perfumesPage === 1
 									}
-									className={`transition-all duration-200 hover:scale-105 ${
-										pagination.perfumesPage === 1
-											? "pointer-events-none opacity-50"
-											: ""
-									}`}
+									className={`transition-all duration-200 hover:scale-105 ${pagination.perfumesPage === 1
+										? "pointer-events-none opacity-50"
+										: ""
+										}`}
 								/>
 							</PaginationItem>
 
@@ -602,11 +596,10 @@ function Search() {
 											),
 										)
 									}
-									className={`transition-all duration-200 hover:scale-105 ${
-										pagination.perfumesPage === totalPages
-											? "pointer-events-none opacity-50"
-											: ""
-									}`}
+									className={`transition-all duration-200 hover:scale-105 ${pagination.perfumesPage === totalPages
+										? "pointer-events-none opacity-50"
+										: ""
+										}`}
 								/>
 							</PaginationItem>
 						</PaginationContent>
