@@ -133,6 +133,8 @@ function PerfumeQuiz() {
 	const [selectedAccords, setSelectedAccords] = useState<string[]>([]);
 	const [activeNotesTab, setActiveNotesTab] = useState("top");
 
+
+
 	// Filter and sort data
 	const filteredAccords = useMemo(() => {
 		return (
@@ -248,12 +250,76 @@ function PerfumeQuiz() {
 		});
 	};
 
+	// Quiz validation
+	const [formErrors, setFormErrors] = useState<string[]>([]);
+	const validateStep = (stepComponent: string): string[] => {
+		const errors: string[] = [];
+
+		switch (stepComponent) {
+			case "gender":
+				if (!formData.gender_filter)
+					errors.push("Please select a gender preference.");
+				break;
+
+			case "situation":
+				if (!formData.accords_filter || formData.accords_filter.length === 0)
+					errors.push("Please select at least one occasion.");
+				break;
+
+			case "accords":
+				if (!selectedAccords.length)
+					errors.push("Please select at least one fragrance accord.");
+				break;
+
+			case "notes":
+				if (
+					formData.top_notes_filter.length === 0 &&
+					formData.middle_notes_filter.length === 0 &&
+					formData.base_notes_filter.length === 0
+				)
+					errors.push("Please select at least one note.");
+				break;
+
+			case "birthday":
+				const allBirthdayAccords = Object.values(birthdateAccords).flat();
+
+				const hasBirthdayAccord = formData.accords_filter.some((accord) =>
+					allBirthdayAccords.includes(accord)
+				);
+
+				if (!hasBirthdayAccord) {
+					errors.push("Please select your birthday.");
+				}
+				break;
+
+			case "brand":
+				break;
+
+			default:
+				break;
+		}
+
+		return errors;
+	};
+
+
 	const handleNext = () => {
+		const stepComponent = steps[currentStep].component;
+		const errors = validateStep(stepComponent);
+
+		if (errors.length > 0) {
+			setFormErrors(errors);
+			window.scrollTo(0, 0);
+			return;
+		}
+
+		setFormErrors([]);
 		if (currentStep < totalSteps - 1) {
 			setCurrentStep(currentStep + 1);
 			window.scrollTo(0, 0);
 		}
 	};
+
 
 	const handlePrevious = () => {
 		if (currentStep > 0) {
@@ -264,15 +330,19 @@ function PerfumeQuiz() {
 
 	const handleSubmit = () => {
 		dispatch(fetchSuggestedPerfumes({ filters: formData }));
+
+		// Navigate without reload
 		router.push("/profile?q=recommendations");
 	};
 
 	const renderStepContent = () => {
-		const step = steps[currentStep];
 
+		const step = steps[currentStep];
+		let stepContent = null;
+		console.log("Step component:", steps[currentStep].component);
 		switch (step.component) {
 			case "welcome":
-				return (
+				stepContent = (
 					<div className="space-y-6 mt-6 text-center">
 						<div className="mx-auto w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
 							<Heart className="h-12 w-12 text-primary" />
@@ -300,9 +370,9 @@ function PerfumeQuiz() {
 						</div>
 					</div>
 				);
-
+				break;
 			case "gender":
-				return (
+				stepContent = (
 					<div className="space-y-6 mt-6">
 						<div className="grid grid-cols-2 gap-4">
 							{["Male", "Female"].map((gender) => (
@@ -310,9 +380,9 @@ function PerfumeQuiz() {
 									key={gender}
 									variant={
 										formData.gender_filter ===
-										(gender === "Male"
-											? "for men"
-											: "for women")
+											(gender === "Male"
+												? "for men"
+												: "for women")
 											? "default"
 											: "outline"
 									}
@@ -326,14 +396,13 @@ function PerfumeQuiz() {
 									}
 								>
 									<div
-										className={`w-16 h-16 rounded-full mb-2 flex items-center justify-center ${
-											formData.gender_filter ===
+										className={`w-16 h-16 rounded-full mb-2 flex items-center justify-center ${formData.gender_filter ===
 											(gender === "Male"
 												? "for men"
 												: "for women")
-												? "bg-background"
-												: "bg-primary/10"
-										}`}
+											? "bg-background"
+											: "bg-primary/10"
+											}`}
 									>
 										{gender === "Male" ? (
 											<Men />
@@ -358,9 +427,9 @@ function PerfumeQuiz() {
 						</Button>
 					</div>
 				);
-
+				break;
 			case "situation":
-				return (
+				stepContent = (
 					<div className="space-y-6 mt-6">
 						<div className="grid grid-cols-2 md:grid-cols-3 gap-4">
 							{Object.keys(situation).map((key) => (
@@ -370,9 +439,9 @@ function PerfumeQuiz() {
 										JSON.stringify(
 											formData.accords_filter,
 										) ===
-										JSON.stringify(
-											situation[key as SituationType],
-										)
+											JSON.stringify(
+												situation[key as SituationType],
+											)
 											? "default"
 											: "outline"
 									}
@@ -384,16 +453,15 @@ function PerfumeQuiz() {
 									}
 								>
 									<div
-										className={`w-12 h-12 rounded-full flex items-center justify-center ${
-											JSON.stringify(
-												formData.accords_filter,
-											) ===
+										className={`w-12 h-12 rounded-full flex items-center justify-center ${JSON.stringify(
+											formData.accords_filter,
+										) ===
 											JSON.stringify(
 												situation[key as SituationType],
 											)
-												? "bg-background"
-												: "bg-primary/10"
-										}`}
+											? "bg-background"
+											: "bg-primary/10"
+											}`}
 									>
 										{key === "daily" && (
 											<Coffee className="h-6 w-6" />
@@ -432,9 +500,9 @@ function PerfumeQuiz() {
 						</div>
 					</div>
 				);
-
+				break;
 			case "accords":
-				return (
+				stepContent = (
 					<div className="space-y-4 mt-6">
 						<div className="relative">
 							<Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -464,12 +532,11 @@ function PerfumeQuiz() {
 											? "default"
 											: "outline"
 									}
-									className={`cursor-pointer px-3 py-1.5 text-sm ${
-										selectedAccords.length >= 5 &&
+									className={`cursor-pointer px-3 py-1.5 text-sm ${selectedAccords.length >= 5 &&
 										!selectedAccords.includes(accord)
-											? "opacity-50"
-											: ""
-									}`}
+										? "opacity-50"
+										: ""
+										}`}
 									onClick={() => handleAccordToggle(accord)}
 								>
 									{accord}
@@ -511,9 +578,9 @@ function PerfumeQuiz() {
 						)}
 					</div>
 				);
-
+				break;
 			case "notes":
-				return (
+				stepContent = (
 					<div className="space-y-4 mt-4">
 						<Tabs
 							value={activeNotesTab}
@@ -782,8 +849,9 @@ function PerfumeQuiz() {
 						</TooltipProvider>
 					</div>
 				);
+				break;
 			case "birthday":
-				return (
+				stepContent = (
 					<div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
 						{Object.entries(birthdateAccords).map(
 							([day, accords]) => (
@@ -813,9 +881,9 @@ function PerfumeQuiz() {
 						)}
 					</div>
 				);
-
+				break;
 			case "brand":
-				return (
+				stepContent = (
 					<div className="space-y-4 mt-6">
 						<div className="relative">
 							<Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -881,11 +949,35 @@ function PerfumeQuiz() {
 						</Button>
 					</div>
 				);
-
+				break;
 			default:
-				return null;
+				if (!stepContent) {
+					stepContent = null;
+				}
+				break;
 		}
+		console.log("Rendering step content for:", stepContent);
+
+
+		return (
+			<>
+				{formErrors.length > 0 && (
+					<div className="bg-red-100 text-red-700 p-3 rounded-md mb-4">
+						<ul className="list-disc pl-5 space-y-1">
+							{formErrors.map((err, idx) => (
+								<li key={idx}>{err}</li>
+							))}
+						</ul>
+					</div>
+				)}
+				<div>
+					{stepContent}
+				</div>
+			</>
+		);
 	};
+
+
 
 	return (
 		<div className="min-h-screen bg-background flex items-center justify-center p-4 py-10">
