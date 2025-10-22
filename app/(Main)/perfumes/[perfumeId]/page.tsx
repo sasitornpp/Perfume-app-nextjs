@@ -35,6 +35,7 @@ import CommentSection from "@/components/comment-section";
 import { toggleLikePerfume } from "@/redux/perfume/perfumeReducer";
 import { removePerfume, togglePerfumeToBasket } from "@/redux/user/userReducer";
 import AddPerfumeToAlbumButton from "@/components/album/add-perfume";
+import SellersList from "@/components/sellers-list/sellers-list";
 
 function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 	const router = useRouter();
@@ -265,11 +266,10 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 									perfume.images.map((image, index) => (
 										<motion.div
 											key={index}
-											className={`relative aspect-square w-20 h-20 flex-shrink-0 overflow-hidden rounded-md cursor-pointer border-2 ${
-												activeImage === index
-													? "border-primary"
-													: "border-transparent"
-											}`}
+											className={`relative aspect-square w-20 h-20 flex-shrink-0 overflow-hidden rounded-md cursor-pointer border-2 ${activeImage === index
+												? "border-primary"
+												: "border-transparent"
+												}`}
 											onClick={() =>
 												setActiveImage(index)
 											}
@@ -338,24 +338,23 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 									onClick={handleLikes}
 								>
 									<Heart
-										className={`h-4 w-4 ${
-											user &&
+										className={`h-4 w-4 ${user &&
 											perfume.likes.includes(user.id)
-												? "fill-primary text-primary"
-												: ""
-										}`}
+											? "fill-primary text-primary"
+											: ""
+											}`}
 									/>
 								</Button>
 								<span className="font-medium text-foreground bg-secondary/30 px-3 py-1 rounded-full">
 									{perfume.likes.length >= 1000
 										? perfume.likes.length >= 1000000
 											? (
-													perfume.likes.length /
-													1000000
-												).toFixed(1) + "M"
+												perfume.likes.length /
+												1000000
+											).toFixed(1) + "M"
 											: (
-													perfume.likes.length / 1000
-												).toFixed(1) + "K"
+												perfume.likes.length / 1000
+											).toFixed(1) + "K"
 										: perfume.likes.length}
 								</span>
 								<Badge className="bg-accent text-accent-foreground rounded-full">
@@ -367,8 +366,8 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 								>
 									{perfume.created_at
 										? `${new Date(
-												perfume.created_at,
-											).getFullYear()} Edition`
+											perfume.created_at,
+										).getFullYear()} Edition`
 										: "Unknown"}{" "}
 								</Badge>
 							</div>
@@ -386,7 +385,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 													? `${perfume.descriptions.substring(0, 150)}...`
 													: perfume?.descriptions
 												: perfume?.descriptions ||
-													"No description available"}
+												"No description available"}
 									</p>
 									{perfume?.descriptions &&
 										perfume.descriptions.length > 150 && (
@@ -552,7 +551,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 					<Card className="w-full border-border/50 bg-card shadow-sm rounded-lg">
 						<CardContent className="p-0">
 							<Tabs defaultValue="notes" className="w-full">
-								<TabsList className="w-full grid grid-cols-2 rounded-lg border-b border-border/50">
+								<TabsList className={`w-full grid ${!perfume.is_tradable ? 'grid-cols-3':'grid-cols-2'} rounded-lg border-b border-border/50`}>
 									<TabsTrigger
 										value="notes"
 										className="rounded-none data-[state=active]:bg-background/50"
@@ -565,6 +564,13 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 									>
 										Details
 									</TabsTrigger>
+									{!perfume.is_tradable && <TabsTrigger
+										value="sellers"
+										className="rounded-none data-[state=active]:bg-background/50"
+									>
+										Sellers
+									</TabsTrigger>}
+
 								</TabsList>
 
 								<TabsContent
@@ -721,7 +727,7 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 													</p>
 												</div>
 											)}
-											
+
 											{perfume.scent_type && (
 												<div>
 													<p className="text-sm text-muted-foreground mb-1">
@@ -748,66 +754,72 @@ function PerfumePage({ params }: { params: Promise<{ perfumeId: string }> }) {
 										{(perfume.facebook ||
 											perfume.line ||
 											perfume.phone_number) && (
-											<>
-												<Separator className="bg-border/50" />
-												<div className="space-y-3">
-													<p className="text-sm text-muted-foreground">
-														Contact Information
-													</p>
-													<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-														{perfume.facebook && (
-															<div>
-																<p className="text-sm text-muted-foreground mb-1">
-																	Facebook
-																</p>
-																<a
-																	href={
-																		perfume.facebook.startsWith(
-																			"http",
-																		)
-																			? perfume.facebook
-																			: `https://${perfume.facebook}`
-																	}
-																	target="_blank"
-																	rel="noopener noreferrer"
-																	className="font-medium text-primary hover:underline"
-																>
-																	View Profile
-																</a>
-															</div>
-														)}
-														{perfume.line && (
-															<div>
-																<p className="text-sm text-muted-foreground mb-1">
-																	Line
-																</p>
-																<p className="font-medium">
-																	{
-																		perfume.line
-																	}
-																</p>
-															</div>
-														)}
-														{perfume.phone_number && (
-															<div>
-																<p className="text-sm text-muted-foreground mb-1">
-																	Phone
-																</p>
-																<a
-																	href={`tel:${perfume.phone_number}`}
-																	className="font-medium text-primary hover:underline"
-																>
-																	{
-																		perfume.phone_number
-																	}
-																</a>
-															</div>
-														)}
+												<>
+													<Separator className="bg-border/50" />
+													<div className="space-y-3">
+														<p className="text-sm text-muted-foreground">
+															Contact Information
+														</p>
+														<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+															{perfume.facebook && (
+																<div>
+																	<p className="text-sm text-muted-foreground mb-1">
+																		Facebook
+																	</p>
+																	<a
+																		href={
+																			perfume.facebook.startsWith(
+																				"http",
+																			)
+																				? perfume.facebook
+																				: `https://${perfume.facebook}`
+																		}
+																		target="_blank"
+																		rel="noopener noreferrer"
+																		className="font-medium text-primary hover:underline"
+																	>
+																		View Profile
+																	</a>
+																</div>
+															)}
+															{perfume.line && (
+																<div>
+																	<p className="text-sm text-muted-foreground mb-1">
+																		Line
+																	</p>
+																	<p className="font-medium">
+																		{
+																			perfume.line
+																		}
+																	</p>
+																</div>
+															)}
+															{perfume.phone_number && (
+																<div>
+																	<p className="text-sm text-muted-foreground mb-1">
+																		Phone
+																	</p>
+																	<a
+																		href={`tel:${perfume.phone_number}`}
+																		className="font-medium text-primary hover:underline"
+																	>
+																		{
+																			perfume.phone_number
+																		}
+																	</a>
+																</div>
+															)}
+														</div>
 													</div>
-												</div>
-											</>
-										)}
+												</>
+											)}
 									</div>
+								</TabsContent>
+								<TabsContent
+									value="sellers"
+									className="p-6 rounded-lg"
+								>
+									<SellersList perfume={perfume} />
 								</TabsContent>
 							</Tabs>
 						</CardContent>

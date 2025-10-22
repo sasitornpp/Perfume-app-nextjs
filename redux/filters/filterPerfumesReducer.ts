@@ -22,6 +22,15 @@ export interface Filters {
 	middle_notes_filter: string[];
 	base_notes_filter: string[];
 	is_tradable_filter: boolean;
+
+}
+
+interface Seller {
+    perfume_id: string;
+    perfume_name: string;
+    seller_name: string;
+    seller_user_id: string;
+    seller_image: string;
 }
 
 export const initialValues: Filters = {
@@ -38,7 +47,8 @@ export const initialValues: Filters = {
 interface FilterPerfumesState {
 	perfumes: { [key: string]: Perfume[] };
 	Filters: Filters | null;
-	suggestions: {name:string}[];
+	suggestions: { name: string }[];
+	sellers: { [key: string]: Seller[] };
 	error: string | null;
 	loading: boolean;
 }
@@ -47,6 +57,7 @@ const initialState: FilterPerfumesState = {
 	perfumes: {},
 	Filters: null,
 	suggestions: [],
+	sellers: {},
 	error: null,
 	loading: false,
 };
@@ -203,7 +214,21 @@ const filterPerfumesSlice = createSlice({
 			.addCase(fetchPerfumeSuggestions.rejected, (state, action) => {
 				state.loading = false;
 				state.error = action.payload as string;
+			})
+			.addCase(fetchSellersByPerfume.pending, (state) => {
+				state.loading = true;
+				state.error = null;
+			})
+			.addCase(fetchSellersByPerfume.fulfilled, (state, action: PayloadAction<Seller[]>) => {
+				state.loading = false;
+				state.sellers = { ...state.sellers, sellers: action.payload };
+
+			})
+			.addCase(fetchSellersByPerfume.rejected, (state, action) => {
+				state.loading = false;
+				state.error = action.payload as string;
 			});
+
 
 
 	},
@@ -224,6 +249,24 @@ export const fetchPerfumeSuggestions = createAsyncThunk(
 		}
 	}
 );
+
+export const fetchSellersByPerfume = createAsyncThunk(
+	"filterPerfumes/fetchSellersByPerfume",
+	async (perfumeName: string, { rejectWithValue }) => {
+		try {
+			const { data, error } = await supabaseClient.rpc(
+				"search_tradeable_perfumes",
+				{ query_text: perfumeName.trim() }
+			);
+			if (error) throw error;
+			return data as Seller[];
+		} catch (err: any) {
+			return rejectWithValue(err.message);
+		}
+	}
+);
+
+
 
 
 export const { setFilters, clearFilters, clearError } =

@@ -177,11 +177,7 @@ function TabImage({
 										>
 											<div className="relative aspect-square">
 												<Image
-													src={
-														allImages[
-															selectedImageIndex
-														] || ""
-													}
+													src={allImages[selectedImageIndex]}
 													alt="Preview"
 													fill
 													className="object-contain"
@@ -320,7 +316,7 @@ function TabImage({
 														"flex flex-col items-center justify-center h-full rounded-xl cursor-pointer",
 														"border-2 border-dashed border-primary/30 bg-muted/5 hover:bg-primary/5 transition-colors",
 														isUploading &&
-															"opacity-50 cursor-not-allowed",
+														"opacity-50 cursor-not-allowed",
 													)}
 												>
 													<div className="flex flex-col items-center justify-center p-4">

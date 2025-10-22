@@ -100,7 +100,7 @@ function Home() {
 			{/* Hero Section */}
 			<div className="relative w-full max-w-5xl mx-auto mt-8 mb-16 overflow-hidden rounded-xl">
 				<div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary/30 z-10 rounded-xl"></div>
-				<div className="absolute inset-0 bg-[url('/hero-bg.jpg')] bg-cover bg-center opacity-40"></div>
+				<div className="absolute inset-0 bg-cover bg-center opacity-40"></div>
 
 				<div className="relative z-20 py-20 px-6 md:px-12 flex flex-col items-center text-center">
 					<motion.h1
@@ -206,25 +206,27 @@ function Home() {
 											<Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02]">
 												<CardContent className="p-0 flex flex-col h-full">
 													<div className="relative aspect-square overflow-hidden">
-														<Image
-															src={
-																perfume
-																	.images[0]
-															}
-															alt={`${perfume.name} by ${perfume.brand}`}
-															fill
-															className="object-cover"
-															priority={index < 2}
-														/>
+														{perfume.images?.[0] ? (
+															<Image
+																src={perfume.images[0]}
+																alt={`${perfume.name} by ${perfume.brand}`}
+																fill
+																className="object-cover"
+																priority={index < 2}
+															/>
+														) : (
+															<div className="bg-gray-200 flex items-center justify-center w-full h-full">
+																<span className="text-gray-500 text-sm">No image</span>
+															</div>
+														)}
+
 														<div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
 														<div className="absolute bottom-0 left-0 right-0 p-4 text-white">
 															<div className="flex items-center gap-2 mb-2">
 																<div className="relative w-6 h-6 rounded-full overflow-hidden">
 																	{perfume.logo && (
 																		<Image
-																			src={
-																				perfume.logo
-																			}
+																			src={perfume.logo}
 																			alt={
 																				perfume.brand ||
 																				"test"
