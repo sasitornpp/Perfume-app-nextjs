@@ -4,6 +4,112 @@
 
 ระบบแนะนำน้ำหอมเป็นระบบที่ช่วยผู้ใช้ค้นหาน้ำหอมที่เหมาะสมกับความต้องการโดยผ่านแบบฟอร์ม Quiz ที่มี 7 ขั้นตอน ระบบจะคำนวณคะแนนความเหมาะสม (match score) จากข้อมูลที่ผู้ใช้กรอก และแสดงผลน้ำหอมที่เหมาะสมที่สุด
 
+## Data Flow Diagram (แผนภาพการไหลของข้อมูล)
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           USER (ผู้ใช้)                                 │
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │
+                                 │ เข้าหน้า Quiz
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│              /components/perfume-quiz.tsx                               │
+│                    (QUIZ COMPONENT)                                     │
+├─────────────────────────────────────────────────────────────────────────┤
+│  Step 1: Welcome                                                        │
+│  Step 2: Gender (for men / for women / No Preference)                  │
+│  Step 3: Situation (daily / formal / date / party / exercise)          │
+│  Step 4: Accords (เลือกสูงสุด 5 รายการ)                                │
+│  Step 5: Notes (top / middle / base)                                    │
+│  Step 6: Birthday (Monday-Sunday → accord mapping)                      │
+│  Step 7: Brand (เลือก 1 แบรนด์ หรือไม่เลือก)                           │
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │
+                                 │ กด "Find My Fragrances"
+                                 │ 
+                                 │ formData = {
+                                 │   gender_filter: "for men",
+                                 │   accords_filter: ["woody", "fresh"],
+                                 │   top_notes_filter: ["bergamot"],
+                                 │   middle_notes_filter: ["lavender"],
+                                 │   base_notes_filter: ["cedar"],
+                                 │   brand_filter: "Dior"
+                                 │ }
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│           /redux/user/userReducer.ts                                    │
+│              fetchSuggestedPerfumes                                     │
+├─────────────────────────────────────────────────────────────────────────┤
+│  1. รับ filters จาก Quiz                                               │
+│  2. เรียก Supabase RPC function                                         │
+│     supabaseClient.rpc("filter_perfumes", filters)                      │
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │
+                                 │ HTTP Request
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│         /backend/function/filter_perfumes.sql                           │
+│              (DATABASE FUNCTION)                                        │
+├─────────────────────────────────────────────────────────────────────────┤
+│  FOR EACH perfume IN database:                                          │
+│                                                                         │
+│    match_score = (                                                      │
+│      accords_match * 25% +                                              │
+│      top_notes_match * 25% +                                            │
+│      middle_notes_match * 25% +                                         │
+│      base_notes_match * 25%                                             │
+│    )                                                                    │
+│                                                                         │
+│  Filter:                                                                │
+│    - match_score > 0                                                    │
+│    - gender_filter (if selected)                                        │
+│    - brand_filter (if selected)                                         │
+│                                                                         │
+│  Sort by: match_score DESC, name ASC                                    │
+│  Limit: items_per_page                                                  │
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │
+                                 │ คืนค่า JSONB Array
+                                 │ [
+                                 │   {
+                                 │     id: "...",
+                                 │     name: "Sauvage",
+                                 │     brand: "Dior",
+                                 │     match_score: 85.5,
+                                 │     ...
+                                 │   },
+                                 │   ...
+                                 │ ]
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│           /redux/user/userReducer.ts                                    │
+│              fetchSuggestedPerfumes (Response)                          │
+├─────────────────────────────────────────────────────────────────────────┤
+│  1. รับผลลัพธ์จาก database                                             │
+│  2. อัพเดท Redux state:                                                 │
+│     state.user.profile.suggestions_perfumes = results                   │
+│  3. Navigate to /profile?q=recommendations                              │
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│           /app/(Main)/profile/page.tsx                                  │
+│              (PROFILE PAGE - RECOMMENDATIONS TAB)                       │
+├─────────────────────────────────────────────────────────────────────────┤
+│  1. อ่าน suggestions_perfumes จาก Redux state                          │
+│  2. แสดงผล PerfumeCard สำหรับแต่ละน้ำหอม                               │
+│  3. แสดง match_score เป็นเปอร์เซ็นต์                                   │
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │
+                                 │ แสดงผลให้ผู้ใช้เห็น
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         USER (ผู้ใช้)                                   │
+│                 ได้เห็นน้ำหอมที่แนะนำพร้อมคะแนน                        │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
 ## ไฟล์ที่เกี่ยวข้อง (Related Files)
 
 ### 1. Frontend Components
@@ -90,7 +196,66 @@ export const fetchSuggestedPerfumes = createAsyncThunk(
 );
 ```
 
-### 3. Backend Database Function
+### 4. Viewing Recommendations (การดูผลลัพธ์)
+
+#### `/app/(Main)/profile/page.tsx`
+**Component**: ProfilePage (Recommendations Tab)
+
+**บทบาท**: แสดงผลน้ำหอมที่แนะนำจากการทำ Quiz
+
+**การทำงาน**:
+1. อ่านข้อมูล `suggestions_perfumes` จาก Redux state
+2. แสดงผลโดยใช้ `PerfumeCard` component สำหรับแต่ละน้ำหอม
+3. แต่ละการ์ดจะแสดง:
+   - รูปภาพน้ำหอม
+   - ชื่อน้ำหอม
+   - แบรนด์
+   - คะแนนความเหมาะสม (match_score)
+   - ข้อมูลอื่นๆ (ราคา, accords, notes)
+
+**โค้ด**:
+```typescript
+const selectMySuggestedPerfumes = (state: RootState) =>
+  state.user.profile?.suggestions_perfumes;
+
+const suggestionsPerfumes = useSelector(selectMySuggestedPerfumes);
+
+// ในส่วน JSX
+<TabsContent value="recommendations">
+  <div className="flex flex-wrap gap-4 justify-center">
+    {suggestionsPerfumes && suggestionsPerfumes.length > 0 ? (
+      suggestionsPerfumes.map((perfume, index) => (
+        <PerfumeCard
+          key={perfume.id}
+          perfume={perfume}
+          index={index}
+        />
+      ))
+    ) : (
+      <div className="col-span-full p-8 text-center">
+        <Star className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <h3 className="text-lg font-medium mb-2">
+          No Recommendations Yet
+        </h3>
+        <p className="text-muted-foreground mb-4">
+          Take the perfume quiz to get personalized recommendations
+        </p>
+      </div>
+    )}
+  </div>
+</TabsContent>
+```
+
+**การเข้าถึง**:
+- URL: `/profile?q=recommendations`
+- Tab: "Recommendations" ในหน้า Profile
+- ผู้ใช้สามารถ:
+  - ดูน้ำหอมที่แนะนำพร้อมคะแนนความเหมาะสม
+  - คลิกดูรายละเอียดของแต่ละน้ำหอม
+  - กดถูกใจหรือเพิ่มลงตะกร้า
+  - ทำ Quiz ใหม่เพื่ออัพเดท recommendations
+
+### 6. Backend Database Function
 
 #### `/backend/function/filter_perfumes.sql`
 **Function**: `filter_perfumes` (PostgreSQL Function)
@@ -166,7 +331,7 @@ match_score = (
 ]
 ```
 
-### 4. Type Definitions
+### 7. Type Definitions (การกำหนดประเภทข้อมูล)
 
 #### `/types/perfume.ts`
 
@@ -242,9 +407,15 @@ const birthdateAccords = {
 8. Navigate ไปหน้าโปรไฟล์
    - router.push("/profile?q=recommendations")
    ↓
-9. แสดงผลน้ำหอมที่แนะนำ
+9. หน้า Profile Page แสดงผล (app/(Main)/profile/page.tsx)
    - อ่านจาก state.user.profile.suggestions_perfumes
-   - แสดงพร้อม match_score เป็นเปอร์เซ็นต์
+   - ใช้ PerfumeCard component แสดงแต่ละน้ำหอม
+   - แสดง match_score เป็นเปอร์เซ็นต์
+   ↓
+10. ผู้ใช้เห็นผลลัพธ์
+   - สามารถดูรายละเอียดน้ำหอม
+   - กดถูกใจหรือเพิ่มลงตะกร้า
+   - ทำ Quiz ใหม่ได้ตลอดเวลา
 ```
 
 ## ตัวอย่างการใช้งาน (Example Usage)
@@ -361,6 +532,102 @@ const progress = ((currentStep + 1) / totalSteps) * 100;
 5. **Social Features**
    - แชร์ผลลัพธ์ Quiz
    - ดูผลลัพธ์ของเพื่อน
+
+## Quick Reference (คู่มืออ้างอิงอย่างรวดเร็ว)
+
+### ไฟล์สำคัญและบรรทัดที่ควรรู้จัก
+
+| ไฟล์ | บรรทัด | รายละเอียด |
+|------|--------|-----------|
+| `/components/perfume-quiz.tsx` | 44-52 | Birthday-Accord mapping |
+| `/components/perfume-quiz.tsx` | 119-153 | State management (formData) |
+| `/components/perfume-quiz.tsx` | 350-353 | handleSubmit - ส่งข้อมูลไปคำนวณ |
+| `/redux/user/userReducer.ts` | 419-447 | fetchSuggestedPerfumes - Redux action |
+| `/backend/function/filter_perfumes.sql` | 16-57 | Match score calculation algorithm |
+| `/app/(Main)/profile/page.tsx` | 72-77 | อ่านและแสดงผล suggestions_perfumes |
+| `/types/perfume.ts` | 69-79 | Filters interface |
+| `/types/perfume.ts` | 60-62 | suggestedPerfume interface |
+| `/types/perfume.ts` | 130-280 | Situation-Accord mappings |
+
+### คำสั่งสำคัญ
+
+**ทดสอบระบบ**:
+```bash
+# 1. เริ่ม development server
+npm run dev
+
+# 2. เปิดเบราว์เซอร์ไปที่
+# http://localhost:3000/perfumes/quiz
+
+# 3. กรอกข้อมูล Quiz
+
+# 4. ดูผลลัพธ์ที่
+# http://localhost:3000/profile?q=recommendations
+```
+
+**ตรวจสอบ Database Function**:
+```sql
+-- ทดสอบ filter_perfumes function
+SELECT * FROM filter_perfumes(
+  search_query := null,
+  gender_filter := 'for men',
+  brand_filter := null,
+  accords_filter := ARRAY['woody', 'fresh'],
+  top_notes_filter := ARRAY['bergamot'],
+  middle_notes_filter := ARRAY['lavender'],
+  base_notes_filter := ARRAY['cedar'],
+  page := 1,
+  items_per_page := 10
+);
+```
+
+**ดู Redux State**:
+```javascript
+// ใน Browser Console
+// ดู state ทั้งหมด
+window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
+
+// หรือใช้ Redux DevTools Extension
+// เปิด tab "State" -> "user" -> "profile" -> "suggestions_perfumes"
+```
+
+### Flow การแก้ไข
+
+**เพิ่ม/แก้ไข Situation**:
+1. แก้ไขใน `/types/perfume.ts` (บรรทัด 130-280)
+2. ไม่ต้องแก้อะไรเพิ่มที่อื่น (ระบบจะอ่านจาก `situation` object อัตโนมัติ)
+
+**เพิ่ม/แก้ไข Birthday Mapping**:
+1. แก้ไขใน `/components/perfume-quiz.tsx` (บรรทัด 44-52)
+2. เพิ่มวันในสัปดาห์และ accord ที่เหมาะสม
+
+**ปรับ Match Score Algorithm**:
+1. แก้ไขใน `/backend/function/filter_perfumes.sql` (บรรทัด 16-57)
+2. ปรับเปอร์เซ็นต์ของแต่ละ category (ปัจจุบันอยู่ที่ 25% แต่ละส่วน)
+3. Run migration หรือ update function ใน Supabase Dashboard
+
+**เพิ่มขั้นตอนใหม่ใน Quiz**:
+1. เพิ่มใน `steps` array (บรรทัด 55-92)
+2. เพิ่ม case ใหม่ใน `renderStepContent()` function
+3. เพิ่ม handler function สำหรับ step ใหม่
+4. อัพเดท `Filters` interface ใน `/types/perfume.ts` ถ้าจำเป็น
+
+### คำถามที่พบบ่อย (FAQ)
+
+**Q: ทำไม match_score ของผู้ใช้บางคนต่ำ?**  
+A: เพราะน้ำหอมในระบบมี accords/notes ที่ไม่ตรงกับที่ผู้ใช้เลือก แนะนำให้ผู้ใช้เลือก accords/notes ที่หลากหลายมากขึ้น หรือใช้ Situation-based selection
+
+**Q: ผู้ใช้ทำ Quiz ใหม่ recommendations เดิมจะหายไหม?**  
+A: ใช่ จะ replace ด้วยผลลัพธ์ใหม่ (อาจพิจารณาเก็บ history ในอนาคต)
+
+**Q: สามารถกรองผลลัพธ์ต่อหลังจากได้ recommendations แล้วได้ไหม?**  
+A: ตอนนี้ยังไม่ได้ แต่สามารถเพิ่ม client-side filtering ในหน้า profile ได้
+
+**Q: Match score คำนวณอย่างไร?**  
+A: รวม 4 ส่วน: accords (25%), top notes (25%), middle notes (25%), base notes (25%) โดยนับจำนวนที่ตรงกันหารด้วยจำนวนทั้งหมด
+
+**Q: ทำไมต้องใช้ GREATEST ใน SQL?**  
+A: เพื่อป้องกันการหารด้วย 0 และให้ผลลัพธ์ที่เป็นธรรมเมื่อผู้ใช้เลือกน้อยกว่าหรือมากกว่าน้ำหอม
 
 ## สรุป (Summary)
 
