@@ -1,3 +1,32 @@
+-- ============================================================================
+-- PERFUME RECOMMENDATION SYSTEM - DATABASE FUNCTION
+-- ============================================================================
+-- Function: filter_perfumes
+-- Purpose: คำนวณคะแนนความเหมาะสม (match score) ระหว่างน้ำหอมกับความต้องการของผู้ใช้
+-- 
+-- Algorithm:
+--   คำนวณ match score (0-100%) จาก 4 categories:
+--   1. Accords Match (25% สูงสุด)
+--   2. Top Notes Match (25% สูงสุด)
+--   3. Middle Notes Match (25% สูงสุด)
+--   4. Base Notes Match (25% สูงสุด)
+--
+-- Parameters:
+--   @search_query       - ข้อความค้นหาทั่วไป (ชื่อ, แบรนด์, คำอธิบาย)
+--   @gender_filter      - กรองตามเพศ (for men, for women)
+--   @brand_filter       - กรองตามแบรนด์
+--   @accords_filter     - array ของ accords ที่ผู้ใช้ต้องการ
+--   @top_notes_filter   - array ของ top notes ที่ผู้ใช้ต้องการ
+--   @middle_notes_filter - array ของ middle notes ที่ผู้ใช้ต้องการ
+--   @base_notes_filter  - array ของ base notes ที่ผู้ใช้ต้องการ
+--   @page              - หน้าที่ต้องการ (pagination)
+--   @items_per_page    - จำนวนรายการต่อหน้า
+--
+-- Returns: JSONB array ของน้ำหอมพร้อม match_score
+--
+-- ดูเอกสารเพิ่มเติมที่: /PERFUME_RECOMMENDATION_SYSTEM.md
+-- ============================================================================
+
 create or replace function public.filter_perfumes (
   search_query TEXT default null,
   gender_filter TEXT default null,
@@ -16,7 +45,19 @@ BEGIN
     WITH perfume_scores AS (
       SELECT
         to_jsonb(p) AS perfume_data,
+        -- ============================================================================
+        -- MATCH SCORE CALCULATION (การคำนวณคะแนนความเหมาะสม)
+        -- ============================================================================
         -- คำนวณคะแนนความเหมือนเป็นเปอร์เซ็นต์ (สูงสุด 100%)
+        -- แบ่งเป็น 4 ส่วนๆ ละ 25%:
+        --   1. Accords matching
+        --   2. Top notes matching
+        --   3. Middle notes matching
+        --   4. Base notes matching
+        -- 
+        -- สูตร: (จำนวนที่ตรง / จำนวนทั้งหมด) * 25
+        -- ใช้ GREATEST เพื่อป้องกันการหารด้วย 0
+        -- ============================================================================
         ((
           -- คะแนนจาก accords (25% สูงสุด)
           CASE WHEN accords_filter IS NULL OR cardinality(accords_filter) = 0 THEN 0
