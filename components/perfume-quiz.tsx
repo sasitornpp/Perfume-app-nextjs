@@ -1,5 +1,24 @@
 "use client";
 
+/**
+ * PERFUME QUIZ COMPONENT (คอมโพเนนต์แบบทดสอบหาน้ำหอม)
+ * 
+ * คอมโพเนนต์นี้เป็นหน้าแบบฟอร์ม Quiz สำหรับช่วยผู้ใช้ค้นหาน้ำหอมที่เหมาะสมกับความต้องการ
+ * โดยผ่าน 7 ขั้นตอน ได้แก่:
+ * 1. Welcome - หน้าต้อนรับ
+ * 2. Gender - เลือกเพศที่ต้องการ
+ * 3. Situation - เลือกโอกาสที่จะใช้น้ำหอม (เดท, ทำงาน, ออกกำลังกาย เป็นต้น)
+ * 4. Accords - เลือกกลิ่นหลัก (สูงสุด 5 แบบ)
+ * 5. Notes - เลือก Top/Middle/Base notes ที่ชอบ
+ * 6. Birthday - เลือกวันเกิด (จะแปลงเป็น accord ที่เหมาะสม)
+ * 7. Brand - เลือกแบรนด์ที่ชอบ
+ * 
+ * เมื่อผู้ใช้กรอกข้อมูลเสร็จ ระบบจะส่งข้อมูลไปยัง Redux action `fetchSuggestedPerfumes`
+ * เพื่อคำนวณหาน้ำหอมที่เหมาะสมพร้อมคะแนนความเหมาะสม (match score)
+ * 
+ * ดูเอกสารเพิ่มเติมที่: /PERFUME_RECOMMENDATION_SYSTEM.md
+ */
+
 import React, { useState, useMemo } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -40,7 +59,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Women from "@/components/icon/women";
 import Men from "@/components/icon/male";
 
-// Define birthdate-accord associations
+/**
+ * Birthday-Accord Associations (การแมปวันเกิดกับกลิ่น)
+ * แต่ละวันในสัปดาห์จะถูกแมปกับ accord ที่เหมาะสม
+ * ใช้ในขั้นตอน Birthday ของ Quiz
+ */
 const birthdateAccords = {
 	monday: ["fresh"],
 	tuesday: ["spicy"],
@@ -51,7 +74,10 @@ const birthdateAccords = {
 	sunday: ["powdery"],
 };
 
-// Define steps for quiz
+/**
+ * Quiz Steps Configuration (การกำหนดขั้นตอน Quiz)
+ * กำหนดขั้นตอนทั้ง 7 ของ Quiz พร้อมชื่อและคำอธิบาย
+ */
 const steps = [
 	{
 		component: "welcome",
@@ -95,6 +121,10 @@ function PerfumeQuiz() {
 	const router = useRouter();
 	const dispatch = useDispatch<AppDispatch>();
 
+	/**
+	 * Data Sources from Redux Store (ข้อมูลจาก Redux Store)
+	 * ดึงข้อมูล accords, notes, brands ที่มีในระบบมาแสดงให้ผู้ใช้เลือก
+	 */
 	// Get perfume data from Redux store
 	const perfumeAccords = useSelector(
 		(state: RootState) => state.perfumes.perfume_unique_data.accords,
@@ -116,12 +146,21 @@ function PerfumeQuiz() {
 		(state: RootState) => state.perfumes.perfume_unique_data.brand,
 	).map((brand) => brand.name);
 
-	// Quiz state
+	/**
+	 * Quiz State Management (การจัดการสถานะ Quiz)
+	 */
+	// ขั้นตอนปัจจุบันของ Quiz (0-6)
 	const [currentStep, setCurrentStep] = useState(0);
+	
+	// ข้อมูลฟอร์มที่ผู้ใช้กรอก (จะถูกส่งไปคำนวณน้ำหอมที่เหมาะสม)
 	const [formData, setFormData] = useState<Filters>({
 		...FiltersPerfumeValues,
 	});
 
+	/**
+	 * Search States (สถานะการค้นหา)
+	 * ใช้สำหรับ filter ข้อมูลในแต่ละขั้นตอน
+	 */
 	// Search states
 	const [accordSearch, setAccordSearch] = useState("");
 	const [topNoteSearch, setTopNoteSearch] = useState("");
@@ -129,10 +168,22 @@ function PerfumeQuiz() {
 	const [baseNoteSearch, setBaseNoteSearch] = useState("");
 	const [brandSearch, setBrandSearch] = useState("");
 
-	// Helper state for multi-select management
+	/**
+	 * Helper States (สถานะช่วยเหลือ)
+	 */
+	// เก็บ accords ที่ผู้ใช้เลือก (สูงสุด 5 รายการ)
 	const [selectedAccords, setSelectedAccords] = useState<string[]>([]);
+	// Tab ที่เปิดอยู่ในขั้นตอน Notes (top/middle/base)
 	const [activeNotesTab, setActiveNotesTab] = useState("top");
 
+	/**
+	 * Filtered Data with Memoization (ข้อมูลที่กรองแล้วพร้อม memoization)
+	 * ใช้ useMemo เพื่อลด re-render ที่ไม่จำเป็น
+	 * แต่ละรายการจะ:
+	 * 1. กรองตามคำค้นหา
+	 * 2. เรียงตาม alphabetical order
+	 * 3. จำกัดแสดงสูงสุด 50 รายการ
+	 */
 	// Filter and sort data
 	const filteredAccords = useMemo(() => {
 		return (
@@ -189,13 +240,27 @@ function PerfumeQuiz() {
 		);
 	}, [perfumeBrands, brandSearch]);
 
+	// คำนวณ Progress (0-100%)
 	const totalSteps = steps.length;
 	const progress = ((currentStep + 1) / totalSteps) * 100;
 
+	/**
+	 * Event Handlers (ฟังก์ชันจัดการเหตุการณ์)
+	 */
+
+	/**
+	 * handleGenderSelect - จัดการการเลือกเพศ
+	 * @param value - "for men" | "for women" | null (No Preference)
+	 */
 	const handleGenderSelect = (value: string | null) => {
 		setFormData({ ...formData, gender_filter: value });
 	};
 
+	/**
+	 * handleAccordToggle - จัดการการเลือก/ยกเลิก accord
+	 * จำกัดการเลือกสูงสุด 5 รายการ
+	 * @param accord - ชื่อ accord ที่เลือก
+	 */
 	const handleAccordToggle = (accord: string) => {
 		if (selectedAccords.includes(accord)) {
 			// Remove the accord
@@ -214,6 +279,12 @@ function PerfumeQuiz() {
 		}
 	};
 
+	/**
+	 * handleNoteToggle - จัดการการเลือก/ยกเลิก note
+	 * ไม่จำกัดจำนวนการเลือก
+	 * @param noteType - ประเภท note (top/middle/base)
+	 * @param note - ชื่อ note ที่เลือก
+	 */
 	const handleNoteToggle = (
 		noteType:
 			| "top_notes_filter"
@@ -233,14 +304,28 @@ function PerfumeQuiz() {
 		}
 	};
 
+	/**
+	 * handleBrandSelect - จัดการการเลือกแบรนด์
+	 * @param brand - ชื่อแบรนด์ที่เลือก
+	 */
 	const handleBrandSelect = (brand: string) => {
 		setFormData({ ...formData, brand_filter: brand });
 	};
 
+	/**
+	 * clearBrandSelection - ล้างการเลือกแบรนด์
+	 */
 	const clearBrandSelection = () => {
 		setFormData({ ...formData, brand_filter: null });
 	};
 
+	/**
+	 * handleSituationChange - จัดการการเลือกสถานการณ์
+	 * จะ set accords_filter อัตโนมัติตาม situation ที่เลือก
+	 * @param value - ประเภทสถานการณ์ (daily/formal/date/party/exercise)
+	 * 
+	 * ตัวอย่าง: เลือก "date" จะ set accords เป็น ["Rose", "Amber", "Vanilla", ...]
+	 */
 	const handleSituationChange = (value: SituationType) => {
 		setFormData({
 			...formData,
@@ -255,6 +340,19 @@ function PerfumeQuiz() {
 		}
 	};
 
+	/**
+	 * handleNext - ไปขั้นตอนถัดไป
+	 */
+	const handleNext = () => {
+		if (currentStep < totalSteps - 1) {
+			setCurrentStep(currentStep + 1);
+			window.scrollTo(0, 0);
+		}
+	};
+
+	/**
+	 * handlePrevious - กลับไปขั้นตอนก่อนหน้า
+	 */
 	const handlePrevious = () => {
 		if (currentStep > 0) {
 			setCurrentStep(currentStep - 1);
@@ -262,11 +360,25 @@ function PerfumeQuiz() {
 		}
 	};
 
+	/**
+	 * handleSubmit - ส่งข้อมูลไปคำนวณน้ำหอมที่แนะนำ
+	 * 
+	 * ขั้นตอนการทำงาน:
+	 * 1. Dispatch Redux action `fetchSuggestedPerfumes` พร้อมส่ง filters
+	 * 2. Redux จะเรียก Supabase RPC function `filter_perfumes`
+	 * 3. Function จะคำนวณ match_score และคืนผลลัพธ์
+	 * 4. บันทึกผลลัพธ์ลง profile.suggestions_perfumes
+	 * 5. Navigate ไปหน้าโปรไฟล์ tab recommendations
+	 */
 	const handleSubmit = () => {
 		dispatch(fetchSuggestedPerfumes({ filters: formData }));
 		router.push("/profile?q=recommendations");
 	};
 
+	/**
+	 * renderStepContent - แสดง UI ของแต่ละขั้นตอน
+	 * @returns JSX element ของขั้นตอนปัจจุบัน
+	 */
 	const renderStepContent = () => {
 		const step = steps[currentStep];
 
